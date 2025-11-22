@@ -1,0 +1,104 @@
+#pragma once
+#include <iostream>
+#include <string>
+#include <vector>
+#include "Nodes.h"
+#include "BlackboardBase.h"
+#include "Root.h"
+
+class EnemyAI;
+class BehaviorTree;
+
+class BehaviorTree
+{
+public:
+    BehaviorTree(EnemyAI* owner) : m_Owner(owner), m_Blackboard(nullptr) {}
+    ~BehaviorTree();
+
+    void StartTree();
+    void TickTree();
+    void StopTree();
+    
+    void SetRootNode(std::unique_ptr<HNode> root) { m_RootNode = std::move(root); }
+    HNode* GetRootNode() const { return m_RootNode.get(); }
+    HBlackboard* GetBlackboard() const { return m_Blackboard; }
+private:
+    std::unique_ptr<HNode> m_RootNode;
+    EnemyAI* m_Owner;
+    HBlackboard* m_Blackboard;
+    bool m_bIsRunning = false;
+    friend class BehaviorTreeBuilder;
+};
+
+class BehaviorTreeBuilder
+{
+public:
+    BehaviorTreeBuilder(EnemyAI* owner) : m_Tree(Root::CreateBehaviorTree(owner)) {}
+
+    template<typename BlackboardType>
+    BehaviorTreeBuilder& setBlackboard()
+    {
+        BlackboardType* blackboard = new BlackboardType();
+        m_Tree->m_Blackboard = blackboard;
+        return *this;
+    }
+
+    BehaviorTreeBuilder& sequence(const std::string& name);
+    BehaviorTreeBuilder& selector(const std::string& name);
+    template<typename ActionNodeType, typename... Args>
+    BehaviorTreeBuilder& action(Args&&... args)
+    {
+        auto action = std::make_unique<ActionNodeType>(std::forward<Args>(args)...);
+        std::cout << "Adding Action Node: " << action->GetName() << std::endl;
+        if (m_CurrentDecorator)
+        {
+            auto decoratorNode = std::move(m_CurrentDecorator);
+            if (!m_NodeStack.empty())
+            {
+                action->SetOwner(m_Tree->m_Owner);
+                action->SetBlackboard(m_Tree->m_Blackboard);
+                decoratorNode->AddChild(std::move(action));
+                m_NodeStack.back()->AddChild(std::move(decoratorNode));
+            }
+        }
+        else
+        {
+            if (!m_NodeStack.empty())
+            {
+                action->SetOwner(m_Tree->m_Owner);
+                action->SetBlackboard(m_Tree->m_Blackboard);
+                m_NodeStack.back()->AddChild(std::move(action));
+            }
+        }
+        return *this;
+    }
+    template<typename ConditionNodeType, typename... Args>
+    BehaviorTreeBuilder& condition(PriortyType priorty, Args&&... args)
+    {
+        auto condition = std::make_unique<ConditionNodeType>(std::forward<Args>(args)...);
+        std::cout << "Adding Condition Node: " << condition->GetName() << std::endl;
+        if (!m_NodeStack.empty())
+        {
+            condition->SetOwner(m_Tree->m_Owner);
+            condition->SetBlackboard(m_Tree->m_Blackboard);
+            condition->SetPriortyMode(priorty);
+            m_NodeStack.back()->AddConditionNode(std::move(condition));
+        }
+        return *this;
+    }
+    template<typename DecoratorNodeType, typename... Args>
+    BehaviorTreeBuilder& decorator(Args&&... args)
+    {
+        m_CurrentDecorator = std::make_unique<DecoratorNodeType>(std::forward<Args>(args)...);
+        std::cout << "Adding Decorator Node: " << m_CurrentDecorator->GetName() << std::endl;
+        m_CurrentDecorator->SetOwner(m_Tree->m_Owner);
+        m_CurrentDecorator->SetBlackboard(m_Tree->m_Blackboard);
+        return *this;
+    }
+    BehaviorTreeBuilder& end();
+    BehaviorTree* build();
+private:
+    BehaviorTree* m_Tree;
+    std::vector<HNode*> m_NodeStack;
+    std::unique_ptr<HDecorator> m_CurrentDecorator;
+};

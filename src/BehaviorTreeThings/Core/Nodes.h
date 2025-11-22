@@ -1,0 +1,108 @@
+#pragma once
+#include <memory>
+#include <string>
+#include <vector>
+#include "EnumsForTree.h"
+
+class HCondition;
+class HBlackboard;
+class EnemyAI;
+
+class HNode
+{
+public:
+    HNode(const std::string& name) : m_Name(name), m_Parent(nullptr), m_Status(NodeStatus::RUNNING) {}
+    virtual ~HNode() = default;
+    
+    NodeStatus Tick();
+    virtual void OnStart() = 0;
+    virtual NodeStatus Update() = 0;
+    virtual void OnFinished() = 0;
+    virtual void OnAbort() = 0;
+    
+    void AddChild(std::unique_ptr<HNode> child);
+    void AddConditionNode(std::unique_ptr<HCondition> conditionNode);
+    
+    const HNode* GetParent() const { return m_Parent; }
+    const NodeStatus GetStatus() const { return m_Status; }
+    std::string GetName() const { return m_Name; }
+    std::vector<std::unique_ptr<HNode>>& GetChildrens() { return m_Childrens; }
+    std::vector<std::unique_ptr<HCondition>>& GetConditionNodes() { return m_ConditionNodes; }
+protected:
+    std::string m_Name;
+    HNode* m_Parent;
+    NodeStatus m_Status;
+    bool m_bIsStarted = false;
+    std::vector<std::unique_ptr<HNode>> m_Childrens;
+    std::vector<std::unique_ptr<HCondition>> m_ConditionNodes;
+};
+
+class HActionNode : public HNode
+{
+public:
+    HActionNode(const std::string& name) : HNode(name), m_Owner(nullptr), m_Blackboard(nullptr) {}
+    
+    virtual void OnStart() override = 0;
+    virtual NodeStatus Update() override = 0;
+    virtual void OnFinished() override = 0;
+    virtual void OnAbort() override = 0;
+protected:
+    EnemyAI& GetOwner() const { return *m_Owner; }
+    HBlackboard& GetBlackboard() const { return *m_Blackboard; }
+private:
+    EnemyAI* m_Owner;
+    HBlackboard* m_Blackboard;
+    
+    void SetOwner(EnemyAI* owner) { m_Owner = owner; }
+    void SetBlackboard(HBlackboard* blackboard) { m_Blackboard = blackboard; }
+    friend class BehaviorTreeBuilder;
+    friend class BehaviorTree;
+};
+
+class HCondition : public HNode
+{
+public:
+    HCondition(const std::string& name) : HNode(name), m_Owner(nullptr), m_Blackboard(nullptr), m_PriortyMode(PriortyType::None) {}
+
+    virtual void OnStart() override = 0;
+    virtual NodeStatus Update() override = 0;
+    virtual void OnFinished() override = 0;
+    virtual void OnAbort() override = 0;
+
+    PriortyType GetPriortyMode() const { return m_PriortyMode; }
+protected:
+    EnemyAI& GetOwner() const { return *m_Owner; }
+    HBlackboard& GetBlackboard() const { return *m_Blackboard; }
+private:
+    EnemyAI* m_Owner;
+    HBlackboard* m_Blackboard;
+    PriortyType m_PriortyMode;
+    
+    void SetOwner(EnemyAI* owner) { m_Owner = owner; }
+    void SetBlackboard(HBlackboard* blackboard) { m_Blackboard = blackboard; }
+    void SetPriortyMode(PriortyType priorty) { m_PriortyMode = priorty; }
+    friend class BehaviorTreeBuilder;
+    friend class BehaviorTree;
+};
+
+class HDecorator : public HNode
+{
+public:
+    HDecorator(const std::string& name) : HNode(name), m_Blackboard(nullptr), m_Owner(nullptr) {}
+
+    virtual void OnStart() override = 0;
+    virtual NodeStatus Update() override = 0;
+    virtual void OnFinished() override = 0;
+    virtual void OnAbort() override = 0;
+protected:
+    EnemyAI& GetOwner() const { return *m_Owner; }
+    HBlackboard& GetBlackboard() const { return *m_Blackboard; }
+private:
+    EnemyAI* m_Owner;
+    HBlackboard* m_Blackboard;
+
+    void SetOwner(EnemyAI* owner) { m_Owner = owner; }
+    void SetBlackboard(HBlackboard* blackboard) { m_Blackboard = blackboard; }
+    friend class BehaviorTreeBuilder;
+    friend class BehaviorTree;
+};
