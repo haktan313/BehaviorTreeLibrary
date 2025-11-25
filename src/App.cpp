@@ -1,7 +1,12 @@
 #include "App.h"
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
 #include "BehaviorTreeThings/Core/Tree.h"
 
-App::App()
+App* App::s_Instance = nullptr;
+
+App::App() : m_EnemyAI(nullptr), m_Window(nullptr)
 {
     Root::RootStart();
     m_EnemyAI = new EnemyAI();
@@ -16,9 +21,79 @@ App::~App()
 
 void App::Run()
 {
-    while (m_EnemyAI != nullptr)
+    if (!Init())
+    {
+        std::cout << "Application failed to initialize!" << std::endl;
+        Shutdown();
+        return;
+    }
+    while (m_EnemyAI != nullptr && !glfwWindowShouldClose(m_Window))
     {
         Root::RootTick();
         m_EnemyAI->Tick(0.016f);
+
+        glfwSwapBuffers(m_Window);
+        glfwPollEvents();
     }
+    Shutdown();
 }
+
+bool App::Init()
+{
+    if (!glfwInit())
+    {
+        std::cout << "GLFW initialization failed!" << std::endl;
+        return false;
+    }
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+    m_Window = glfwCreateWindow(1280, 720, "NavMesh Example", NULL, NULL);
+    if (m_Window == NULL)
+    {
+        std::cout << "Failed to create GLFW window" << std::endl;
+        glfwTerminate();
+        return false;
+    }
+    glfwSetWindowUserPointer(m_Window, this);
+    glfwMakeContextCurrent(m_Window);
+    glfwSetFramebufferSizeCallback(m_Window, App::SizeCallback);
+
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    {
+        std::cout << "Failed to initialize GLAD" << std::endl;
+        return false;
+    }
+    
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    ImGui::StyleColorsDark();
+    ImGui_ImplGlfw_InitForOpenGL(m_Window, true);
+    ImGui_ImplOpenGL3_Init("#version 330");
+    
+    return true;
+}
+
+void App::Shutdown()
+{
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+
+    if (m_Window)
+        glfwDestroyWindow(m_Window);
+    m_Window = nullptr;
+    
+    glfwTerminate();
+}
+
+void App::SizeCallback(GLFWwindow* window, int width, int height)
+{
+    glViewport(0, 0, width, height);
+}
+

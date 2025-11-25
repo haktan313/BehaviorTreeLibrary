@@ -27,7 +27,7 @@ void EnemyAI::BeginPlay()
         .end()
         .decorator<InverterDecorator>("Inverter_CanSeePlayer")
             .sequence("ChaseSequence")
-                .decorator<InverterDecorator>("Inverter").action<ActionNode>("DetectPlayerAction",50.0f)
+                .action<ActionNode>("DetectPlayerAction",50.0f)
                 .action<ActionNode>("ChasePlayerAction",40.0f)
             .end()
     .end()
@@ -41,7 +41,7 @@ void EnemyAI::Tick(float DeltaTime)
     if (m_BehaviorTree && !b_StopAI)
     {
         m_TickTimer += DeltaTime;
-        if (m_TickTimer >= 10000.0f)
+        if (m_TickTimer >= 10.0f)
         {
             b_StopAI = true;
             m_TickTimer = 0.0f;
@@ -59,5 +59,4 @@ void EnemyAI::Tick(float DeltaTime)
 void EnemyAI::EndPlay()
 {
     std::cout << "Enemy AI Ended" << std::endl;
-    Root::DestroyBehaviorTree(m_BehaviorTree);
 }
