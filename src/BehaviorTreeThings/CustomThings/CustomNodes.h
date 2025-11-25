@@ -22,8 +22,8 @@ public:
 
     void OnStart() override {}
     NodeStatus Update() override { return NodeStatus::SUCCESS; }
-    void OnFinished() override {}
-    void OnAbort() override {}
+    void OnFinished() override { HNode::OnFinished(); }
+    void OnAbort() override { HNode::OnAbort(); }
 };
 
 class AlwaysFalseCondition : public HCondition
@@ -33,8 +33,8 @@ public:
 
     void OnStart() override {}
     NodeStatus Update() override { return NodeStatus::FAILURE; }
-    void OnFinished() override {}
-    void OnAbort() override {}
+    void OnFinished() override { HNode::OnFinished(); }
+    void OnAbort() override { HNode::OnAbort(); }
 };
 
 class CanSeePlayerCondition : public HCondition
@@ -44,8 +44,8 @@ public:
 
     void OnStart() override {}
     NodeStatus Update() override;
-    void OnFinished() override {}
-    void OnAbort() override {}
+    void OnFinished() override { HNode::OnFinished(); }
+    void OnAbort() override { HNode::OnAbort(); }
 private:
     bool m_bInverse = false;
 };
@@ -57,6 +57,6 @@ public:
 
     void OnStart() override {}
     NodeStatus Update() override;
-    void OnFinished() override {}
-    void OnAbort() override {}
+    void OnFinished() override { HNode::OnFinished(); }
+    void OnAbort() override { HNode::OnAbort(); }
 };

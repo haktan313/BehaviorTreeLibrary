@@ -26,16 +26,15 @@ NodeStatus ActionNode::Update()
 void ActionNode::OnFinished()
 {
     std::cout << "Action Node Finished: " << m_Name << std::endl;
+    HNode::OnFinished();
     m_TickCount = 0;
-    m_bIsStarted = false;
 }
 
 void ActionNode::OnAbort()
 {
     std::cout << "Action Node Aborted: " << m_Name << std::endl;
+    HNode::OnAbort();
     m_TickCount = 0;
-    m_bIsStarted = false;
-    m_Status = NodeStatus::FAILURE;
 }
 
 NodeStatus CanSeePlayerCondition::Update()

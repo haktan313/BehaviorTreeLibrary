@@ -1,5 +1,7 @@
 #include "Nodes.h"
 
+#include <iostream>
+
 // HNode methods
 NodeStatus HNode::Tick()
 {
@@ -15,6 +17,28 @@ NodeStatus HNode::Tick()
     if (status == NodeStatus::SUCCESS || status == NodeStatus::FAILURE)
         OnFinished();
     return status;
+}
+
+void HNode::OnFinished()
+{
+    for (auto& child : m_Childrens)
+    {
+        if (child->GetStatus() == NodeStatus::RUNNING)
+            child->OnFinished();
+    }
+    m_bIsStarted = false;
+}
+
+void HNode::OnAbort()
+{
+    std::cout << "Node Aborted: " << m_Name << std::endl;
+    for (auto& child : m_Childrens)
+    {
+        if (child->GetStatus() == NodeStatus::RUNNING)
+            child->OnAbort();
+    }
+    m_bIsStarted = false;
+    m_Status = NodeStatus::FAILURE;
 }
 
 void HNode::AddChild(std::unique_ptr<HNode> child)

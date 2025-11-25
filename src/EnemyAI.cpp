@@ -21,7 +21,7 @@ void EnemyAI::BeginPlay()
     
     m_BehaviorTree = BehaviorTreeBuilder(this).setBlackboard<EnemyBlackboard>()
     .selector("Root")
-        .sequence("PatrolSequence").condition<CanSeePlayerCondition>(PriortyType::LowerPriority,"CanSeePlayerCondition",false)
+        .sequence("PatrolSequence").condition<CanSeePlayerCondition>(PriortyType::Both,"CanSeePlayerCondition",false)
             .action<ActionNode>("MoveToPatrolPointAction",10.0f)
             .action<ActionNode>("WaitAtPatrolPointAction",5.0f)
         .end()
@@ -41,7 +41,7 @@ void EnemyAI::Tick(float DeltaTime)
     if (m_BehaviorTree && !b_StopAI)
     {
         m_TickTimer += DeltaTime;
-        if (m_TickTimer >= 10.0f)
+        if (m_TickTimer >= 5.0f)
         {
             b_StopAI = true;
             m_TickTimer = 0.0f;

@@ -17,8 +17,8 @@ public:
     NodeStatus Tick();
     virtual void OnStart() = 0;
     virtual NodeStatus Update() = 0;
-    virtual void OnFinished() = 0;
-    virtual void OnAbort() = 0;
+    virtual void OnFinished();
+    virtual void OnAbort();
     
     void AddChild(std::unique_ptr<HNode> child);
     void AddConditionNode(std::unique_ptr<HCondition> conditionNode);
