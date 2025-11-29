@@ -1277,7 +1277,9 @@ static bool             Platform_OpenInShellFn_DefaultImpl(ImGuiContext* ctx, co
 
 namespace ImGui
 {
-// Item
+    struct ImGuiLayoutItem;
+    struct ImGuiLayout;
+    // Item
 static void             ItemHandleShortcut(ImGuiID id);
 
 // Window Focus
@@ -8307,6 +8309,320 @@ bool ImGui::IsWindowHovered(ImGuiHoveredFlags flags)
 
     return true;
 }
+
+
+
+/*
+namespace ImGui
+{
+    typedef int ImGuiLayoutItemType;        // -> enum ImGuiLayoutItemType_    // Enum: Item or Spring
+    static void             BeginLayout(ImGuiID id, ImGuiLayoutType type, ImVec2 size, float align);
+    static void             EndLayout(ImGuiLayoutType type);
+    static void          BeginVertical(const char* str_id, const ImVec2& size = ImVec2(0, 0), float align = -1.0f);
+    static void          BeginVertical(const void* ptr_id, const ImVec2& size = ImVec2(0, 0), float align = -1.0f);
+    static void          BeginVertical(int id, const ImVec2& size = ImVec2(0, 0), float align = -1);
+    static void          EndVertical();
+    static ImGuiLayout*     FindLayout(ImGuiID id, ImGuiLayoutType type);
+    static ImGuiLayout*     CreateNewLayout(ImGuiID id, ImGuiLayoutType type, ImVec2 size);
+    static void             PushLayout(ImGuiLayout* layout);
+    static void             SignedIndent(float indent);
+    static void             BeginLayoutItem(ImGuiLayout& layout);
+    static ImGuiLayoutItem* GenerateLayoutItem(ImGuiLayout& layout, ImGuiLayoutItemType type);
+    static float            CalculateLayoutItemAlignmentOffset(ImGuiLayout& layout, ImGuiLayoutItem& item);
+    static void             BeginLayout(ImGuiID id, ImGuiLayoutType type, ImVec2 size, float align);
+    enum ImGuiLayoutItemType_
+    {
+        ImGuiLayoutItemType_Item,
+        ImGuiLayoutItemType_Spring
+    };
+    // sizeof() == 48
+    struct ImGuiLayoutItem
+    {
+        ImGuiLayoutItemType     Type;               // Type of an item
+        ImRect                  MeasuredBounds;
+
+        float                   SpringWeight;       // Weight of a spring
+        float                   SpringSpacing;      // Spring spacing
+        float                   SpringSize;         // Calculated spring size
+
+        float                   CurrentAlign;
+        float                   CurrentAlignOffset;
+
+        unsigned int            VertexIndexBegin;
+        unsigned int            VertexIndexEnd;
+
+        ImGuiLayoutItem(ImGuiLayoutItemType type)
+        {
+            Type = type;
+            MeasuredBounds = ImRect(0, 0, 0, 0);    // FIXME: @thedmd are you sure the default ImRect value FLT_MAX,FLT_MAX,-FLT_MAX,-FLT_MAX aren't enough here?
+            SpringWeight = 1.0f;
+            SpringSpacing = -1.0f;
+            SpringSize = 0.0f;
+            CurrentAlign = 0.0f;
+            CurrentAlignOffset = 0.0f;
+            VertexIndexBegin = VertexIndexEnd = (ImDrawIdx)0;
+        }
+    };
+
+    struct ImGuiLayout
+    {
+        ImGuiID                     Id;
+        ImGuiLayoutType             Type;
+        bool                        Live;
+        ImVec2                      Size;               // Size passed to BeginLayout
+        ImVec2                      CurrentSize;        // Bounds of layout known at the beginning the frame.
+        ImVec2                      MinimumSize;        // Minimum possible size when springs are collapsed.
+        ImVec2                      MeasuredSize;       // Measured size with springs expanded.
+
+        ImVector<ImGuiLayoutItem>   Items;
+        int                         CurrentItemIndex;
+        int                         ParentItemIndex;
+        ImGuiLayout*                Parent;
+        ImGuiLayout*                FirstChild;
+        ImGuiLayout*                NextSibling;
+        float                       Align;              // Current item alignment.
+        float                       Indent;             // Indent used to align items in vertical layout.
+        ImVec2                      StartPos;           // Initial cursor position when BeginLayout is called.
+        ImVec2                      StartCursorMaxPos;  // Maximum cursor position when BeginLayout is called.
+
+        ImGuiLayout(ImGuiID id, ImGuiLayoutType type)
+        {
+            Id = id;
+            Type = type;
+            Live = false;
+            Size = CurrentSize = MinimumSize = MeasuredSize = ImVec2(0, 0);
+            CurrentItemIndex = 0;
+            ParentItemIndex = 0;
+            Parent = FirstChild = NextSibling = NULL;
+            Align = -1.0f;
+            Indent = 0.0f;
+            StartPos = ImVec2(0, 0);
+            StartCursorMaxPos = ImVec2(0, 0);
+        }
+    };
+};
+
+
+void ImGui::BeginVertical(const char* str_id, const ImVec2& size/* = ImVec2(0, 0)#1#, float align/* = -1#1#)
+{
+    ImGuiWindow* window = GetCurrentWindow();
+    BeginLayout(window->GetID(str_id), ImGuiLayoutType_Vertical, size, align);
+}
+
+void ImGui::BeginVertical(const void* ptr_id, const ImVec2& size/* = ImVec2(0, 0)#1#, float align/* = -1#1#)
+{
+    ImGuiWindow* window = GetCurrentWindow();
+    BeginLayout(window->GetID(ptr_id), ImGuiLayoutType_Vertical, size, align);
+}
+
+void ImGui::BeginVertical(int id, const ImVec2& size/* = ImVec2(0, 0)#1#, float align/* = -1#1#)
+{
+    ImGuiWindow* window = GetCurrentWindow();
+    BeginLayout(window->GetID((void*)(intptr_t)id), ImGuiLayoutType_Vertical, size, align);
+}
+
+void ImGui::EndVertical()
+{
+    EndLayout(ImGuiLayoutType_Vertical);
+}
+
+static void ImGui::BeginLayout(ImGuiID id, ImGuiLayoutType type, ImVec2 size, float align)
+{
+    ImGuiWindow* window = GetCurrentWindow();
+
+    PushID(id);
+
+    // Find or create
+    ImGuiLayout* layout = FindLayout(id, type);
+    if (!layout)
+        layout = CreateNewLayout(id, type, size);
+
+    layout->Live = true;
+
+    PushLayout(layout);
+
+    if (layout->Size.x != size.x || layout->Size.y != size.y)
+        layout->Size = size;
+
+    if (align < 0.0f)
+        layout->Align = -1.0f;
+    else
+        layout->Align = ImClamp(align, 0.0f, 1.0f);
+
+    // Start capture
+    layout->CurrentItemIndex = 0;
+
+    layout->CurrentSize.x = layout->Size.x > 0.0f ? layout->Size.x : layout->MinimumSize.x;
+    layout->CurrentSize.y = layout->Size.y > 0.0f ? layout->Size.y : layout->MinimumSize.y;
+
+    layout->StartPos = window->DC.CursorPos;
+    layout->StartCursorMaxPos = window->DC.CursorMaxPos;
+
+    if (type == ImGuiLayoutType_Vertical)
+    {
+        // Push empty item to recalculate cursor position.
+        PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
+        Dummy(ImVec2(0.0f, 0.0f));
+        PopStyleVar();
+
+        // Indent horizontal position to match edge of the layout.
+        layout->Indent = layout->StartPos.x - window->DC.CursorPos.x;
+        SignedIndent(layout->Indent);
+    }
+
+    BeginLayoutItem(*layout);
+}
+
+static ImGui::ImGuiLayout* ImGui::FindLayout(ImGuiID id, ImGuiLayoutType type)
+{
+    IM_ASSERT(type == ImGuiLayoutType_Horizontal || type == ImGuiLayoutType_Vertical);
+
+    ImGuiWindow* window = GetCurrentWindow();
+    ImGuiLayout* layout = (ImGuiLayout*)window->DC.Layouts.GetVoidPtr(id);
+    if (!layout)
+        return NULL;
+
+    if (layout->Type != type)
+    {
+        layout->Type = type;
+        layout->MinimumSize = ImVec2(0.0f, 0.0f);
+        layout->Items.clear();
+    }
+
+    return layout;
+}
+
+static ImGui::ImGuiLayout* ImGui::CreateNewLayout(ImGuiID id, ImGuiLayoutType type, ImVec2 size)
+{
+    IM_ASSERT(type == ImGuiLayoutType_Horizontal || type == ImGuiLayoutType_Vertical);
+
+    ImGuiWindow* window = GetCurrentWindow();
+
+    ImGuiLayout* layout = IM_NEW(ImGuiLayout)(id, type);
+    layout->Size = size;
+
+    window->DC.Layouts.SetVoidPtr(id, layout);
+
+    return layout;
+}
+
+static void ImGui::PushLayout(ImGuiLayout* layout)
+{
+    ImGuiWindow* window = GetCurrentWindow();
+
+    if (layout)
+    {
+        layout->Parent = window->DC.CurrentLayout;
+        if (layout->Parent != NULL)
+            layout->ParentItemIndex = layout->Parent->CurrentItemIndex;
+        if (window->DC.CurrentLayout)
+        {
+            layout->NextSibling = window->DC.CurrentLayout->FirstChild;
+            layout->FirstChild  = NULL;
+            window->DC.CurrentLayout->FirstChild = layout;
+        }
+        else
+        {
+            layout->NextSibling = NULL;
+            layout->FirstChild  = NULL;
+        }
+    }
+
+    window->DC.LayoutStack.push_back(layout);
+    window->DC.CurrentLayout = layout;
+    window->DC.CurrentLayoutItem = NULL;
+}
+
+static void ImGui::SignedIndent(float indent)
+{
+    if (indent > 0.0f)
+        Indent(indent);
+    else if (indent < 0.0f)
+        Unindent(-indent);
+}
+
+static void ImGui::BeginLayoutItem(ImGuiLayout& layout)
+{
+    ImGuiContext& g = *GImGui;
+    ImGuiWindow* window = g.CurrentWindow;
+    ImGuiLayoutItem& item = *GenerateLayoutItem(layout, ImGuiLayoutItemType_Item);
+
+    item.CurrentAlign = layout.Align;
+    if (item.CurrentAlign < 0.0f)
+        item.CurrentAlign = ImClamp(g.Style.LayoutAlign, 0.0f, 1.0f);
+
+    // Align item according to data from previous frame.
+    // If layout changes in current frame alignment will
+    // be corrected in EndLayout() to it visualy coherent.
+    item.CurrentAlignOffset = CalculateLayoutItemAlignmentOffset(layout, item);
+    if (item.CurrentAlign > 0.0f)
+    {
+        if (layout.Type == ImGuiLayoutType_Horizontal)
+        {
+            window->DC.CursorPos.y += item.CurrentAlignOffset;
+        }
+        else
+        {
+            float new_position = window->DC.CursorPos.x + item.CurrentAlignOffset;
+
+            // Make placement behave like in horizontal case when next
+            // widget is placed at very same Y position. This indent
+            // make sure for vertical layout placed widgets has same X position.
+            SignedIndent(item.CurrentAlignOffset);
+
+            window->DC.CursorPos.x = new_position;
+        }
+    }
+
+    item.MeasuredBounds.Min = item.MeasuredBounds.Max = window->DC.CursorPos;
+    item.VertexIndexBegin = item.VertexIndexEnd = window->DrawList->_VtxCurrentIdx;
+}
+
+static ImGui::ImGuiLayoutItem* ImGui::GenerateLayoutItem(ImGuiLayout& layout, ImGuiLayoutItemType type)
+{
+    ImGuiContext& g = *GImGui;
+    IM_ASSERT(layout.CurrentItemIndex <= layout.Items.Size);
+
+    if (layout.CurrentItemIndex < layout.Items.Size)
+    {
+        ImGuiLayoutItem& item = layout.Items[layout.CurrentItemIndex];
+        if (item.Type != type)
+            item = ImGuiLayoutItem(type);
+    }
+    else
+    {
+        layout.Items.push_back(ImGuiLayoutItem(type));
+    }
+
+    g.CurrentWindow->DC.CurrentLayoutItem = &layout.Items[layout.CurrentItemIndex];
+
+    return &layout.Items[layout.CurrentItemIndex];
+}
+
+// Calculate how many pixels from top/left layout edge item need to be moved to match
+// layout alignment.
+static float ImGui::CalculateLayoutItemAlignmentOffset(ImGuiLayout& layout, ImGuiLayoutItem& item)
+{
+    if (item.CurrentAlign <= 0.0f)
+        return 0.0f;
+
+    ImVec2 item_size = item.MeasuredBounds.GetSize();
+
+    float layout_extent = (layout.Type == ImGuiLayoutType_Horizontal) ? layout.CurrentSize.y : layout.CurrentSize.x;
+    float item_extent   = (layout.Type == ImGuiLayoutType_Horizontal) ? item_size.y : item_size.x;
+
+    if (item_extent <= 0/* || layout_extent <= item_extent#1#)
+        return 0.0f;
+
+    float align_offset = ImFloor(item.CurrentAlign * (layout_extent - item_extent));
+
+    return align_offset;
+}
+*/
+
+
+
+
 
 float ImGui::GetWindowWidth()
 {

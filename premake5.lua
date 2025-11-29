@@ -18,7 +18,13 @@ project "BehaviorTreeProject"
         "src/**.hpp",
         "src/**.cpp",
         "libs/glad/src/glad.c", 
-        "libs/imgui-1.92.4/*.cpp",
+        
+        "libs/imgui-1.92.4/imgui.cpp",
+        "libs/imgui-1.92.4/imgui_draw.cpp",
+        "libs/imgui-1.92.4/imgui_widgets.cpp",
+        "libs/imgui-1.92.4/imgui_tables.cpp",
+        "libs/imgui-1.92.4/imgui_demo.cpp",
+        
         "libs/imgui-1.92.4/backends/imgui_impl_glfw.cpp",
         "libs/imgui-1.92.4/backends/imgui_impl_opengl3.cpp",
 

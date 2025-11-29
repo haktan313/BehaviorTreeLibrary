@@ -2548,6 +2548,12 @@ struct ImGuiContext
 // Transient per-window data, reset at the beginning of the frame. This used to be called ImGuiDrawContext, hence the DC variable name in ImGuiWindow.
 // (That's theory, in practice the delimitation between ImGuiWindow and ImGuiWindowTempData is quite tenuous and could be reconsidered..)
 // (This doesn't need a constructor because we zero-clear it as part of ImGuiWindow and all frame-temporary data are setup on Begin)
+
+
+/*struct ImGuiLayout;
+struct ImGuiLayoutItem;
+struct ImGuiStorage;*/
+
 struct IMGUI_API ImGuiWindowTempData
 {
     // Layout
@@ -2566,6 +2572,12 @@ struct IMGUI_API ImGuiWindowTempData
     ImVec1                  ColumnsOffset;          // Offset to the current column (if ColumnsCurrent > 0). FIXME: This and the above should be a stack to allow use cases like Tree->Column->Tree. Need revamp columns API.
     ImVec1                  GroupOffset;
     ImVec2                  CursorStartPosLossyness;// Record the loss of precision of CursorStartPos due to really large scrolling amount. This is used by clipper to compensate and fix the most common use case of large scroll area.
+
+
+    /*ImGui::ImGuiLayout*            CurrentLayout;
+    ImGui::ImVector<ImGuiLayout*>  LayoutStack;
+    ImGui::ImGuiLayoutItem*        CurrentLayoutItem;
+    ImGui::ImGuiStorage            Layouts;*/
 
     // Keyboard/Gamepad navigation
     ImGuiNavLayer           NavLayerCurrent;        // Current layer, 0..31 (we currently only use 0..1)

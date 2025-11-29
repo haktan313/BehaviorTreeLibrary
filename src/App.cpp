@@ -1,4 +1,5 @@
 #include "App.h"
+#define IMGUI_DEFINE_MATH_OPERATORS
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
@@ -27,10 +28,27 @@ void App::Run()
         Shutdown();
         return;
     }
+    ImGui::SetCurrentContext(m_ImGuiContext);
     while (m_EnemyAI != nullptr && !glfwWindowShouldClose(m_Window))
     {
         Root::RootTick();
         m_EnemyAI->Tick(0.016f);
+
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        m_NodeEditor.OnUpdate();
+
+        ImGui::Render();
+
+        int width, height;
+        glfwGetFramebufferSize(m_Window, &width, &height);
+        glViewport(0, 0, width, height);
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         glfwSwapBuffers(m_Window);
         glfwPollEvents();
@@ -70,12 +88,15 @@ bool App::Init()
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    ImGui::CreateContext();
+    m_ImGuiContext = ImGui::CreateContext();
+    ImGui::SetCurrentContext(m_ImGuiContext);
+    
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     ImGui::StyleColorsDark();
     ImGui_ImplGlfw_InitForOpenGL(m_Window, true);
     ImGui_ImplOpenGL3_Init("#version 330");
-    
+
+    m_NodeEditor.OnStart();
     return true;
 }
 
