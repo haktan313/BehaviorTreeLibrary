@@ -10,6 +10,8 @@ public:
     void BuildNodes();
     bool CanCreateLink(Pin* a, Pin* b);
     Pin* FindPin(nodeEditor::PinId id);
+    int GetNextID() { return m_NextId++; }
+    ax::NodeEditor::LinkId GetNextLinkId() { return nodeEditor::LinkId(GetNextID()); }
     void OnStart();
     void OnUpdate();
 private:

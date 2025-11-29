@@ -1,5 +1,5 @@
 #include "NodeEditor.h"
-#include <imgui_node_editor_internal.h>
+
 
 namespace nodeEditor = ax::NodeEditor;
 
@@ -108,19 +108,28 @@ void NodeEditor::OnStart()
     node = SpawnSequenceNode();
     nodeEditor::SetNodePosition(node->ID, ImVec2(0,0));
 
+    node = SpawnSequenceNode();
+    nodeEditor::SetNodePosition(node->ID, ImVec2(200, -100));
+
+    node = SpawnSequenceNode();
+    nodeEditor::SetNodePosition(node->ID, ImVec2(200, 100));
+
     nodeEditor::NavigateToContent();
     BuildNodes();
+
+    m_Links.push_back(Link(GetNextLinkId(), m_Nodes[0].Outputs[0].ID, m_Nodes[1].Inputs[0].ID));
+    m_Links.push_back(Link(GetNextLinkId(), m_Nodes[0].Outputs[0].ID, m_Nodes[2].Inputs[0].ID));
 }
 
 void NodeEditor::OnUpdate()
 {
+    ImGui::Separator();
     nodeEditor::SetCurrentEditor(m_EditorContext);
     nodeEditor::Begin("My nodeEditoritor", ImVec2(0.0, 0.0f));
 
     int uniqueId = 1;
         for (auto& node : m_Nodes)
             {
-
                 const float rounding = 5.0f;
                 const float padding  = 12.0f;
 
@@ -139,10 +148,10 @@ void NodeEditor::OnUpdate()
                 nodeEditor::PushStyleVar(nodeEditor::StyleVar_PinBorderWidth, 1.0f);
                 nodeEditor::PushStyleVar(nodeEditor::StyleVar_PinRadius, 5.0f);
                 nodeEditor::BeginNode(node.ID);
-
-                //ImGui::BeginVertical(node.ID.AsPointer());
-                //ImGui::BeginHorizontal("inputs");
-                //ImGui::Spring(0, padding * 2);
+            
+                ImGui::BeginVertical(node.ID.AsPointer());
+                ImGui::BeginHorizontal("inputs");
+                ImGui::Spring(0, padding * 2);
 
                 ImRect inputsRect;
                 int inputAlpha = 200;
@@ -150,7 +159,7 @@ void NodeEditor::OnUpdate()
                 {
                         auto& pin = node.Inputs[0];
                         ImGui::Dummy(ImVec2(0, padding));
-                        //ImGui::Spring(1, 0);
+                        ImGui::Spring(1, 0);
                         inputsRect = ax::NodeEditor::Detail::ImGui_GetItemRect();
 
                         nodeEditor::PushStyleVar(nodeEditor::StyleVar_PinArrowSize, 10.0f);
@@ -172,25 +181,25 @@ void NodeEditor::OnUpdate()
                 else
                     ImGui::Dummy(ImVec2(0, padding));
 
-                //ImGui::Spring(0, padding * 2);
-                //ImGui::EndHorizontal();
+                ImGui::Spring(0, padding * 2);
+                ImGui::EndHorizontal();
 
-                //ImGui::BeginHorizontal("content_frame");
-                //ImGui::Spring(1, padding);
+                ImGui::BeginHorizontal("content_frame");
+                ImGui::Spring(1, padding);
 
-                //ImGui::BeginVertical("content", ImVec2(0.0f, 0.0f));
+                ImGui::BeginVertical("content", ImVec2(0.0f, 0.0f));
                 ImGui::Dummy(ImVec2(160, 0));
-                //ImGui::Spring(1);
+                ImGui::Spring(1);
                 ImGui::TextUnformatted(node.Name.c_str());
-                //ImGui::Spring(1);
-                //ImGui::EndVertical();
+                ImGui::Spring(1);
+                ImGui::EndVertical();
                 auto contentRect = ax::NodeEditor::Detail::ImGui_GetItemRect();
 
-                //ImGui::Spring(1, padding);
-                //ImGui::EndHorizontal();
+                ImGui::Spring(1, padding);
+                ImGui::EndHorizontal();
 
-                //ImGui::BeginHorizontal("outputs");
-                //ImGui::Spring(0, padding * 2);
+                ImGui::BeginHorizontal("outputs");
+                ImGui::Spring(0, padding * 2);
 
                 ImRect outputsRect;
                 int outputAlpha = 200;
@@ -198,7 +207,7 @@ void NodeEditor::OnUpdate()
                 {
                     auto& pin = node.Outputs[0];
                     ImGui::Dummy(ImVec2(0, padding));
-                    //ImGui::Spring(1, 0);
+                    ImGui::Spring(1, 0);
                     outputsRect = ax::NodeEditor::Detail::ImGui_GetItemRect();
 
 #if IMGUI_VERSION_NUM > 18101
@@ -218,10 +227,10 @@ void NodeEditor::OnUpdate()
                 else
                     ImGui::Dummy(ImVec2(0, padding));
 
-                //ImGui::Spring(0, padding * 2);
-                //ImGui::EndHorizontal();
+                ImGui::Spring(0, padding * 2);
+                ImGui::EndHorizontal();
 
-                //ImGui::EndVertical();
+                ImGui::EndVertical();
 
                 nodeEditor::EndNode();
                 nodeEditor::PopStyleVar(7);
@@ -248,11 +257,11 @@ void NodeEditor::OnUpdate()
                 const auto bottomRoundCornersFlags = 4 | 8;
 #endif
 
-                /*drawList->AddRectFilled(inputsRect.GetTL() + ImVec2(0, 1), inputsRect.GetBR(),
+                drawList->AddRectFilled(inputsRect.GetTL() + ImVec2(0, 1), inputsRect.GetBR(),
                     IM_COL32((int)(255 * pinBackground.x), (int)(255 * pinBackground.y), (int)(255 * pinBackground.z), inputAlpha), 4.0f, bottomRoundCornersFlags);
                 //ImGui::PushStyleVar(ImGuiStyleVar_AntiAliasFringeScale, 1.0f);
                 drawList->AddRect(inputsRect.GetTL() + ImVec2(0, 1), inputsRect.GetBR(),
-                    IM_COL32((int)(255 * pinBackground.x), (int)(255 * pinBackground.y), (int)(255 * pinBackground.z), inputAlpha), 4.0f, bottomRoundCornersFlags);*/
+                    IM_COL32((int)(255 * pinBackground.x), (int)(255 * pinBackground.y), (int)(255 * pinBackground.z), inputAlpha), 4.0f, bottomRoundCornersFlags);
                 //ImGui::PopStyleVar();
                 drawList->AddRectFilled(outputsRect.GetTL(), outputsRect.GetBR() - ImVec2(0, 1),
                     IM_COL32((int)(255 * pinBackground.x), (int)(255 * pinBackground.y), (int)(255 * pinBackground.z), outputAlpha), 4.0f, topRoundCornersFlags);
@@ -282,13 +291,13 @@ void NodeEditor::OnUpdate()
                         auto padding = ImGui::GetStyle().FramePadding;
                         auto spacing = ImGui::GetStyle().ItemSpacing;
 
-                        //ImGui::SetCursorPos(ImGui::GetCursorPos() + ImVec2(spacing.x, -spacing.y));
+                        ImGui::SetCursorPos(ImGui::GetCursorPos() + ImVec2(spacing.x, -spacing.y));
 
                         auto rectMin = ImGui::GetCursorScreenPos() - padding;
-                        //auto rectMax = ImGui::GetCursorScreenPos() + size + padding;
+                        auto rectMax = ImGui::GetCursorScreenPos() + size + padding;
 
                         auto drawList = ImGui::GetWindowDrawList();
-                        //drawList->AddRectFilled(rectMin, rectMax, color, size.y * 0.15f);
+                        drawList->AddRectFilled(rectMin, rectMax, color, size.y * 0.15f);
                         ImGui::TextUnformatted(label);
                     };
 
@@ -333,7 +342,7 @@ void NodeEditor::OnUpdate()
                                 if (nodeEditor::AcceptNewItem(ImColor(128, 255, 128), 4.0f))
                                 {
                                     m_Links.emplace_back(Link(GetNextId(), startPinId, endPinId));
-                                    //m_Links.back().Color = GetIconColor(Pin);
+                                    m_Links.back().Color = GetIconColor(PinType::Bool);
                                 }
                             }
                         }
@@ -388,7 +397,6 @@ void NodeEditor::OnUpdate()
                 }
                 nodeEditor::EndDelete();
             }
-
     nodeEditor::End();
     nodeEditor::SetCurrentEditor(nullptr);
 }
