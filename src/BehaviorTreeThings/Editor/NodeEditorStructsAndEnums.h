@@ -4,33 +4,22 @@
 
 namespace nodeEditor = ax::NodeEditor;
 
-/*enum class PinType
-{
-    Flow
-};*/
-
 enum class PinKind
 {
     Output,
     Input
 };
 
-/*enum class NodeType
-{
-    Tree
-};*/
-
 struct Node;
 struct Pin
 {
-    nodeEditor::PinId   ID;
-    Node*     Node;
+    nodeEditor::PinId ID;
+    Node* Node;
     std::string Name;
-    //PinType     Type;
-    PinKind     Kind;
+    PinKind Kind;
 
-    Pin(int id, const char* name/*, PinType type*/):
-        ID(id), Node(nullptr), Name(name),/* Type(type),*/ Kind(PinKind::Input)
+    Pin(int id, const char* name):
+        ID(id), Node(nullptr), Name(name), Kind(PinKind::Input)
     {
     }
 };
@@ -42,14 +31,13 @@ struct Node
     std::vector<Pin> Inputs;
     std::vector<Pin> Outputs;
     ImColor Color;
-    //NodeType Type;
     ImVec2 Size;
 
     std::string State;
     std::string SavnodeEditorState;
 
     Node(int id, const char* name, ImColor color = ImColor(255, 255, 255)):
-        ID(id), Name(name), Color(color), /*Type(NodeType::Tree),*/ Size(0, 0)
+        ID(id), Name(name), Color(color), Size(0, 0)
     {
     }
 };

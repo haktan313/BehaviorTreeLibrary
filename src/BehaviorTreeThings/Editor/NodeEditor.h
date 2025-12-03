@@ -9,8 +9,6 @@ public:
     
     static Node* FindNode(nodeEditor::NodeId id);
     static void TouchNode(nodeEditor::NodeId id);
-    static void BuildNodes();
-    static bool CanCreateLink(Pin* a, Pin* b);
     static Pin* FindPin(nodeEditor::PinId id);
     static int GetNextID();
     static ax::NodeEditor::LinkId GetNextLinkId() { return nodeEditor::LinkId(GetNextID()); }
@@ -18,7 +16,6 @@ public:
     static std::vector<Link>& GetLinks() { return m_Links; }
     static void OnStart();
     static void OnUpdate();
-    static void BuildNode(Node* node);
 
     static Node* SpawnRootNode();
     static Node* SpawnSequenceNode(ImVec2 position);
@@ -27,6 +24,19 @@ public:
     static Node* SpawnConditionNode();
     static Node* SpawnDecoratorNode();
 private:
+
+    static void BuildNode(Node* node);
+public:
+    static void BuildNodes();
+private:
+    static void StylizeNodes();
+    static void ManageInputs(ImRect& inputsRect, int& inputAlpha, Node& node, float padding);
+    static void ManageOutputs(ImRect& outputsRect, int& outputAlpha, Node& node, float padding);
+    static void PaintNodeBackground(Node& node, const ImRect& inputsRect, const ImRect& outputsRect, const ImRect& contentRect, const ImVec4& pinBackground, int
+                                    inputAlpha, int outputAlpha);
+    static void ManageLinks();
+    static bool CanCreateLink(Pin* a, Pin* b);
+    
     static nodeEditor::PinId m_RootOutputPinId;
     static std::vector<Node> m_Nodes;
     static std::vector<Link> m_Links;
