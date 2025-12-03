@@ -20,7 +20,7 @@ void EnemyAI::BeginPlay()
     std::cout << "Enemy AI Started" << std::endl;
     
     m_BehaviorTree = BehaviorTreeBuilder(this).setBlackboard<EnemyBlackboard>()
-    .selector("Root")
+    .selector("RootNode")
         .sequence("PatrolSequence").condition<CanSeePlayerCondition>(PriortyType::Both,"CanSeePlayerCondition",false)
             .action<ActionNode>("MoveToPatrolPointAction",10.0f)
             .action<ActionNode>("WaitAtPatrolPointAction",5.0f)
@@ -33,7 +33,7 @@ void EnemyAI::BeginPlay()
     .end()
     .build();
     
-    m_BehaviorTree->StartTree();
+    //m_BehaviorTree->StartTree();
 }
 
 void EnemyAI::Tick(float DeltaTime)

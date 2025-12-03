@@ -42,7 +42,6 @@ public:
         m_Tree->m_Blackboard = blackboard;
         return *this;
     }
-
     BehaviorTreeBuilder& sequence(const std::string& name);
     BehaviorTreeBuilder& selector(const std::string& name);
     template<typename ActionNodeType, typename... Args>

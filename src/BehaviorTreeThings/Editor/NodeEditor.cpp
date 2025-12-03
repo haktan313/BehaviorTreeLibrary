@@ -1,11 +1,26 @@
-#include "NodeEditor.h"
 
+
+#include "NodeEditor.h"
+#include <iostream>
 
 namespace nodeEditor = ax::NodeEditor;
+
+NodeEditor* NodeEditor::s_Instance = nullptr;
+std::vector<Node> NodeEditor::m_Nodes;
+std::vector<Link> NodeEditor::m_Links;
+std::map<nodeEditor::NodeId, float, NodeIdLess> NodeEditor::m_NodeTouchTime;
 
 static Pin* newLinkPin = nullptr;
 static Pin* newNodeLinkPin = nullptr;
 static bool createNewNode = false;
+static const float m_TouchTime = 1.0f;
+static nodeEditor::EditorContext* m_EditorContext = nullptr;
+static int m_NextId = 1;
+
+NodeEditor::NodeEditor()
+{
+    s_Instance = this;
+}
 
 Node* NodeEditor::FindNode(nodeEditor::NodeId id)
 {
@@ -52,7 +67,12 @@ Pin* NodeEditor::FindPin(nodeEditor::PinId id)
     return nullptr;
 }
 
-ImColor GetIconColor(PinType type)
+int NodeEditor::GetNextID()
+{
+    return m_NextId++;
+}
+
+/*ImColor GetIconColor(PinType type)
 {
     switch (type)
     {
@@ -66,12 +86,12 @@ ImColor GetIconColor(PinType type)
     case PinType::Function: return ImColor(218,   0, 183);
     case PinType::Delegate: return ImColor(255,  48,  48);
     }
-};
+};*/
 
 void NodeEditor::OnStart()
 {
     nodeEditor::Config config;
-    config.UserPointer = this;
+    config.UserPointer = s_Instance;
 
     config.LoadNodeSettings = [](nodeEditor::NodeId nodeId, char* data, void* userPointer) -> size_t
     {
@@ -104,21 +124,19 @@ void NodeEditor::OnStart()
     m_EditorContext = nodeEditor::CreateEditor(&config);
     nodeEditor::SetCurrentEditor(m_EditorContext);
 
-    Node* node = new Node(1, "Sequencee");
-    node = SpawnSequenceNode();
-    nodeEditor::SetNodePosition(node->ID, ImVec2(0,0));
+    /*Node* node = new Node(1, "Sequencee");
+    node = SpawnSequenceNode(ImVec2(0,0));
+    //nodeEditor::SetNodePosition(node->ID, ImVec2(0,0));
 
-    node = SpawnSequenceNode();
-    nodeEditor::SetNodePosition(node->ID, ImVec2(200, -100));
+    node = SpawnActionNode(ImVec2(-200, 100));
 
-    node = SpawnSequenceNode();
-    nodeEditor::SetNodePosition(node->ID, ImVec2(200, 100));
+    node = SpawnSelectorNode(ImVec2(200, 100));*/
 
     nodeEditor::NavigateToContent();
     BuildNodes();
 
-    m_Links.push_back(Link(GetNextLinkId(), m_Nodes[0].Outputs[0].ID, m_Nodes[1].Inputs[0].ID));
-    m_Links.push_back(Link(GetNextLinkId(), m_Nodes[0].Outputs[0].ID, m_Nodes[2].Inputs[0].ID));
+    /*m_Links.push_back(Link(GetNextLinkId(), m_Nodes[0].Outputs[0].ID, m_Nodes[1].Inputs[0].ID));
+    m_Links.push_back(Link(GetNextLinkId(), m_Nodes[0].Outputs[0].ID, m_Nodes[2].Inputs[0].ID));*/
 }
 
 void NodeEditor::OnUpdate()
@@ -341,8 +359,8 @@ void NodeEditor::OnUpdate()
                                 showLabel("+ Create Link", ImColor(32, 45, 32, 180));
                                 if (nodeEditor::AcceptNewItem(ImColor(128, 255, 128), 4.0f))
                                 {
-                                    m_Links.emplace_back(Link(GetNextId(), startPinId, endPinId));
-                                    m_Links.back().Color = GetIconColor(PinType::Bool);
+                                    m_Links.emplace_back(Link(GetNextID(), startPinId, endPinId));
+                                    m_Links.back().Color = ImColor(255, 255, 255);/*GetIconColor(PinType::Flow);*/
                                 }
                             }
                         }
@@ -397,8 +415,12 @@ void NodeEditor::OnUpdate()
                 }
                 nodeEditor::EndDelete();
             }
+    /*for (auto& link : m_Links)
+    {
+        nodeEditor::Flow(link.ID);
+    }*/
     nodeEditor::End();
-    nodeEditor::SetCurrentEditor(nullptr);
+    //nodeEditor::SetCurrentEditor(nullptr);
 }
 
 void NodeEditor::BuildNode(Node* node)
@@ -416,34 +438,55 @@ void NodeEditor::BuildNode(Node* node)
     }
 }
 
-Node* NodeEditor::SpawnSequenceNode()
+Node* NodeEditor::SpawnSequenceNode(ImVec2 position)
 {
-    m_Nodes.emplace_back(GetNextId(), "Sequence");
+    m_Nodes.emplace_back(GetNextID(), "Sequence");
     //m_Nodes.back().Type = NodeType::Tree;
-    m_Nodes.back().Inputs.emplace_back(GetNextId(), "");
-    m_Nodes.back().Outputs.emplace_back(GetNextId(), "");
+    m_Nodes.back().Inputs.emplace_back(GetNextID(), "");
+    m_Nodes.back().Outputs.emplace_back(GetNextID(), "");
+    nodeEditor::SetNodePosition(m_Nodes.back().ID, position);
 
     BuildNode(&m_Nodes.back());
 
     return &m_Nodes.back();
 }
 
-Node* NodeEditor::SpawnSelectorNode()
+Node* NodeEditor::SpawnSelectorNode(ImVec2 position)
 {
-    return nullptr;
+    m_Nodes.emplace_back(GetNextID(), "Selector");
+    //m_Nodes.back().Type = NodeType::Tree;
+    m_Nodes.back().Inputs.emplace_back(GetNextID(), "");
+    m_Nodes.back().Outputs.emplace_back(GetNextID(), "");
+    nodeEditor::SetNodePosition(m_Nodes.back().ID, position);
+    BuildNode(&m_Nodes.back());
+    return &m_Nodes.back();
 }
 
-Node* NodeEditor::SpawnActionNode()
+Node* NodeEditor::SpawnActionNode(ImVec2 position)
 {
-    return nullptr;
+    m_Nodes.emplace_back(GetNextID(), "Action");
+    //m_Nodes.back().Type = NodeType::Action;
+    m_Nodes.back().Inputs.emplace_back(GetNextID(), "");
+    nodeEditor::SetNodePosition(m_Nodes.back().ID, position);
+    BuildNode(&m_Nodes.back());
+    return &m_Nodes.back();
 }
 
 Node* NodeEditor::SpawnConditionNode()
 {
-    return nullptr;
+    m_Nodes.emplace_back(GetNextID(), "Condition");
+    //m_Nodes.back().Type = NodeType::Condition;
+    m_Nodes.back().Outputs.emplace_back(GetNextID(), "");
+    BuildNode(&m_Nodes.back());
+    return &m_Nodes.back();
 }
 
 Node* NodeEditor::SpawnDecoratorNode()
 {
-    return nullptr;
+    m_Nodes.emplace_back(GetNextID(), "Decorator");
+    //m_Nodes.back().Type = NodeType::Decorator;
+    m_Nodes.back().Inputs.emplace_back(GetNextID(), "");
+    m_Nodes.back().Outputs.emplace_back(GetNextID(), "");
+    BuildNode(&m_Nodes.back());
+    return &m_Nodes.back();
 }

@@ -5,29 +5,29 @@
 class NodeEditor
 {
 public:
-    Node* FindNode(nodeEditor::NodeId id);
-    void TouchNode(nodeEditor::NodeId id);
-    void BuildNodes();
-    bool CanCreateLink(Pin* a, Pin* b);
-    Pin* FindPin(nodeEditor::PinId id);
-    int GetNextID() { return m_NextId++; }
-    ax::NodeEditor::LinkId GetNextLinkId() { return nodeEditor::LinkId(GetNextID()); }
-    void OnStart();
-    void OnUpdate();
-private:
-    void BuildNode(Node* node);
-    inline int GetNextId() { return m_NextId++; }
+    NodeEditor();
     
-    Node* SpawnSequenceNode();
-    Node* SpawnSelectorNode();
-    Node* SpawnActionNode();
-    Node* SpawnConditionNode();
-    Node* SpawnDecoratorNode();
-
-    nodeEditor::EditorContext* m_EditorContext = nullptr;
-    std::vector<Node> m_Nodes;
-    std::vector<Link> m_Links;
-    int m_NextId = 1;
-    std::map<nodeEditor::NodeId, float, NodeIdLess> m_NodeTouchTime;
-    const float          m_TouchTime = 1.0f;
+    static Node* FindNode(nodeEditor::NodeId id);
+    static void TouchNode(nodeEditor::NodeId id);
+    static void BuildNodes();
+    static bool CanCreateLink(Pin* a, Pin* b);
+    static Pin* FindPin(nodeEditor::PinId id);
+    static int GetNextID();
+    static ax::NodeEditor::LinkId GetNextLinkId() { return nodeEditor::LinkId(GetNextID()); }
+    static std::vector<Node>& GetNodes() { return m_Nodes; }
+    static std::vector<Link>& GetLinks() { return m_Links; }
+    static void OnStart();
+    static void OnUpdate();
+    static void BuildNode(Node* node);
+    
+    static Node* SpawnSequenceNode(ImVec2 position);
+    static Node* SpawnSelectorNode(ImVec2 position);
+    static Node* SpawnActionNode(ImVec2 position);
+    static Node* SpawnConditionNode();
+    static Node* SpawnDecoratorNode();
+private:
+    static std::vector<Node> m_Nodes;
+    static std::vector<Link> m_Links;
+    static std::map<nodeEditor::NodeId, float, NodeIdLess> m_NodeTouchTime;
+    static NodeEditor* s_Instance;
 };

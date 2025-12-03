@@ -5,7 +5,7 @@ class HCompositeNode : public HNode
 {
 public:
     HCompositeNode(const std::string& name) : HNode(name) {}
-
+    
     bool CheckConditions();
     bool CheckConditionsSelfMode();
     void CheckConditionsLowerPriortyMode(int& currentChildIndex);

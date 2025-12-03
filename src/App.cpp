@@ -4,11 +4,13 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 #include "BehaviorTreeThings/Core/Tree.h"
+#include "Editor/NodeEditorApp.h"
 
 App* App::s_Instance = nullptr;
 
 App::App() : m_EnemyAI(nullptr), m_Window(nullptr)
 {
+    s_Instance = this;
     Root::RootStart();
     m_EnemyAI = new EnemyAI();
 }
@@ -38,8 +40,27 @@ void App::Run()
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        m_NodeEditor.OnUpdate();
+        ImGuiIO& io = ImGui::GetIO();
+        
+        ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f));
+        ImGui::SetNextWindowSize(io.DisplaySize);
 
+        ImGuiWindowFlags windowFlags =
+            ImGuiWindowFlags_NoTitleBar |
+            ImGuiWindowFlags_NoResize   |
+            ImGuiWindowFlags_NoMove     |
+            ImGuiWindowFlags_NoCollapse |
+            ImGuiWindowFlags_NoBringToFrontOnFocus |
+            ImGuiWindowFlags_NoNavFocus;
+
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+        ImGui::Begin("MainWindow_Fullscreen", nullptr, windowFlags);
+        ImGui::PopStyleVar();
+
+        NodeEditorApp::Update();
+        
+        m_NodeEditor.OnUpdate();
+        ImGui::End(); 
         ImGui::Render();
 
         int width, height;
@@ -117,4 +138,3 @@ void App::SizeCallback(GLFWwindow* window, int width, int height)
 {
     glViewport(0, 0, width, height);
 }
-
