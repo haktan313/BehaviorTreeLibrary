@@ -20,21 +20,35 @@ public:
     virtual void OnFinished();
     virtual void OnAbort();
     
-    void AddChild(std::unique_ptr<HNode> child);
-    void AddConditionNode(std::unique_ptr<HCondition> conditionNode);
+    virtual void AddChild(std::unique_ptr<HNode> child);
+    virtual void AddConditionNode(std::unique_ptr<HCondition> conditionNode);
     
     const HNode* GetParent() const { return m_Parent; }
     const NodeStatus GetStatus() const { return m_Status; }
     std::string GetName() const { return m_Name; }
     std::vector<std::unique_ptr<HNode>>& GetChildrens() { return m_Childrens; }
     std::vector<std::unique_ptr<HCondition>>& GetConditionNodes() { return m_ConditionNodes; }
+    HNode* m_Parent;
 protected:
     std::string m_Name;
-    HNode* m_Parent;
     NodeStatus m_Status;
     bool m_bIsStarted = false;
     std::vector<std::unique_ptr<HNode>> m_Childrens;
     std::vector<std::unique_ptr<HCondition>> m_ConditionNodes;
+};
+
+class HRootNode : public HNode
+{
+public:
+    HRootNode() : HNode("Root") {}
+
+    virtual void OnStart() override;
+    virtual NodeStatus Update() override;
+    virtual void OnFinished() override;
+    virtual void OnAbort() override;
+
+    void AddChild(std::unique_ptr<HNode> child) override;
+    void AddConditionNode(std::unique_ptr<HCondition> conditionNode) override {}
 };
 
 class HActionNode : public HNode

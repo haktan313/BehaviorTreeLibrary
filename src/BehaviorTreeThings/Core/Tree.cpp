@@ -40,6 +40,16 @@ void BehaviorTree::StopTree()
 
 // BehaviorTreeBuilder methods
 
+BehaviorTreeBuilder& BehaviorTreeBuilder::root()
+{
+    std::cout << "Adding Root Node" << std::endl;
+    auto rootNode = std::make_unique<HRootNode>();
+    HRootNode* rootNodePtr = rootNode.get();
+    m_Tree->SetRootNode(std::move(rootNode));
+    m_NodeStack.push_back(rootNodePtr);
+    return *this;
+}
+
 BehaviorTreeBuilder& BehaviorTreeBuilder::sequence(const std::string& name)
 {
     std::cout << "Adding Sequence Node: " << name << std::endl;
