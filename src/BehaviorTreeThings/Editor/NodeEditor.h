@@ -19,13 +19,15 @@ public:
     static void OnStart();
     static void OnUpdate();
     static void BuildNode(Node* node);
-    
+
+    static Node* SpawnRootNode();
     static Node* SpawnSequenceNode(ImVec2 position);
     static Node* SpawnSelectorNode(ImVec2 position);
     static Node* SpawnActionNode(ImVec2 position);
     static Node* SpawnConditionNode();
     static Node* SpawnDecoratorNode();
 private:
+    static nodeEditor::PinId m_RootOutputPinId;
     static std::vector<Node> m_Nodes;
     static std::vector<Link> m_Links;
     static std::map<nodeEditor::NodeId, float, NodeIdLess> m_NodeTouchTime;

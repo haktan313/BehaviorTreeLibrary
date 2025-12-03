@@ -4,12 +4,8 @@
 class NodeEditorApp
 {
 public:
-    NodeEditorApp();
-    ~NodeEditorApp();
-
+    static void OnStart();
     static void Update();
 private:
     static void BuildBehaviorTree();
-    
-    static NodeEditorApp* s_Instance;
 };

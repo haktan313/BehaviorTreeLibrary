@@ -34,7 +34,7 @@ void EnemyAI::BeginPlay()
     .end()
     .build();
     
-    m_BehaviorTree->StartTree();
+    //m_BehaviorTree->StartTree();
 }
 
 void EnemyAI::Tick(float DeltaTime)

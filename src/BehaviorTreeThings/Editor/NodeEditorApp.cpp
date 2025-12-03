@@ -4,16 +4,9 @@
 #include "imgui.h"
 #include "NodeEditor.h"
 
-NodeEditorApp* NodeEditorApp::s_Instance = nullptr;
-
-NodeEditorApp::NodeEditorApp()
+void NodeEditorApp::OnStart()
 {
-    s_Instance = this;
-}
-
-NodeEditorApp::~NodeEditorApp()
-{
-    s_Instance = nullptr;
+    NodeEditor::SpawnRootNode();
 }
 
 void NodeEditorApp::Update()

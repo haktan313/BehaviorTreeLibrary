@@ -9,6 +9,7 @@ NodeEditor* NodeEditor::s_Instance = nullptr;
 std::vector<Node> NodeEditor::m_Nodes;
 std::vector<Link> NodeEditor::m_Links;
 std::map<nodeEditor::NodeId, float, NodeIdLess> NodeEditor::m_NodeTouchTime;
+nodeEditor::PinId NodeEditor::m_RootOutputPinId = 0;
 
 static Pin* newLinkPin = nullptr;
 static Pin* newNodeLinkPin = nullptr;
@@ -359,6 +360,16 @@ void NodeEditor::OnUpdate()
                                 showLabel("+ Create Link", ImColor(32, 45, 32, 180));
                                 if (nodeEditor::AcceptNewItem(ImColor(128, 255, 128), 4.0f))
                                 {
+                                    if (startPinId == m_RootOutputPinId)
+                                    {
+                                        auto rootOutputPinId = startPinId;
+                                        for (int i = 0; i < (int)m_Links.size(); ++i)
+                                            if (m_Links[i].StartPinID == rootOutputPinId)
+                                            {
+                                                m_Links.erase(m_Links.begin() + i);
+                                                break;
+                                            }
+                                    }
                                     m_Links.emplace_back(Link(GetNextID(), startPinId, endPinId));
                                     m_Links.back().Color = ImColor(255, 255, 255);/*GetIconColor(PinType::Flow);*/
                                 }
@@ -436,6 +447,17 @@ void NodeEditor::BuildNode(Node* node)
         output.Node = node;
         output.Kind = PinKind::Output;
     }
+}
+
+Node* NodeEditor::SpawnRootNode()
+{
+    m_Nodes.emplace_back(GetNextID(), "Root");
+    //m_Nodes.back().Type = NodeType::Tree;
+    m_Nodes.back().Outputs.emplace_back(GetNextID(), "");
+    nodeEditor::SetNodePosition(m_Nodes.back().ID, ImVec2(0, 0));
+    BuildNode(&m_Nodes.back());
+    m_RootOutputPinId = m_Nodes.back().Outputs[0].ID;
+    return &m_Nodes.back();
 }
 
 Node* NodeEditor::SpawnSequenceNode(ImVec2 position)

@@ -118,6 +118,7 @@ bool App::Init()
     ImGui_ImplOpenGL3_Init("#version 330");
 
     m_NodeEditor.OnStart();
+    NodeEditorApp::OnStart();
     return true;
 }
 
