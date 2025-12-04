@@ -9,6 +9,9 @@
 
 EnemyAI* NodeEditorApp::m_Enemy = nullptr;
 Node* NodeEditorApp::m_LastHoveredNode = nullptr;
+static bool s_InitLayout = true;
+static float s_RightPanelWidth = 320.0f;
+
 
 void NodeEditorApp::OnStart()
 {
@@ -17,11 +20,12 @@ void NodeEditorApp::OnStart()
 
 void NodeEditorApp::Update()
 {
+    ImGuiIO& io = ImGui::GetIO();
     if (ImGui::Button("Build", ImVec2(100, 30)))
         BuildBehaviorTree();
 
     auto lastHoveredNodeID = nodeEditor::GetHoveredNode();
-    if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+    if (ImGui::IsMouseClicked(ImGuiMouseButton_Right) && !io.KeyAlt)
     {
         bool isNodeHovered = nodeEditor::GetHoveredNode() || nodeEditor::GetHoveredPin() || nodeEditor::GetHoveredLink();
         if (!isNodeHovered)
@@ -64,6 +68,30 @@ void NodeEditorApp::Update()
     }
     int linkAmount = (int)NodeEditor::GetLinks().size();
     ImGui::Text("Links: %d", linkAmount);
+
+    ImGuiViewport* viewport = ImGui::GetMainViewport();
+    ImVec2 workPos  = viewport->WorkPos;
+    ImVec2 workSize = viewport->WorkSize;
+    
+    if (s_InitLayout)
+    {
+        ImGui::SetNextWindowPos(
+            ImVec2(workPos.x + workSize.x - s_RightPanelWidth, workPos.y),
+            ImGuiCond_Once
+        );
+        ImGui::SetNextWindowSize(
+            ImVec2(s_RightPanelWidth, workSize.y),
+            ImGuiCond_Once
+        );
+    }
+    ImGui::Begin("Blackboard & Details", nullptr, ImGuiWindowFlags_NoMove | /*ImGuiWindowFlags_NoResize |*/ ImGuiWindowFlags_NoCollapse);
+
+    ImGui::TextUnformatted("Blackboard / Node Details Panel");
+    ImGui::Separator();
+    ImGui::Text("Buraya blackboard ve node bilgileri gelecek.");
+
+    ImGui::End();
+    s_InitLayout = false;
 }
 
 void NodeEditorApp::BuildBehaviorTree()
