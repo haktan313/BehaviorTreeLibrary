@@ -19,7 +19,7 @@ void EnemyAI::BeginPlay()
 {
     std::cout << "Enemy AI Started" << std::endl;
     
-    m_BehaviorTree = BehaviorTreeBuilder(this).setBlackboard<EnemyBlackboard>()
+    /*m_BehaviorTree = BehaviorTreeBuilder(this).setBlackboard<EnemyBlackboard>()
     .root()
     .selector("RootNode")
         .sequence("PatrolSequence").condition<CanSeePlayerCondition>(PriortyType::Both,"CanSeePlayerCondition",false)
@@ -32,14 +32,14 @@ void EnemyAI::BeginPlay()
                 .action<ActionNode>("ChasePlayerAction",40.0f)
             .end()
     .end()
-    .build();
+    .build();*/
     
     //m_BehaviorTree->StartTree();
 }
 
 void EnemyAI::Tick(float DeltaTime)
 {
-    if (m_BehaviorTree && !b_StopAI)
+    /*if (m_BehaviorTree && !b_StopAI)
     {
         m_TickTimer += DeltaTime;
         if (m_TickTimer >= 5.0f)
@@ -51,10 +51,10 @@ void EnemyAI::Tick(float DeltaTime)
     if (b_StopAI && m_BehaviorTree)
     {
         /*m_BehaviorTree->StopTree();
-        m_BehaviorTree = nullptr;*/
+        m_BehaviorTree = nullptr;#1#
         m_BehaviorTree->GetBlackboard()->SetBoolValue("IsPlayerVisible", !m_BehaviorTree->GetBlackboard()->GetBoolValue("IsPlayerVisible"));
         b_StopAI = false;
-    }
+    }*/
 }
 
 void EnemyAI::EndPlay()

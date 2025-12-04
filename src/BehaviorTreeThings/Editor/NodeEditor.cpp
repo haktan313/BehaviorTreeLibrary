@@ -6,6 +6,7 @@ namespace nodeEditor = ax::NodeEditor;
 
 NodeEditor* NodeEditor::s_Instance = nullptr;
 std::vector<Node> NodeEditor::m_Nodes;
+std::vector<Node*> NodeEditor::m_NodesBuildOrder;
 std::vector<Link> NodeEditor::m_Links;
 std::map<nodeEditor::NodeId, float, NodeIdLess> NodeEditor::m_NodeTouchTime;
 nodeEditor::PinId NodeEditor::m_RootOutputPinId = 0;
@@ -221,7 +222,8 @@ void NodeEditor::BuildNodes()
                 grandChilderens = allChilderensLevels.back();
                 allChilderensLevels.pop_back();
                 currentChilderens = grandChilderens;
-            }else
+            }
+            else
             {
                 grandChilderens = currentChilderens;
             }
@@ -233,6 +235,7 @@ void NodeEditor::BuildNodes()
             currentChilderens = grandChilderens;
         }
     }
+    m_NodesBuildOrder = nodeList;
     for (auto& node : m_Nodes)
     {
         BuildNode(&node);
@@ -241,7 +244,7 @@ void NodeEditor::BuildNodes()
 
 Node* NodeEditor::SpawnRootNode()
 {
-    m_Nodes.emplace_back(GetNextID(), "Root");
+    m_Nodes.emplace_back(NodeType::Root, GetNextID(), "Root");
     m_Nodes.back().Outputs.emplace_back(GetNextID(), "");
     nodeEditor::SetNodePosition(m_Nodes.back().ID, ImVec2(0, 0));
     BuildNode(&m_Nodes.back());
@@ -251,7 +254,7 @@ Node* NodeEditor::SpawnRootNode()
 
 Node* NodeEditor::SpawnSequenceNode(ImVec2 position)
 {
-    m_Nodes.emplace_back(GetNextID(), "Sequence");
+    m_Nodes.emplace_back(NodeType::Sequence, GetNextID(), "Sequence");
     m_Nodes.back().Inputs.emplace_back(GetNextID(), "");
     m_Nodes.back().Outputs.emplace_back(GetNextID(), "");
     nodeEditor::SetNodePosition(m_Nodes.back().ID, position);
@@ -263,7 +266,7 @@ Node* NodeEditor::SpawnSequenceNode(ImVec2 position)
 
 Node* NodeEditor::SpawnSelectorNode(ImVec2 position)
 {
-    m_Nodes.emplace_back(GetNextID(), "Selector");
+    m_Nodes.emplace_back(NodeType::Selector, GetNextID(), "Selector");
     m_Nodes.back().Inputs.emplace_back(GetNextID(), "");
     m_Nodes.back().Outputs.emplace_back(GetNextID(), "");
     nodeEditor::SetNodePosition(m_Nodes.back().ID, position);
@@ -273,7 +276,7 @@ Node* NodeEditor::SpawnSelectorNode(ImVec2 position)
 
 Node* NodeEditor::SpawnActionNode(ImVec2 position)
 {
-    m_Nodes.emplace_back(GetNextID(), "Action");
+    m_Nodes.emplace_back(NodeType::Action, GetNextID(), "Action");
     m_Nodes.back().Inputs.emplace_back(GetNextID(), "");
     nodeEditor::SetNodePosition(m_Nodes.back().ID, position);
     BuildNode(&m_Nodes.back());
@@ -282,7 +285,7 @@ Node* NodeEditor::SpawnActionNode(ImVec2 position)
 
 Node* NodeEditor::SpawnConditionNode()
 {
-    m_Nodes.emplace_back(GetNextID(), "Condition");
+    m_Nodes.emplace_back(NodeType::Condition, GetNextID(), "Condition");
     m_Nodes.back().Outputs.emplace_back(GetNextID(), "");
     BuildNode(&m_Nodes.back());
     return &m_Nodes.back();
@@ -290,7 +293,7 @@ Node* NodeEditor::SpawnConditionNode()
 
 Node* NodeEditor::SpawnDecoratorNode()
 {
-    m_Nodes.emplace_back(GetNextID(), "Decorator");
+    m_Nodes.emplace_back(NodeType::Decorator, GetNextID(), "Decorator");
     m_Nodes.back().Inputs.emplace_back(GetNextID(), "");
     m_Nodes.back().Outputs.emplace_back(GetNextID(), "");
     BuildNode(&m_Nodes.back());

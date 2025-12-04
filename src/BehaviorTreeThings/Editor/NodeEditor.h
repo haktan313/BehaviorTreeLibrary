@@ -13,6 +13,7 @@ public:
     static int GetNextID();
     static ax::NodeEditor::LinkId GetNextLinkId() { return nodeEditor::LinkId(GetNextID()); }
     static std::vector<Node>& GetNodes() { return m_Nodes; }
+    static std::vector<Node*> GetNodesBuildOrder() { return m_NodesBuildOrder; }
     static std::vector<Link>& GetLinks() { return m_Links; }
     static void OnStart();
     static void OnUpdate();
@@ -40,6 +41,7 @@ private:
     
     static nodeEditor::PinId m_RootOutputPinId;
     static std::vector<Node> m_Nodes;
+    static std::vector<Node*> m_NodesBuildOrder; 
     static std::vector<Link> m_Links;
     static std::map<nodeEditor::NodeId, float, NodeIdLess> m_NodeTouchTime;
     static NodeEditor* s_Instance;

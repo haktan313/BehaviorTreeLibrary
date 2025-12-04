@@ -10,6 +10,16 @@ enum class PinKind
     Input
 };
 
+enum class NodeType
+{
+    Root,
+    Sequence,
+    Selector,
+    Action,
+    Condition,
+    Decorator
+};
+
 struct Node;
 struct Pin
 {
@@ -26,6 +36,7 @@ struct Pin
 
 struct Node
 {
+    NodeType Type;
     nodeEditor::NodeId ID;
     std::string Name;
     std::vector<Pin> Inputs;
@@ -36,8 +47,8 @@ struct Node
     std::string State;
     std::string SavnodeEditorState;
 
-    Node(int id, const char* name, ImColor color = ImColor(255, 255, 255)):
-        ID(id), Name(name), Color(color), Size(0, 0)
+    Node(NodeType type, int id, const char* name, ImColor color = ImColor(255, 255, 255)):
+        Type(type), ID(id), Name(name), Color(color), Size(0, 0)
     {
     }
 };

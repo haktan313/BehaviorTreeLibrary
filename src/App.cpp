@@ -13,6 +13,7 @@ App::App() : m_EnemyAI(nullptr), m_Window(nullptr)
     s_Instance = this;
     Root::RootStart();
     m_EnemyAI = new EnemyAI();
+    NodeEditorApp::SetEnemyAI(m_EnemyAI);
 }
 
 App::~App()
