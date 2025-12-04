@@ -175,8 +175,68 @@ void NodeEditor::BuildNode(Node* node)
 
 void NodeEditor::BuildNodes()
 {
+    auto rootNode = FindNode(nodeEditor::NodeId(m_RootOutputPinId.Get() - 1));
+    if (!rootNode)
+    {
+        std::cerr << "Error: Root node not found!" << std::endl;
+        return;
+    }
+    auto childerens = GetChilderenNodes(rootNode);
+    if (childerens.empty())
+    {
+        std::cerr << "Error: Root node has no children!" << std::endl;
+        return;
+    }
+    auto child = childerens[0];
+    if (!child)
+    {
+        std::cerr << "Error: Root node's first child is null!" << std::endl;
+        return;
+    }
+    std::cout << "  Child Node: " << child->Name << " (ID: " << child->ID.Get() << ")" << std::endl;
+    
+    std::vector<Node*> nodeList;
+    nodeList.push_back(rootNode);
+    nodeList.push_back(child);
+    auto grandChilderens = GetChilderenNodes(child);
+    auto currentChilderens = grandChilderens;
+    std::vector<std::vector<Node*>> allChilderensLevels;
+    while (!grandChilderens.empty())
+    {
+        Node* mostLeftGrandChilderen = grandChilderens[0];
+        for (auto& grandChilderenNode : grandChilderens)
+        {
+            if (nodeEditor::GetNodePosition(grandChilderenNode->ID).x < nodeEditor::GetNodePosition(mostLeftGrandChilderen->ID).x)
+                mostLeftGrandChilderen = grandChilderenNode;
+        }
+        currentChilderens.erase(std::remove(currentChilderens.begin(), currentChilderens.end(), mostLeftGrandChilderen), currentChilderens.end());
+        nodeList.push_back(mostLeftGrandChilderen);
+        grandChilderens = GetChilderenNodes(mostLeftGrandChilderen);
+        if (grandChilderens.empty())
+        {
+            if (currentChilderens.empty())
+            {
+                if (allChilderensLevels.empty())
+                    break;
+                grandChilderens = allChilderensLevels.back();
+                allChilderensLevels.pop_back();
+                currentChilderens = grandChilderens;
+            }else
+            {
+                grandChilderens = currentChilderens;
+            }
+        }
+        else
+        {
+            if (!currentChilderens.empty())
+                allChilderensLevels.push_back(currentChilderens);
+            currentChilderens = grandChilderens;
+        }
+    }
     for (auto& node : m_Nodes)
+    {
         BuildNode(&node);
+    }
 }
 
 Node* NodeEditor::SpawnRootNode()
@@ -237,6 +297,38 @@ Node* NodeEditor::SpawnDecoratorNode()
     return &m_Nodes.back();
 }
 
+std::vector<Node*> NodeEditor::GetChilderenNodes(Node* parentNode)
+{
+    std::vector<Node*> childrenNodes;
+    if (!parentNode || parentNode->Outputs.empty())
+        return childrenNodes;
+    nodeEditor::PinId parentOutputPinId = parentNode->Outputs[0].ID;
+    for (auto& link : m_Links)
+    {
+        if (link.StartPinID != parentOutputPinId)
+            continue;
+        
+        for (auto& node : m_Nodes)
+        {
+            bool found = false;
+
+            for (auto& pin : node.Inputs)
+            {
+                if (pin.ID == link.EndPinID)
+                {
+                    childrenNodes.push_back(&node);
+                    found = true;
+                    break;
+                }
+            }
+
+            if (found)
+                break;
+        }
+    }
+    return childrenNodes;
+}
+
 void NodeEditor::StylizeNodes()
 {
     const float rounding = 5.0f;
@@ -289,11 +381,14 @@ void NodeEditor::ManageOutputs(ImRect& outputsRect, int& outputAlpha, Node& node
         ImGui::Dummy(ImVec2(0, padding));
         ImGui::Spring(1, 0);
         outputsRect = ax::NodeEditor::Detail::ImGui_GetItemRect();
+        
         nodeEditor::PushStyleVar(nodeEditor::StyleVar_PinCorners, ImDrawFlags_RoundCornersTop);
+        
         nodeEditor::BeginPin(pin.ID, nodeEditor::PinKind::Output);
         nodeEditor::PinPivotRect(outputsRect.GetTL(), outputsRect.GetBR());
         nodeEditor::PinRect(outputsRect.GetTL(), outputsRect.GetBR());
         nodeEditor::EndPin();
+        
         nodeEditor::PopStyleVar();  
         if (newLinkPin && !CanCreateLink(newLinkPin, &pin) && &pin != newLinkPin)
             outputAlpha = (int)(255 * ImGui::GetStyle().Alpha * (48.0f / 255.0f));
@@ -331,7 +426,7 @@ void NodeEditor::PaintNodeBackground(Node& node, const ImRect& inputsRect, const
 void NodeEditor::ManageLinks()
 {
     for (auto& link : m_Links)
-            nodeEditor::Link(link.ID, link.StartPinID, link.EndPinID, link.Color, 2.0f);
+        nodeEditor::Link(link.ID, link.StartPinID, link.EndPinID, link.Color, 2.0f);
         if (!createNewNode)
             {
                 if (nodeEditor::BeginCreate(ImColor(255, 255, 255), 2.0f))

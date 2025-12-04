@@ -23,6 +23,7 @@ public:
     static Node* SpawnActionNode(ImVec2 position);
     static Node* SpawnConditionNode();
     static Node* SpawnDecoratorNode();
+    static std::vector<Node*> GetChilderenNodes(Node* parentNode);
 private:
 
     static void BuildNode(Node* node);
