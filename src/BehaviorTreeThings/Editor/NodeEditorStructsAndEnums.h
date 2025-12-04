@@ -2,6 +2,8 @@
 
 #include <imgui_node_editor_internal.h>
 
+#include "Nodes.h"
+
 namespace nodeEditor = ax::NodeEditor;
 
 enum class PinKind
@@ -15,9 +17,18 @@ enum class NodeType
     Root,
     Sequence,
     Selector,
-    Action,
-    Condition,
-    Decorator
+    Action
+};
+
+struct EditorDecorator
+{
+    std::string Name;
+    EditorDecorator(const std::string& name) : Name(name) {}
+};
+struct EditorCondition
+{
+    std::string Name;
+    EditorCondition(const std::string& name) : Name(name) {}
 };
 
 struct Node;
@@ -37,6 +48,8 @@ struct Pin
 struct Node
 {
     NodeType Type;
+    std::vector<EditorDecorator> Decorators;
+    std::vector<EditorCondition> Conditions;
     nodeEditor::NodeId ID;
     std::string Name;
     std::vector<Pin> Inputs;

@@ -126,17 +126,42 @@ void NodeEditor::OnUpdate()
         
         ImGui::BeginHorizontal("content_frame");
         ImGui::Spring(1, padding);
-        
+
+        ImRect decoratorRect;
+        ImRect conditionRect;
+        ImRect sequenceRect;
+
         ImGui::BeginVertical("content", ImVec2(0.0f, 0.0f));
+        DrawDecoratorBar(node, decoratorRect);
+        
         ImGui::Dummy(ImVec2(160, 0));
+        ImGui::BeginHorizontal("sequence_row");
         ImGui::Spring(1);
         ImGui::TextUnformatted(node.Name.c_str());
         ImGui::Spring(1);
+        ImGui::EndHorizontal();
+        sequenceRect = nodeEditor::Detail::ImGui_GetItemRect();
+        
+        DrawConditionBar(node, conditionRect);
         ImGui::EndVertical();
         
-        auto contentRect = nodeEditor::Detail::ImGui_GetItemRect(); 
+        ImRect contentRect = sequenceRect;
+        if (node.Decorators.empty())
+            decoratorRect = ImRect(sequenceRect.Min, sequenceRect.Min);
+        else
+        { 
+            contentRect.Add(decoratorRect.Min);
+            contentRect.Add(decoratorRect.Max);
+        }
+        if (!node.Conditions.empty())
+        {
+            contentRect.Add(conditionRect.Min);
+            contentRect.Add(conditionRect.Max);
+        }
+
         ImGui::Spring(1, padding);
         ImGui::EndHorizontal();
+
         
         ImGui::BeginHorizontal("outputs");
         ImGui::Spring(0, padding * 2);
@@ -149,7 +174,7 @@ void NodeEditor::OnUpdate()
         ImGui::EndVertical();   
         nodeEditor::EndNode();
         
-        PaintNodeBackground(node, inputsRect, outputsRect, contentRect, pinBackground, inputAlpha, outputAlpha);
+        PaintNodeBackground(node, inputsRect, outputsRect, contentRect, pinBackground, inputAlpha, outputAlpha, sequenceRect);
     }
     ManageLinks();
     /*for (auto& link : m_Links)
@@ -283,21 +308,22 @@ Node* NodeEditor::SpawnActionNode(ImVec2 position)
     return &m_Nodes.back();
 }
 
-Node* NodeEditor::SpawnConditionNode()
+void NodeEditor::SpawnConditionNode(Node* parentNode)
 {
-    m_Nodes.emplace_back(NodeType::Condition, GetNextID(), "Condition");
-    m_Nodes.back().Outputs.emplace_back(GetNextID(), "");
-    BuildNode(&m_Nodes.back());
-    return &m_Nodes.back();
+    if (!parentNode)
+        return;
+    std::cout << "Spawned Condition Node for Parent Node: " << parentNode->Name << " (ID: " << parentNode->ID.Get() << ")" << std::endl;
+    EditorCondition condition("CanSeePlayerCondition");
+    parentNode->Conditions.push_back(condition);
 }
 
-Node* NodeEditor::SpawnDecoratorNode()
+void NodeEditor::SpawnDecoratorNode(Node* parentNode)
 {
-    m_Nodes.emplace_back(NodeType::Decorator, GetNextID(), "Decorator");
-    m_Nodes.back().Inputs.emplace_back(GetNextID(), "");
-    m_Nodes.back().Outputs.emplace_back(GetNextID(), "");
-    BuildNode(&m_Nodes.back());
-    return &m_Nodes.back();
+    if (!parentNode)
+        return;
+    std::cout << "Spawned Decorator Node for Parent Node: " << parentNode->Name << " (ID: " << parentNode->ID.Get() << ")" << std::endl;
+    EditorDecorator decorator("InverterDecorator");
+    parentNode->Decorators.push_back(decorator);
 }
 
 std::vector<Node*> NodeEditor::GetChilderenNodes(Node* parentNode)
@@ -376,6 +402,90 @@ void NodeEditor::ManageInputs(ImRect& inputsRect, int& inputAlpha, Node& node, f
         ImGui::Dummy(ImVec2(0, padding));   
 }
 
+void NodeEditor::DrawDecoratorBar(Node& node, ImRect& decoratorRect)
+{
+    if (!node.Decorators.empty())
+    {
+
+        ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(20, 2));
+        ImGui::PushStyleColor(ImGuiCol_Button,        ImColor(24, 64, 128, 255).Value);
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImColor(40, 100, 200, 255).Value);
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive,  ImColor(60, 150, 255, 255).Value);
+
+        ImRect decoratorsUnion;
+        bool hasDecoratorRect = false;
+
+        for (int i = 0; i < static_cast<int>(node.Decorators.size()); ++i)
+        {
+            ImGui::BeginHorizontal(("decorator_row_" + std::to_string(i)).c_str());
+            bool decoClicked = ImGui::Button(node.Decorators[i].Name.c_str());
+            ImGui::EndHorizontal();
+                
+            ImRect thisRect = nodeEditor::Detail::ImGui_GetItemRect();
+            if (!hasDecoratorRect)
+            {
+                decoratorsUnion = thisRect;
+                hasDecoratorRect = true;
+            }
+            else
+            {
+                decoratorsUnion.Add(thisRect.Min);
+                decoratorsUnion.Add(thisRect.Max);
+            }
+            if (decoClicked)
+                std::cout << "Decorator clicked: " << node.Decorators[i].Name << std::endl;
+        }
+        decoratorRect = decoratorsUnion;
+
+        ImGui::PopStyleColor(3);
+        ImGui::PopStyleVar(2);
+    }
+}
+
+void NodeEditor::DrawConditionBar(Node& node, ImRect& conditionRect)
+{
+    if (!node.Conditions.empty())
+    {
+        ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(6, 2));
+        ImGui::PushStyleColor(ImGuiCol_Button,        ImColor(120, 30, 30, 255).Value);
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImColor(160, 40, 40, 255).Value);
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive,  ImColor(200, 50, 50, 255).Value);
+
+
+        ImRect conditionsUnion;
+        bool hasCondRect = false;
+
+        for (int i = 0; i < (int)node.Conditions.size(); ++i)
+        {
+            ImGui::BeginHorizontal(("condition_row_" + std::to_string(i)).c_str());
+            bool condClicked = ImGui::Button(node.Conditions[i].Name.c_str());
+            ImGui::EndHorizontal();
+
+            ImRect thisRect = nodeEditor::Detail::ImGui_GetItemRect();
+            if (!hasCondRect)
+            {
+                conditionsUnion = thisRect;
+                hasCondRect = true;
+            }
+            else
+            {
+                conditionsUnion.Add(thisRect.Min);
+                conditionsUnion.Add(thisRect.Max);
+            }
+
+            if (condClicked)
+                std::cout << "Condition clicked: " << node.Conditions[i].Name << std::endl;
+        }
+
+        conditionRect = conditionsUnion;
+
+        ImGui::PopStyleColor(3);
+        ImGui::PopStyleVar(2);
+    }
+}
+
 void NodeEditor::ManageOutputs(ImRect& outputsRect, int& outputAlpha, Node& node, float padding)
 {
     if (!node.Outputs.empty())
@@ -400,7 +510,8 @@ void NodeEditor::ManageOutputs(ImRect& outputsRect, int& outputAlpha, Node& node
         ImGui::Dummy(ImVec2(0, padding));   
 }
 
-void NodeEditor::PaintNodeBackground(Node& node, const ImRect& inputsRect, const ImRect& outputsRect, const ImRect& contentRect, const ImVec4& pinBackground, int inputAlpha, int outputAlpha)
+void NodeEditor::PaintNodeBackground(Node& node, const ImRect& inputsRect, const ImRect& outputsRect, const ImRect& contentRect, const ImVec4& pinBackground,
+    int inputAlpha, int outputAlpha, const ImRect& sequenceRect)
 {
     nodeEditor::PopStyleVar(7);
     nodeEditor::PopStyleColor(4);   
@@ -424,6 +535,12 @@ void NodeEditor::PaintNodeBackground(Node& node, const ImRect& inputsRect, const
     //ImGui::PushStyleVar(ImGuiStyleVar_AntiAliasFringeScale, 1.0f);
     drawList->AddRect(contentRect.GetTL(), contentRect.GetBR(), IM_COL32(48, 128, 255, 100), 0.0f);
     //ImGui::PopStyleVar();
+    
+    drawList->AddRectFilled(contentRect.GetTL(), contentRect.GetBR(), IM_COL32(50, 50, 50, 230), 0.0f);
+    drawList->AddRect( contentRect.GetTL(), contentRect.GetBR(), IM_COL32(20, 20, 20, 255), 0.0f);
+    
+    drawList->AddRectFilled( sequenceRect.GetTL(), sequenceRect.GetBR(), IM_COL32(30, 30, 30, 255), 0.0f);
+    drawList->AddRect( sequenceRect.GetTL(), sequenceRect.GetBR(), IM_COL32(10, 10, 10, 255), 0.0f);
 }
 
 void NodeEditor::ManageLinks()

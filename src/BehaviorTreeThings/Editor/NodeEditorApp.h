@@ -11,4 +11,5 @@ public:
 private:
     static void BuildBehaviorTree();
     static EnemyAI* m_Enemy;
+    static Node* m_LastHoveredNode;
 };

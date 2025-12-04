@@ -22,8 +22,8 @@ public:
     static Node* SpawnSequenceNode(ImVec2 position);
     static Node* SpawnSelectorNode(ImVec2 position);
     static Node* SpawnActionNode(ImVec2 position);
-    static Node* SpawnConditionNode();
-    static Node* SpawnDecoratorNode();
+    static void SpawnConditionNode(Node* parentNode);
+    static void SpawnDecoratorNode(Node* parentNode);
     static std::vector<Node*> GetChilderenNodes(Node* parentNode);
 private:
 
@@ -33,9 +33,10 @@ public:
 private:
     static void StylizeNodes();
     static void ManageInputs(ImRect& inputsRect, int& inputAlpha, Node& node, float padding);
+    static void DrawDecoratorBar(Node& node, ImRect& decoratorRect);
+    static void DrawConditionBar(Node& node, ImRect& conditionRect);
     static void ManageOutputs(ImRect& outputsRect, int& outputAlpha, Node& node, float padding);
-    static void PaintNodeBackground(Node& node, const ImRect& inputsRect, const ImRect& outputsRect, const ImRect& contentRect, const ImVec4& pinBackground, int
-                                    inputAlpha, int outputAlpha);
+    static void PaintNodeBackground(Node& node, const ImRect& inputsRect, const ImRect& outputsRect, const ImRect& contentRect, const ImVec4& pinBackground, int inputAlpha, int outputAlpha, const ImRect& sequenceRect);
     static void ManageLinks();
     static bool CanCreateLink(Pin* a, Pin* b);
     

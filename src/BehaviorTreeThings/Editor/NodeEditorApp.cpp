@@ -8,6 +8,7 @@
 #include "Tree.h"
 
 EnemyAI* NodeEditorApp::m_Enemy = nullptr;
+Node* NodeEditorApp::m_LastHoveredNode = nullptr;
 
 void NodeEditorApp::OnStart()
 {
@@ -18,9 +19,23 @@ void NodeEditorApp::Update()
 {
     if (ImGui::Button("Build", ImVec2(100, 30)))
         BuildBehaviorTree();
-        
+
+    auto lastHoveredNodeID = nodeEditor::GetHoveredNode();
     if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
-        ImGui::OpenPopup("Node Context");
+    {
+        bool isNodeHovered = nodeEditor::GetHoveredNode() || nodeEditor::GetHoveredPin() || nodeEditor::GetHoveredLink();
+        if (!isNodeHovered)
+        {
+            m_LastHoveredNode = nullptr;
+            ImGui::OpenPopup("Node Context");
+        }
+        else
+        {
+            m_LastHoveredNode = NodeEditor::FindNode(lastHoveredNodeID);
+            if (m_LastHoveredNode->Type == NodeType::Sequence || m_LastHoveredNode->Type == NodeType::Selector)
+                ImGui::OpenPopup("Node Options");
+        }
+    }
         
     if (ImGui::BeginPopup("Node Context"))
     {
@@ -35,6 +50,16 @@ void NodeEditorApp::Update()
             NodeEditor::SpawnSelectorNode(mouseCanvasPos);
         if (ImGui::MenuItem("Create Action"))
             NodeEditor::SpawnActionNode(mouseCanvasPos);
+        ImGui::EndPopup();
+    }
+    if (ImGui::BeginPopup("Node Options"))
+    {
+        ImGui::TextUnformatted("Node Options Menu");
+        ImGui::Separator();
+        if (ImGui::MenuItem("Create Decorator"))
+            NodeEditor::SpawnDecoratorNode(m_LastHoveredNode);
+        if (ImGui::MenuItem("Create Condition"))
+            NodeEditor::SpawnConditionNode(m_LastHoveredNode);
         ImGui::EndPopup();
     }
     int linkAmount = (int)NodeEditor::GetLinks().size();
@@ -59,21 +84,31 @@ void NodeEditorApp::BuildBehaviorTree()
                 break;
             case NodeType::Sequence:
                 std::cout << "  Type: Sequence" << std::endl;
+                if (!node->Decorators.empty())
+                    for (auto& decorator : node->Decorators)
+                        btBuilder.decorator<InverterDecorator>(decorator.Name);
+            
                 btBuilder.sequence(node->Name);
+            
+                if (!node->Conditions.empty())
+                    for (auto& condition : node->Conditions)
+                        btBuilder.condition<CanSeePlayerCondition>(PriortyType::Both, condition.Name, false);
                 break;
             case NodeType::Selector:
                 std::cout << "  Type: Selector" << std::endl;
+                if (!node->Decorators.empty())
+                    for (auto& decorator : node->Decorators)
+                        btBuilder.decorator<InverterDecorator>(decorator.Name);
+            
                 btBuilder.selector(node->Name);
+            
+                if (!node->Conditions.empty())
+                    for (auto& condition : node->Conditions)
+                        btBuilder.condition<CanSeePlayerCondition>(PriortyType::Both, condition.Name, false);
                 break;
             case NodeType::Action:
                 std::cout << "  Type: Action" << std::endl;
                 btBuilder.action<ActionNode>(node->Name, 10.0f);
-                break;
-            case NodeType::Condition:
-                std::cout << "  Type: Condition" << std::endl;
-                break;
-            case NodeType::Decorator:
-                std::cout << "  Type: Decorator" << std::endl;
                 break;
             default:
                 break;
