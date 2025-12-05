@@ -56,10 +56,10 @@ class HActionNode : public HNode
 public:
     HActionNode(const std::string& name) : HNode(name), m_Owner(nullptr), m_Blackboard(nullptr) {}
     
-    virtual void OnStart() override = 0;
+    virtual void OnStart() override { HNode::OnStart(); }
     virtual NodeStatus Update() override = 0;
-    virtual void OnFinished() override = 0;
-    virtual void OnAbort() override = 0;
+    virtual void OnFinished() override { HNode::OnFinished(); }
+    virtual void OnAbort() override { HNode::OnAbort(); }
 protected:
     EnemyAI& GetOwner() const { return *m_Owner; }
     HBlackboard& GetBlackboard() const { return *m_Blackboard; }
@@ -78,10 +78,10 @@ class HCondition : public HNode
 public:
     HCondition(const std::string& name) : HNode(name), m_Owner(nullptr), m_Blackboard(nullptr), m_PriortyMode(PriortyType::None) {}
 
-    virtual void OnStart() override = 0;
+    virtual void OnStart() override {}
     virtual NodeStatus Update() override = 0;
-    virtual void OnFinished() override = 0;
-    virtual void OnAbort() override = 0;
+    virtual void OnFinished() override { m_bIsStarted = false; }
+    virtual void OnAbort() override { HNode::OnAbort(); }
 
     PriortyType GetPriortyMode() const { return m_PriortyMode; }
 protected:
@@ -104,10 +104,10 @@ class HDecorator : public HNode
 public:
     HDecorator(const std::string& name) : HNode(name), m_Blackboard(nullptr), m_Owner(nullptr) {}
 
-    virtual void OnStart() override = 0;
+    virtual void OnStart() override {}
     virtual NodeStatus Update() override = 0;
-    virtual void OnFinished() override = 0;
-    virtual void OnAbort() override = 0;
+    virtual void OnFinished() override { m_bIsStarted = false; }
+    virtual void OnAbort() override { HNode::OnAbort(); }
 protected:
     EnemyAI& GetOwner() const { return *m_Owner; }
     HBlackboard& GetBlackboard() const { return *m_Blackboard; }

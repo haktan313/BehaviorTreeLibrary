@@ -210,12 +210,12 @@ void NodeEditorApp::BuildBehaviorTree()
                         btBuilder.decorator<InverterDecorator>(decorator.Name);
                     btBuilder.selector(node->Name);
                 }
-
-                if (auto* runtimeNode = btBuilder.GetLastCreatedNode())
-                    RegisterNodeMapping(runtimeNode, node->ID);
                     
                 for (auto& condition : node->Conditions)
                     btBuilder.condition<CanSeePlayerCondition>(PriortyType::Both, condition.Name, false);
+                    
+                if (auto* runtimeNode = btBuilder.GetLastCreatedNode())
+                    RegisterNodeMapping(runtimeNode, node->ID);
                 break;
             }
             case BuildOpType::Action:

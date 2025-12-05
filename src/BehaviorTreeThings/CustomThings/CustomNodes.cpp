@@ -9,7 +9,7 @@ void ActionNode::OnStart()
 {
     std::cout << "Action Node Started: " << m_Name << " - Parent:" << (m_Parent != nullptr ? m_Parent->GetName() : std::string(" NoParent")) << std::endl;
     std::cout << "Action Node Speed: " << m_Speed << std::endl;
-    HNode::OnStart();
+    HActionNode::OnStart();
 }
 
 NodeStatus ActionNode::Update()
@@ -29,13 +29,13 @@ void ActionNode::OnFinished()
 {
     std::cout << "Action Node Finished: " << m_Name << std::endl;
     m_TickCount = 0;
-    HNode::OnFinished();
+    HActionNode::OnFinished();
 }
 
 void ActionNode::OnAbort()
 {
     std::cout << "Action Node Aborted: " << m_Name << std::endl;
-    HNode::OnAbort();
+    HActionNode::OnAbort();
     m_TickCount = 0;
 }
 

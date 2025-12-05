@@ -20,10 +20,10 @@ class AlwaysTrueCondition : public HCondition
 public:
     AlwaysTrueCondition(const std::string& name) : HCondition(name) {}
 
-    void OnStart() override {}
+    void OnStart() override { HCondition::OnStart(); }
     NodeStatus Update() override { return NodeStatus::SUCCESS; }
-    void OnFinished() override { HNode::OnFinished(); }
-    void OnAbort() override { HNode::OnAbort(); }
+    void OnFinished() override { HCondition::OnFinished(); }
+    void OnAbort() override { HCondition::OnAbort(); }
 };
 
 class AlwaysFalseCondition : public HCondition
@@ -31,10 +31,10 @@ class AlwaysFalseCondition : public HCondition
 public:
     AlwaysFalseCondition(const std::string& name) : HCondition(name) {}
 
-    void OnStart() override {}
+    void OnStart() override { HCondition::OnStart(); }
     NodeStatus Update() override { return NodeStatus::FAILURE; }
-    void OnFinished() override { HNode::OnFinished(); }
-    void OnAbort() override { HNode::OnAbort(); }
+    void OnFinished() override { HCondition::OnFinished(); }
+    void OnAbort() override { HCondition::OnAbort(); }
 };
 
 class CanSeePlayerCondition : public HCondition
@@ -42,10 +42,10 @@ class CanSeePlayerCondition : public HCondition
 public:
     CanSeePlayerCondition(const std::string& name, bool bInverse) : HCondition(name), m_bInverse(bInverse) {}
 
-    void OnStart() override {}
+    void OnStart() override { HCondition::OnStart(); }
     NodeStatus Update() override;
-    void OnFinished() override { HNode::OnFinished(); }
-    void OnAbort() override { HNode::OnAbort(); }
+    void OnFinished() override { HCondition::OnFinished(); }
+    void OnAbort() override { HCondition::OnAbort(); }
 private:
     bool m_bInverse = false;
 };
@@ -55,8 +55,8 @@ class InverterDecorator : public HDecorator
 public:
     InverterDecorator(const std::string& name) : HDecorator(name) {}
 
-    void OnStart() override {}
+    void OnStart() override { HDecorator::OnStart(); }
     NodeStatus Update() override;
-    void OnFinished() override { HNode::OnFinished(); }
-    void OnAbort() override { HNode::OnAbort(); }
+    void OnFinished() override { HDecorator::OnFinished(); }
+    void OnAbort() override { HDecorator::OnAbort(); }
 };
