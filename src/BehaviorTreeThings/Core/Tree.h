@@ -21,7 +21,7 @@ public:
     
     void SetRootNode(std::unique_ptr<HNode> root) { m_RootNode = std::move(root); }
     HNode* GetRootNode() const { return m_RootNode.get(); }
-    HBlackboard* GetBlackboard() const { return m_Blackboard; }
+
 private:
     std::unique_ptr<HNode> m_RootNode;
     EnemyAI* m_Owner;
@@ -50,6 +50,7 @@ public:
     {
         auto action = std::make_unique<ActionNodeType>(std::forward<Args>(args)...);
         std::cout << "Adding Action Node: " << action->GetName() << std::endl;
+        m_LastCreatedNode = action.get();
         if (m_CurrentDecorator)
         {
             auto decoratorNode = std::move(m_CurrentDecorator);
@@ -97,8 +98,11 @@ public:
     }
     BehaviorTreeBuilder& end();
     BehaviorTree* build();
+
+    HNode* GetLastCreatedNode() const { return m_LastCreatedNode; }
 private:
     BehaviorTree* m_Tree;
     std::vector<HNode*> m_NodeStack;
     std::unique_ptr<HDecorator> m_CurrentDecorator;
+    HNode* m_LastCreatedNode = nullptr;
 };

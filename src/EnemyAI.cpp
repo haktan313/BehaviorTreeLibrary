@@ -21,20 +21,22 @@ void EnemyAI::BeginPlay()
     
     /*m_BehaviorTree = BehaviorTreeBuilder(this).setBlackboard<EnemyBlackboard>()
     .root()
-    .selector("RootNode")
-        .sequence("PatrolSequence").condition<CanSeePlayerCondition>(PriortyType::Both,"CanSeePlayerCondition",false)
-            .action<ActionNode>("MoveToPatrolPointAction",10.0f)
+    .sequence("RootNode")
+        .sequence("PatrolSequence")//.condition<CanSeePlayerCondition>(PriortyType::Both,"CanSeePlayerCondition",false)
+            .sequence("PatrolSubSequence")
+                .action<ActionNode>("MoveToPatrolPointAction",10.0f)
+            .end()
             .action<ActionNode>("WaitAtPatrolPointAction",5.0f)
         .end()
-        .decorator<InverterDecorator>("Inverter_CanSeePlayer")
+        //.decorator<InverterDecorator>("Inverter_CanSeePlayer")
             .sequence("ChaseSequence")
                 .action<ActionNode>("DetectPlayerAction",50.0f)
-                .action<ActionNode>("ChasePlayerAction",40.0f)
+                .action<ActionNode>("ChasePlayerAction",40.0f)  
             .end()
     .end()
-    .build();*/
+    .build();
     
-    //m_BehaviorTree->StartTree();
+    m_BehaviorTree->StartTree();*/
 }
 
 void EnemyAI::Tick(float DeltaTime)

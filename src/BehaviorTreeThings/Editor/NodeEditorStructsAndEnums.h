@@ -17,7 +17,8 @@ enum class NodeType
     Root,
     Sequence,
     Selector,
-    Action
+    Action,
+    end
 };
 
 struct EditorDecorator

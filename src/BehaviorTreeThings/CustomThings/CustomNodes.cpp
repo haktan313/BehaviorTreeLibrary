@@ -1,6 +1,7 @@
 #include "CustomNodes.h"
 #include <iostream>
 #include "../Core/Tree.h"
+#include "Editor/NodeEditorApp.h"
 
 
 //ActionNode methods
@@ -8,11 +9,12 @@ void ActionNode::OnStart()
 {
     std::cout << "Action Node Started: " << m_Name << " - Parent:" << (m_Parent != nullptr ? m_Parent->GetName() : std::string(" NoParent")) << std::endl;
     std::cout << "Action Node Speed: " << m_Speed << std::endl;
+    HNode::OnStart();
 }
 
 NodeStatus ActionNode::Update()
 {
-    if (m_TickCount < 20.0f)
+    if (m_TickCount < 100.0f)
     {
         //std::cout << "Parent Sequence Name:" << m_Parent->GetName() << " Action Node Running: " << m_Name << " (Tick " << m_TickCount + 0.1f << ")" << std::endl;
         m_TickCount += 0.1f;
@@ -26,8 +28,8 @@ NodeStatus ActionNode::Update()
 void ActionNode::OnFinished()
 {
     std::cout << "Action Node Finished: " << m_Name << std::endl;
-    HNode::OnFinished();
     m_TickCount = 0;
+    HNode::OnFinished();
 }
 
 void ActionNode::OnAbort()

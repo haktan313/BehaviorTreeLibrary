@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include "Editor/NodeEditorApp.h"
+
 // HNode methods
 NodeStatus HNode::Tick()
 {
@@ -19,8 +21,14 @@ NodeStatus HNode::Tick()
     return status;
 }
 
+void HNode::OnStart()
+{
+    NodeEditorApp::AddActiveNode(this);
+}
+
 void HNode::OnFinished()
 {
+    NodeEditorApp::RemoveActiveNode();
     for (auto& child : m_Childrens)
     {
         if (child->GetStatus() == NodeStatus::RUNNING)
@@ -56,6 +64,7 @@ void HNode::AddConditionNode(std::unique_ptr<HCondition> conditionNode)
 void HRootNode::OnStart()
 {
     std::cout << "Root Node Started" << std::endl;
+    NodeEditorApp::AddActiveNode(this);
 }
 
 NodeStatus HRootNode::Update()
@@ -83,6 +92,7 @@ void HRootNode::OnFinished()
 {
     m_bIsStarted = false;
     std::cout << "Root Node Finished with result: " << (m_Status == NodeStatus::SUCCESS ? "SUCCESS" : "FAILURE") << std::endl;
+    NodeEditorApp::RemoveActiveNode();
 }
 
 void HRootNode::OnAbort()

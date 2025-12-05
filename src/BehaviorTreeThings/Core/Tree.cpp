@@ -45,6 +45,7 @@ BehaviorTreeBuilder& BehaviorTreeBuilder::root()
     std::cout << "Adding Root Node" << std::endl;
     auto rootNode = std::make_unique<HRootNode>();
     HRootNode* rootNodePtr = rootNode.get();
+    m_LastCreatedNode = rootNodePtr;
     m_Tree->SetRootNode(std::move(rootNode));
     m_NodeStack.push_back(rootNodePtr);
     return *this;
@@ -55,6 +56,7 @@ BehaviorTreeBuilder& BehaviorTreeBuilder::sequence(const std::string& name)
     std::cout << "Adding Sequence Node: " << name << std::endl;
     auto sequenceNode = std::make_unique<SequenceNode>(name);
     SequenceNode* sequenceNodePtr = sequenceNode.get();
+    m_LastCreatedNode = sequenceNodePtr;
     if (m_CurrentDecorator)
     {
         auto decoratorNode = std::move(m_CurrentDecorator);
@@ -80,6 +82,7 @@ BehaviorTreeBuilder& BehaviorTreeBuilder::selector(const std::string& name)
     std::cout << "Adding Selector Node: " << name << std::endl;
     auto selectorNode = std::make_unique<SelectorNode>(name);
     auto selectorNodePtr = selectorNode.get();
+    m_LastCreatedNode = selectorNodePtr;
     if (m_CurrentDecorator)
     {
         auto decoratorNode = std::move(m_CurrentDecorator);

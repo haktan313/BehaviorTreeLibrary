@@ -247,6 +247,9 @@ void NodeEditor::BuildNodes()
                 grandChilderens = allChilderensLevels.back();
                 allChilderensLevels.pop_back();
                 currentChilderens = grandChilderens;
+                //.end().
+                Node* endNode = new Node(NodeType::end, GetNextID(), "end");
+                nodeList.push_back(endNode);
             }
             else
             {

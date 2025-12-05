@@ -15,7 +15,7 @@ public:
     virtual ~HNode() = default;
     
     NodeStatus Tick();
-    virtual void OnStart() = 0;
+    virtual void OnStart();
     virtual NodeStatus Update() = 0;
     virtual void OnFinished();
     virtual void OnAbort();
