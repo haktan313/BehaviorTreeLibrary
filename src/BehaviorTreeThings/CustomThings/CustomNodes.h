@@ -1,11 +1,17 @@
 #pragma once
 #include <iostream>
-
+#define IMGUI_DEFINE_MATH_OPERATORS
+#include "imgui.h"
 #include "../Core/Nodes.h"
+#include "../Editor/NodeEditorStructsAndEnums.h"
 
-struct ActionNodeParams
+struct ActionNodeParams : Params
 {
     float Speed = 1.0f;
+    void DrawImGui() override
+    {
+        ImGui::InputFloat("Speed", &Speed);
+    }
 };
 class ActionNode : public HActionNode
 {
@@ -21,9 +27,13 @@ protected:
     float m_Speed;
 };
 
-struct MoveToNodeParams
+struct MoveToNodeParams : Params
 {
     float AcceptanceRadius = 5.0f;
+    void DrawImGui() override
+    {
+        ImGui::InputFloat("Acceptance Radius", &AcceptanceRadius);
+    }
 };
 class MoveToNode : public HActionNode
 {

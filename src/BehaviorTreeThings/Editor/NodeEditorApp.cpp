@@ -17,6 +17,8 @@ static float s_RightPanelWidth = 320.0f;
 
 std::unordered_map<std::string, ActionClassInfo> NodeEditorApp::s_ActionClassInfoMap;
 std::string NodeEditorApp::s_SelectedActionClassName = "";
+std::unordered_map<int, std::string> NodeEditorApp::s_NodeToActionClassId;
+std::unordered_map<int, std::unique_ptr<Params>> NodeEditorApp::s_NodeToParams;
 
 void NodeEditorApp::OnStart()
 {
@@ -174,7 +176,7 @@ void NodeEditorApp::BlackboardPanel()
     ImGui::TextUnformatted("Blackboard / Node Details Panel");
     ImGui::Separator();
 
-    if (m_LastSelectedNode && m_LastSelectedNode->Type == NodeType::Action)
+    /*if (m_LastSelectedNode && m_LastSelectedNode->Type == NodeType::Action)
     {
         ImGui::Text("Action Class");
         ImGui::Separator();
@@ -185,6 +187,56 @@ void NodeEditorApp::BlackboardPanel()
                 if(ImGui::Selectable(info.Name.c_str()))
                     s_SelectedActionClassName = info.Name.c_str();
             ImGui::EndCombo();
+        }
+        ImGui::Text("Parameters");
+        ImGui::Separator();
+        if (!s_SelectedActionClassName.empty())
+            s_ActionClassInfoMap[s_SelectedActionClassName].Params->DrawImGui();
+    }*/
+    if (m_LastSelectedNode && m_LastSelectedNode->Type == NodeType::Action)
+    {
+        int nodeKey = (int)m_LastSelectedNode->ID.Get();
+
+        ImGui::Text("Action Class");
+        ImGui::Separator();
+
+        std::string currentIdString;
+        auto it = s_NodeToActionClassId.find(nodeKey);
+        if (it != s_NodeToActionClassId.end())
+            currentIdString = it->second;
+
+        std::string currentLabel = "Select Action";
+        if (!currentIdString.empty())
+        {
+            auto info = s_ActionClassInfoMap.find(currentIdString);
+            if (info != s_ActionClassInfoMap.end())
+                currentLabel = info->second.Name;
+        }
+
+        if (ImGui::BeginCombo("##ActionList", currentLabel.c_str()))
+        {
+            for (auto& [id, info] : s_ActionClassInfoMap)
+            {
+                bool isSelected = (id == currentIdString);
+                if (ImGui::Selectable(info.Name.c_str(), isSelected))
+                {
+                    s_NodeToActionClassId[nodeKey] = id;
+                    s_NodeToParams[nodeKey] = info.CreateParamsFn();
+                    if (m_LastSelectedNode)
+                        m_LastSelectedNode->Name = info.Name;
+                }
+            }
+            ImGui::EndCombo();
+        }
+
+        ImGui::Text("Parameters");
+        ImGui::Separator();
+
+        if (!currentIdString.empty())
+        {
+            auto parameter = s_NodeToParams.find(nodeKey);
+            if (parameter != s_NodeToParams.end() && parameter->second)
+                parameter->second->DrawImGui();
         }
     }
 
@@ -243,13 +295,25 @@ void NodeEditorApp::BuildBehaviorTree()
             case BuildOpType::Action:
             {
                 Node* node = op.EditorNode;
-                auto it = s_ActionClassInfoMap.find(s_SelectedActionClassName);
-                if (it != s_ActionClassInfoMap.end())
-                {
-                    it->second.BuildFn(btBuilder, node);
-                    if (auto* runtimeNode = btBuilder.GetLastCreatedNode())
+                int nodeKey = (int)node->ID.Get();
+                auto classIt = s_NodeToActionClassId.find(nodeKey);
+                if (classIt == s_NodeToActionClassId.end())
+                    break;
+                    
+                const std::string& classId = classIt->second;
+                auto infoIt = s_ActionClassInfoMap.find(classId);
+                if (infoIt == s_ActionClassInfoMap.end())
+                    break;
+                    
+                ActionClassInfo& info = infoIt->second;
+                auto paramsIt = s_NodeToParams.find(nodeKey);
+                if (paramsIt == s_NodeToParams.end() || !paramsIt->second)
+                    break;
+                    
+                Params& params = *paramsIt->second;
+                info.BuildFn(btBuilder, node, params);              
+                if (auto* runtimeNode = btBuilder.GetLastCreatedNode())
                     RegisterNodeMapping(runtimeNode, node->ID);
-                }
                 break;
             }
             case BuildOpType::CloseComposite:

@@ -1,10 +1,17 @@
 #pragma once
-
 #include <imgui_node_editor_internal.h>
-
 #include "Nodes.h"
 
 namespace nodeEditor = ax::NodeEditor;
+
+struct Params
+{
+public:
+    Params() = default;
+    ~Params() = default;
+    
+    virtual void DrawImGui() {}
+};
 
 enum class PinKind
 {
@@ -76,7 +83,7 @@ struct Node
     std::string State;
     std::string SavnodeEditorState;
 
-    Node(NodeType type, int id, const char* name, ImColor color = ImColor(255, 255, 255)):
+    Node(NodeType type, int id, const char* name,  ImColor color = ImColor(255, 255, 255)):
         Type(type), ID(id), Name(name), Color(color), Size(0, 0)
     {
     }

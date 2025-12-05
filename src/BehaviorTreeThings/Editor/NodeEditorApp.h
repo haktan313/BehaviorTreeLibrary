@@ -8,7 +8,8 @@ struct ActionClassInfo
 {
     std::string NameAsID;
     std::string Name;
-    std::function<void(BehaviorTreeBuilder&, Node*)> BuildFn;
+    std::function<void(BehaviorTreeBuilder&, Node*, Params&)> BuildFn;
+    std::function<std::unique_ptr<Params>()> CreateParamsFn;
 };
 
 class NodeEditorApp
@@ -36,7 +37,10 @@ private:
     static BehaviorTree* m_BehaviorTree;
     static std::vector<HNode*> m_ActiveNodes;
     static std::unordered_map<const HNode*, nodeEditor::NodeId> s_NodeToEditorIdMap;
+    
     static std::unordered_map<std::string, ActionClassInfo> s_ActionClassInfoMap;
+    static std::unordered_map<int, std::string> s_NodeToActionClassId;
+    static std::unordered_map<int, std::unique_ptr<Params>> s_NodeToParams;
     static std::string s_SelectedActionClassName;
 
     template<typename ActionClass, typename ParamsStruct>
@@ -45,11 +49,16 @@ private:
         ActionClassInfo actionInfo;
         actionInfo.NameAsID = nameAsID;
         actionInfo.Name = name;
-        actionInfo.BuildFn = [](BehaviorTreeBuilder& builder, Node* node)
+        actionInfo.CreateParamsFn = []()
         {
-            ParamsStruct params;
+            return std::make_unique<ParamsStruct>();
+        };
+
+        actionInfo.BuildFn = [](BehaviorTreeBuilder& builder, Node* node, Params& baseParams)
+        {
+            auto& params = static_cast<ParamsStruct&>(baseParams);
             builder.action<ActionClass>(node->Name, params);
         };
-        s_ActionClassInfoMap.emplace(name, actionInfo);
+        s_ActionClassInfoMap.emplace(name, std::move(actionInfo));
     }
 };
