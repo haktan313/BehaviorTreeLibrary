@@ -50,7 +50,7 @@ void NodeEditorApp::Update()
         else
         {
             m_LastHoveredNode = NodeEditor::FindNode(lastHoveredNodeID);
-            if (m_LastHoveredNode->Type == NodeType::Sequence || m_LastHoveredNode->Type == NodeType::Selector)
+            if (m_LastHoveredNode->Type == NodeType::Sequence || m_LastHoveredNode->Type == NodeType::Selector || m_LastHoveredNode->Type == NodeType::Action)
                 ImGui::OpenPopup("Node Options");
         }
     }
@@ -175,24 +175,7 @@ void NodeEditorApp::BlackboardPanel()
 
     ImGui::TextUnformatted("Blackboard / Node Details Panel");
     ImGui::Separator();
-
-    /*if (m_LastSelectedNode && m_LastSelectedNode->Type == NodeType::Action)
-    {
-        ImGui::Text("Action Class");
-        ImGui::Separator();
-
-        if (ImGui::BeginCombo("##ActionList", s_SelectedActionClassName.c_str()))
-        {
-            for (auto& [key, info] : s_ActionClassInfoMap)
-                if(ImGui::Selectable(info.Name.c_str()))
-                    s_SelectedActionClassName = info.Name.c_str();
-            ImGui::EndCombo();
-        }
-        ImGui::Text("Parameters");
-        ImGui::Separator();
-        if (!s_SelectedActionClassName.empty())
-            s_ActionClassInfoMap[s_SelectedActionClassName].Params->DrawImGui();
-    }*/
+    
     if (m_LastSelectedNode && m_LastSelectedNode->Type == NodeType::Action)
     {
         int nodeKey = (int)m_LastSelectedNode->ID.Get();
@@ -311,7 +294,15 @@ void NodeEditorApp::BuildBehaviorTree()
                     break;
                     
                 Params& params = *paramsIt->second;
-                info.BuildFn(btBuilder, node, params);              
+
+                for (auto& decorator : node->Decorators)
+                    btBuilder.decorator<InverterDecorator>(decorator.Name);
+
+                info.BuildFn(btBuilder, node, params);
+
+                for (auto& condition : node->Conditions)
+                    btBuilder.condition<CanSeePlayerCondition>(PriortyType::Both, condition.Name, false);
+                    
                 if (auto* runtimeNode = btBuilder.GetLastCreatedNode())
                     RegisterNodeMapping(runtimeNode, node->ID);
                 break;

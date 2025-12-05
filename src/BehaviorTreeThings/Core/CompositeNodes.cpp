@@ -64,15 +64,20 @@ void HCompositeNode::CheckConditionsLowerPriortyMode(int& currentChildIndex)
         }
 }
 
-// SequenceNode methods
-void SequenceNode::OnStart()
+bool HCompositeNode::CanStart()
 {
     if (!CheckConditions())
     {
         m_bIsStarted = false;
         m_Status = NodeStatus::FAILURE;
-        return;
+        return false;
     }
+    return true;
+}
+
+// SequenceNode methods
+void SequenceNode::OnStart()
+{
     NodeEditorApp::AddActiveNode(this);
     std::cout << "Sequence Node Started: " << m_Name << " - Parent:" << (m_Parent != nullptr ? m_Parent->GetName() : std::string(" NoParent")) << std::endl;
 }
@@ -120,12 +125,6 @@ void SequenceNode::OnAbort()
 //SelectorNode methods
 void SelectorNode::OnStart()
 {
-    if (!CheckConditions())
-    {
-        m_bIsStarted = false;
-        m_Status = NodeStatus::FAILURE;
-        return;
-    }
     NodeEditorApp::AddActiveNode(this);
     std::cout << "Selector Node Started: " << m_Name << " - Parent:" << (m_Parent != nullptr ? m_Parent->GetName() : std::string(" NoParent")) << std::endl;
 }

@@ -9,6 +9,8 @@ public:
     bool CheckConditions();
     bool CheckConditionsSelfMode();
     void CheckConditionsLowerPriortyMode(int& currentChildIndex);
+
+    bool CanStart() override;
 protected:
     int m_CurrentChildIndex = 0;
 };

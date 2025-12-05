@@ -22,6 +22,8 @@ public:
     
     virtual void AddChild(std::unique_ptr<HNode> child);
     virtual void AddConditionNode(std::unique_ptr<HCondition> conditionNode);
+
+    virtual bool CanStart() { return true; }
     
     const HNode* GetParent() const { return m_Parent; }
     const NodeStatus GetStatus() const { return m_Status; }
@@ -56,10 +58,15 @@ class HActionNode : public HNode
 public:
     HActionNode(const std::string& name) : HNode(name), m_Owner(nullptr), m_Blackboard(nullptr) {}
     
-    virtual void OnStart() override { HNode::OnStart(); }
-    virtual NodeStatus Update() override = 0;
-    virtual void OnFinished() override { HNode::OnFinished(); }
-    virtual void OnAbort() override { HNode::OnAbort(); }
+    virtual void OnStart() override;
+    virtual NodeStatus Update() override;
+    virtual void OnFinished() override;
+    virtual void OnAbort() override;
+
+    bool CanStart() override;
+    
+    bool CheckConditions();
+    bool CheckConditionsSelfMode();
 protected:
     EnemyAI& GetOwner() const { return *m_Owner; }
     HBlackboard& GetBlackboard() const { return *m_Blackboard; }

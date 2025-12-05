@@ -9,6 +9,11 @@ NodeStatus HNode::Tick()
 {
     if (!m_bIsStarted)
     {
+        if (!CanStart())
+        {
+            m_Status = NodeStatus::FAILURE;
+            return m_Status;
+        }
         m_bIsStarted = true;
         OnStart();
     }
@@ -112,4 +117,69 @@ void HRootNode::AddChild(std::unique_ptr<HNode> child)
         m_Childrens.push_back(std::move(child));
     else
         m_Childrens[0] = std::move(child);
+}
+
+void HActionNode::OnStart()
+{
+    HNode::OnStart();
+}
+
+NodeStatus HActionNode::Update()
+{
+    return CheckConditionsSelfMode() ? NodeStatus::SUCCESS : NodeStatus::FAILURE;
+}
+
+void HActionNode::OnFinished()
+{
+    HNode::OnFinished();
+}
+
+void HActionNode::OnAbort()
+{
+    HNode::OnAbort();
+}
+
+bool HActionNode::CanStart()
+{
+    if (!CheckConditions())
+    {
+        m_bIsStarted = false;
+        m_Status = NodeStatus::FAILURE;
+        return false;
+    }
+    return true;
+}
+
+bool HActionNode::CheckConditions()
+{
+    if (!m_ConditionNodes.empty())
+        for (auto& condition : m_ConditionNodes)
+        {
+            NodeStatus conditionStatus = condition->Tick();
+            if (conditionStatus == NodeStatus::FAILURE)
+            {
+                m_Status = NodeStatus::FAILURE;
+                std::cout << "Node Condition Failed: " << condition->GetName() << " in " << m_Name << std::endl;
+                return false;
+            }
+        }
+    return true;
+}
+
+bool HActionNode::CheckConditionsSelfMode()
+{
+    if (!m_ConditionNodes.empty())
+        for (auto& condition : m_ConditionNodes)
+        {
+            if (condition->GetPriortyMode() == PriortyType::None)
+                continue;
+            NodeStatus conditionStatus = condition.get()->Tick();
+            if ((condition->GetPriortyMode() == PriortyType::Self || condition->GetPriortyMode() == PriortyType::Both) && conditionStatus == NodeStatus::FAILURE)
+            {
+                OnAbort();
+                std::cout << "Node Condition Failed at Runtime: " << condition->GetName() << " in " << m_Name << std::endl;
+                return false;
+            }
+        }
+    return true;
 }

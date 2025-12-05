@@ -78,14 +78,22 @@ public:
     {
         auto condition = std::make_unique<ConditionNodeType>(std::forward<Args>(args)...);
         std::cout << "Adding Condition Node: " << condition->GetName() << std::endl;
-        if (!m_NodeStack.empty())
+        if (m_LastCreatedNode)
+        {
+            condition->SetOwner(m_Tree->m_Owner);
+            condition->SetBlackboard(m_Tree->m_Blackboard);
+            condition->SetPriortyMode(priorty);
+            m_LastCreatedNode->AddConditionNode(std::move(condition));
+        }
+        return *this;
+        /*if (!m_NodeStack.empty())
         {
             condition->SetOwner(m_Tree->m_Owner);
             condition->SetBlackboard(m_Tree->m_Blackboard);
             condition->SetPriortyMode(priorty);
             m_NodeStack.back()->AddConditionNode(std::move(condition));
         }
-        return *this;
+        return *this;*/
     }
     template<typename DecoratorNodeType, typename... Args>
     BehaviorTreeBuilder& decorator(Args&&... args)

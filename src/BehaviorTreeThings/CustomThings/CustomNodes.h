@@ -7,6 +7,7 @@
 
 struct ActionNodeParams : Params
 {
+    ActionNodeParams(float speed = 1.0f) : Speed(speed) {}
     float Speed = 1.0f;
     void DrawImGui() override
     {

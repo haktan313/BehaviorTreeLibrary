@@ -7,13 +7,14 @@
 //ActionNode methods
 void ActionNode::OnStart()
 {
+    HActionNode::OnStart();
     std::cout << "Action Node Started: " << m_Name << " - Parent:" << (m_Parent != nullptr ? m_Parent->GetName() : std::string(" NoParent")) << std::endl;
     std::cout << "Action Node Speed: " << m_Speed << std::endl;
-    HActionNode::OnStart();
 }
 
 NodeStatus ActionNode::Update()
 {
+    HActionNode::Update();
     if (m_TickCount < 100.0f)
     {
         //std::cout << "Parent Sequence Name:" << m_Parent->GetName() << " Action Node Running: " << m_Name << " (Tick " << m_TickCount + 0.1f << ")" << std::endl;
@@ -27,15 +28,15 @@ NodeStatus ActionNode::Update()
 
 void ActionNode::OnFinished()
 {
+    HActionNode::OnFinished();
     std::cout << "Action Node Finished: " << m_Name << std::endl;
     m_TickCount = 0;
-    HActionNode::OnFinished();
 }
 
 void ActionNode::OnAbort()
 {
-    std::cout << "Action Node Aborted: " << m_Name << std::endl;
     HActionNode::OnAbort();
+    std::cout << "Action Node Aborted: " << m_Name << std::endl;
     m_TickCount = 0;
 }
 
