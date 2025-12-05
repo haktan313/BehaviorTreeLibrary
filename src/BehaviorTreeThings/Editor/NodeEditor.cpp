@@ -6,14 +6,11 @@ namespace nodeEditor = ax::NodeEditor;
 
 NodeEditor* NodeEditor::s_Instance = nullptr;
 std::vector<Node> NodeEditor::m_Nodes;
-std::vector<Node*> NodeEditor::m_NodesBuildOrder;
 std::vector<Link> NodeEditor::m_Links;
 std::map<nodeEditor::NodeId, float, NodeIdLess> NodeEditor::m_NodeTouchTime;
 nodeEditor::PinId NodeEditor::m_RootOutputPinId = 0;
 
 static Pin* newLinkPin = nullptr;
-/*static Pin* newNodeLinkPin = nullptr;
-static bool createNewNode = false;*/
 static const float m_TouchTime = 1.0f;
 static nodeEditor::EditorContext* m_EditorContext = nullptr;
 static int m_NextId = 1;
@@ -177,10 +174,6 @@ void NodeEditor::OnUpdate()
         PaintNodeBackground(node, inputsRect, outputsRect, contentRect, pinBackground, inputAlpha, outputAlpha, sequenceRect);
     }
     ManageLinks();
-    /*for (auto& link : m_Links)
-    {
-        nodeEditor::Flow(link.ID);
-    }*/
     nodeEditor::End();
 }
 
@@ -201,73 +194,8 @@ void NodeEditor::BuildNode(Node* node)
 
 void NodeEditor::BuildNodes()
 {
-    auto rootNode = FindNode(nodeEditor::NodeId(m_RootOutputPinId.Get() - 1));
-    if (!rootNode)
-    {
-        std::cerr << "Error: Root node not found!" << std::endl;
-        return;
-    }
-    auto childerens = GetChilderenNodes(rootNode);
-    if (childerens.empty())
-    {
-        std::cerr << "Error: Root node has no children!" << std::endl;
-        return;
-    }
-    auto child = childerens[0];
-    if (!child)
-    {
-        std::cerr << "Error: Root node's first child is null!" << std::endl;
-        return;
-    }
-    std::cout << "  Child Node: " << child->Name << " (ID: " << child->ID.Get() << ")" << std::endl;
-    
-    std::vector<Node*> nodeList;
-    nodeList.push_back(rootNode);
-    nodeList.push_back(child);
-    auto grandChilderens = GetChilderenNodes(child);
-    auto currentChilderens = grandChilderens;
-    std::vector<std::vector<Node*>> allChilderensLevels;
-    while (!grandChilderens.empty())
-    {
-        Node* mostLeftGrandChilderen = grandChilderens[0];
-        for (auto& grandChilderenNode : grandChilderens)
-        {
-            if (nodeEditor::GetNodePosition(grandChilderenNode->ID).x < nodeEditor::GetNodePosition(mostLeftGrandChilderen->ID).x)
-                mostLeftGrandChilderen = grandChilderenNode;
-        }
-        currentChilderens.erase(std::remove(currentChilderens.begin(), currentChilderens.end(), mostLeftGrandChilderen), currentChilderens.end());
-        nodeList.push_back(mostLeftGrandChilderen);
-        grandChilderens = GetChilderenNodes(mostLeftGrandChilderen);
-        if (grandChilderens.empty())
-        {
-            if (currentChilderens.empty())
-            {
-                if (allChilderensLevels.empty())
-                    break;
-                grandChilderens = allChilderensLevels.back();
-                allChilderensLevels.pop_back();
-                currentChilderens = grandChilderens;
-                //.end().
-                Node* endNode = new Node(NodeType::end, GetNextID(), "end");
-                nodeList.push_back(endNode);
-            }
-            else
-            {
-                grandChilderens = currentChilderens;
-            }
-        }
-        else
-        {
-            if (!currentChilderens.empty())
-                allChilderensLevels.push_back(currentChilderens);
-            currentChilderens = grandChilderens;
-        }
-    }
-    m_NodesBuildOrder = nodeList;
     for (auto& node : m_Nodes)
-    {
         BuildNode(&node);
-    }
 }
 
 Node* NodeEditor::SpawnRootNode()

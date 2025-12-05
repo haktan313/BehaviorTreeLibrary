@@ -17,9 +17,22 @@ enum class NodeType
     Root,
     Sequence,
     Selector,
-    Action,
-    end
+    Action
 };
+
+enum class BuildOpType
+{
+    OpenComposite,
+    Action,
+    CloseComposite
+};
+struct Node;
+struct BuildOp
+{
+    BuildOpType Type;
+    Node* EditorNode;
+};
+
 
 struct EditorDecorator
 {
@@ -32,7 +45,6 @@ struct EditorCondition
     EditorCondition(const std::string& name) : Name(name) {}
 };
 
-struct Node;
 struct Pin
 {
     nodeEditor::PinId ID;

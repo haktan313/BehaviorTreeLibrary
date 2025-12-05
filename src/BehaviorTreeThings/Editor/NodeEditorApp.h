@@ -19,6 +19,9 @@ public:
     static Node* GetEditorNodeFor(const HNode* runtimeNode);
 private:
     static void BuildBehaviorTree();
+    static void BuildPlanForNode(Node* editorNode, std::vector<BuildOp>& ops);
+    static std::vector<BuildOp> CreateBuildPlan();
+    
     static EnemyAI* m_Enemy;
     static Node* m_LastHoveredNode;
     static BehaviorTree* m_BehaviorTree;

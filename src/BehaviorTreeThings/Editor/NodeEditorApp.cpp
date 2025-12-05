@@ -92,7 +92,7 @@ void NodeEditorApp::Update()
             ImGuiCond_Once
         );
     }
-    ImGui::Begin("Blackboard & Details", nullptr, ImGuiWindowFlags_NoMove | /*ImGuiWindowFlags_NoResize |*/ ImGuiWindowFlags_NoCollapse);
+    ImGui::Begin("Blackboard & Details", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
 
     ImGui::TextUnformatted("Blackboard / Node Details Panel");
     ImGui::Separator();
@@ -170,68 +170,133 @@ Node* NodeEditorApp::GetEditorNodeFor(const HNode* runtimeNode)
     return NodeEditor::FindNode(it->second);
 }
 
+
 void NodeEditorApp::BuildBehaviorTree()
 {
     NodeEditor::BuildNodes();
     std::cout << "Building Behavior Tree from Node Editor..." << std::endl;
     ClearNodeMappings();
-    
-    auto btBuilder = BehaviorTreeBuilder(m_Enemy);
+
+    BehaviorTreeBuilder btBuilder(m_Enemy);
     btBuilder.setBlackboard<EnemyBlackboard>();
-    auto nodes = NodeEditor::GetNodesBuildOrder();
-    for (auto& node : nodes)
-    {
-        std::cout << "Node: " << node->Name << " (ID: " << node->ID.Get() << ")" << std::endl;
-        switch (node->Type)
+    
+    btBuilder.root();
+    if (auto* runtimeRoot = btBuilder.GetLastCreatedNode())
+        for (auto& n : NodeEditor::GetNodes())
         {
-            case NodeType::Root:
-                std::cout << "  Type: Root" << std::endl;
-                btBuilder.root();
-                if (auto* runtimeNode = btBuilder.GetLastCreatedNode())
-                    RegisterNodeMapping(runtimeNode, node->ID);
+            if (n.Type == NodeType::Root)
+            {
+                RegisterNodeMapping(runtimeRoot, n.ID);
                 break;
-            case NodeType::Sequence:
-                std::cout << "  Type: Sequence" << std::endl;
-                if (!node->Decorators.empty())
+            }
+        }
+    
+    auto buildOps = CreateBuildPlan();
+    for (BuildOp& op : buildOps)
+        switch (op.Type)
+        {
+            case BuildOpType::OpenComposite:
+            {
+                Node* node = op.EditorNode;
+                if (node->Type == NodeType::Sequence)
+                {
                     for (auto& decorator : node->Decorators)
                         btBuilder.decorator<InverterDecorator>(decorator.Name);
-            
-                btBuilder.sequence(node->Name);
-                if (auto* runtimeNode = btBuilder.GetLastCreatedNode())
-                    RegisterNodeMapping(runtimeNode, node->ID);
-            
-                if (!node->Conditions.empty())
-                    for (auto& condition : node->Conditions)
-                        btBuilder.condition<CanSeePlayerCondition>(PriortyType::Both, condition.Name, false);
-                break;
-            case NodeType::Selector:
-                std::cout << "  Type: Selector" << std::endl;
-                if (!node->Decorators.empty())
+                    btBuilder.sequence(node->Name);
+                }
+                else if (node->Type == NodeType::Selector)
+                {
                     for (auto& decorator : node->Decorators)
                         btBuilder.decorator<InverterDecorator>(decorator.Name);
-            
-                btBuilder.selector(node->Name);
+                    btBuilder.selector(node->Name);
+                }
+
                 if (auto* runtimeNode = btBuilder.GetLastCreatedNode())
                     RegisterNodeMapping(runtimeNode, node->ID);
-            
-                if (!node->Conditions.empty())
-                    for (auto& condition : node->Conditions)
-                        btBuilder.condition<CanSeePlayerCondition>(PriortyType::Both, condition.Name, false);
+                    
+                for (auto& condition : node->Conditions)
+                    btBuilder.condition<CanSeePlayerCondition>(PriortyType::Both, condition.Name, false);
                 break;
-            case NodeType::Action:
-                std::cout << "  Type: Action" << std::endl;
+            }
+            case BuildOpType::Action:
+            {
+                Node* node = op.EditorNode;
                 btBuilder.action<ActionNode>(node->Name, 10.0f);
                 if (auto* runtimeNode = btBuilder.GetLastCreatedNode())
                     RegisterNodeMapping(runtimeNode, node->ID);
                 break;
-            case NodeType::end:
-                std::cout << "  Type: End" << std::endl;
+            }
+            case BuildOpType::CloseComposite:
+            {
                 btBuilder.end();
                 break;
+            }
             default:
                 break;
         }
-    }
-    btBuilder.end();
     m_BehaviorTree = btBuilder.build();
+}
+
+void NodeEditorApp::BuildPlanForNode(Node* editorNode, std::vector<BuildOp>& ops)
+{
+    switch (editorNode->Type)
+    {
+    case NodeType::Root:
+        {
+            auto children = NodeEditor::GetChilderenNodes(editorNode);
+            if (!children.empty())
+                BuildPlanForNode(children[0], ops);
+            break;
+        }
+    case NodeType::Sequence:
+    case NodeType::Selector:
+        {
+            ops.push_back({ BuildOpType::OpenComposite, editorNode });
+            
+            auto children = NodeEditor::GetChilderenNodes(editorNode);
+            std::sort(children.begin(), children.end(),
+                [](Node* a, Node* b)
+                {
+                    ImVec2 pa = nodeEditor::GetNodePosition(a->ID);
+                    ImVec2 pb = nodeEditor::GetNodePosition(b->ID);
+                    if (pa.x == pb.x)
+                        return pa.y < pb.y;
+                    return pa.x < pb.x;
+                });         
+            for (Node* child : children)
+                BuildPlanForNode(child, ops);
+            
+            ops.push_back({ BuildOpType::CloseComposite, nullptr });
+            break;
+        }
+    case NodeType::Action:
+        {
+            ops.push_back({ BuildOpType::Action, editorNode });
+            break;
+        }
+    default:
+        break;
+    }
+}
+
+std::vector<BuildOp> NodeEditorApp::CreateBuildPlan()
+{
+    std::vector<BuildOp> ops;
+    
+    Node* rootEditorNode = nullptr;
+    for (auto& n : NodeEditor::GetNodes())
+        if (n.Type == NodeType::Root)
+        {
+            rootEditorNode = &n;
+            break;
+        }
+
+    if (!rootEditorNode)
+    {
+        std::cerr << "Root editor node not found!\n";
+        return ops;
+    }
+
+    BuildPlanForNode(rootEditorNode, ops);
+    return ops;
 }
