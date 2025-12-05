@@ -1,10 +1,16 @@
 #pragma once
+#include <iostream>
+
 #include "../Core/Nodes.h"
 
+struct ActionNodeParams
+{
+    float Speed = 1.0f;
+};
 class ActionNode : public HActionNode
 {
 public:
-    ActionNode(const std::string& name, float speed) : HActionNode(name), m_Speed(speed) {}
+    ActionNode(const std::string& name, const ActionNodeParams& params) : HActionNode(name), m_Speed(params.Speed) {}
     
     void OnStart() override;
     NodeStatus Update() override;
@@ -13,6 +19,23 @@ public:
 protected:
     float m_TickCount = 0;
     float m_Speed;
+};
+
+struct MoveToNodeParams
+{
+    float AcceptanceRadius = 5.0f;
+};
+class MoveToNode : public HActionNode
+{
+public:
+    MoveToNode(const std::string& name, const MoveToNodeParams& params) : HActionNode(name), m_AcceptanceRadius(params.AcceptanceRadius) {}
+
+    void OnStart() override { std::cout << "MoveTo Node Started: " << m_Name << " with Acceptance Radius: " << m_AcceptanceRadius << std::endl; HActionNode::OnStart(); }
+    NodeStatus Update() override { return NodeStatus::SUCCESS; }
+    void OnFinished() override { HActionNode::OnFinished(); }
+    void OnAbort() override { HActionNode::OnAbort(); }
+private:
+    float m_AcceptanceRadius;
 };
 
 class AlwaysTrueCondition : public HCondition

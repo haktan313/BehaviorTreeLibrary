@@ -5,20 +5,24 @@
 #include "CustomNodes.h"
 #include "imgui.h"
 #include "NodeEditor.h"
-#include "Tree.h"
 
 EnemyAI* NodeEditorApp::m_Enemy = nullptr;
 Node* NodeEditorApp::m_LastHoveredNode = nullptr;
+Node* NodeEditorApp::m_LastSelectedNode = nullptr;
 BehaviorTree* NodeEditorApp::m_BehaviorTree = nullptr;
 std::vector<HNode*> NodeEditorApp::m_ActiveNodes;
 std::unordered_map<const HNode*, nodeEditor::NodeId> NodeEditorApp::s_NodeToEditorIdMap;
 static bool s_InitLayout = true;
 static float s_RightPanelWidth = 320.0f;
 
+std::unordered_map<std::string, ActionClassInfo> NodeEditorApp::s_ActionClassInfoMap;
+std::string NodeEditorApp::s_SelectedActionClassName = "";
 
 void NodeEditorApp::OnStart()
 {
     NodeEditor::SpawnRootNode();
+    AddActionNodeToBuilder<MoveToNode, MoveToNodeParams>("MoveToNode", "Move To");
+    AddActionNodeToBuilder<ActionNode, ActionNodeParams>("ActionNode", "Generic Action");
 }
 
 void NodeEditorApp::Update()
@@ -31,7 +35,7 @@ void NodeEditorApp::Update()
         if (m_BehaviorTree)
             m_BehaviorTree->StartTree();
     }
-
+    m_LastSelectedNode = NodeEditor::GetSelectedNode();
     auto lastHoveredNodeID = nodeEditor::GetHoveredNode();
     if (ImGui::IsMouseClicked(ImGuiMouseButton_Right) && !io.KeyAlt)
     {
@@ -77,29 +81,7 @@ void NodeEditorApp::Update()
     int linkAmount = (int)NodeEditor::GetLinks().size();
     ImGui::Text("Links: %d", linkAmount);
 
-    ImGuiViewport* viewport = ImGui::GetMainViewport();
-    ImVec2 workPos  = viewport->WorkPos;
-    ImVec2 workSize = viewport->WorkSize;
-    
-    if (s_InitLayout)
-    {
-        ImGui::SetNextWindowPos(
-            ImVec2(workPos.x + workSize.x - s_RightPanelWidth, workPos.y),
-            ImGuiCond_Once
-        );
-        ImGui::SetNextWindowSize(
-            ImVec2(s_RightPanelWidth, workSize.y),
-            ImGuiCond_Once
-        );
-    }
-    ImGui::Begin("Blackboard & Details", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
-
-    ImGui::TextUnformatted("Blackboard / Node Details Panel");
-    ImGui::Separator();
-    ImGui::Text("Buraya blackboard ve node bilgileri gelecek.");
-
-    ImGui::End();
-    s_InitLayout = false;
+    BlackboardPanel();
 
     for (int i = 0; i + 1 < (int)m_ActiveNodes.size(); ++i)
     {
@@ -170,13 +152,53 @@ Node* NodeEditorApp::GetEditorNodeFor(const HNode* runtimeNode)
     return NodeEditor::FindNode(it->second);
 }
 
+void NodeEditorApp::BlackboardPanel()
+{
+    ImGuiViewport* viewport = ImGui::GetMainViewport();
+    ImVec2 workPos  = viewport->WorkPos;
+    ImVec2 workSize = viewport->WorkSize;
+    
+    if (s_InitLayout)
+    {
+        ImGui::SetNextWindowPos(
+            ImVec2(workPos.x + workSize.x - s_RightPanelWidth, workPos.y),
+            ImGuiCond_Once
+        );
+        ImGui::SetNextWindowSize(
+            ImVec2(s_RightPanelWidth, workSize.y),
+            ImGuiCond_Once
+        );
+    }
+    ImGui::Begin("Blackboard & Details", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
+
+    ImGui::TextUnformatted("Blackboard / Node Details Panel");
+    ImGui::Separator();
+
+    if (m_LastSelectedNode && m_LastSelectedNode->Type == NodeType::Action)
+    {
+        ImGui::Text("Action Class");
+        ImGui::Separator();
+
+        if (ImGui::BeginCombo("##ActionList", s_SelectedActionClassName.c_str()))
+        {
+            for (auto& [key, info] : s_ActionClassInfoMap)
+                if(ImGui::Selectable(info.Name.c_str()))
+                    s_SelectedActionClassName = info.Name.c_str();
+            ImGui::EndCombo();
+        }
+    }
+
+    ImGui::End();
+    s_InitLayout = false;
+}
+
 
 void NodeEditorApp::BuildBehaviorTree()
 {
     NodeEditor::BuildNodes();
     std::cout << "Building Behavior Tree from Node Editor..." << std::endl;
     ClearNodeMappings();
-
+    
     BehaviorTreeBuilder btBuilder(m_Enemy);
     btBuilder.setBlackboard<EnemyBlackboard>();
     
@@ -221,9 +243,13 @@ void NodeEditorApp::BuildBehaviorTree()
             case BuildOpType::Action:
             {
                 Node* node = op.EditorNode;
-                btBuilder.action<ActionNode>(node->Name, 10.0f);
-                if (auto* runtimeNode = btBuilder.GetLastCreatedNode())
+                auto it = s_ActionClassInfoMap.find(s_SelectedActionClassName);
+                if (it != s_ActionClassInfoMap.end())
+                {
+                    it->second.BuildFn(btBuilder, node);
+                    if (auto* runtimeNode = btBuilder.GetLastCreatedNode())
                     RegisterNodeMapping(runtimeNode, node->ID);
+                }
                 break;
             }
             case BuildOpType::CloseComposite:

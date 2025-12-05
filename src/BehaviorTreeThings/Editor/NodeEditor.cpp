@@ -58,6 +58,20 @@ int NodeEditor::GetNextID()
 }
 
 
+Node* NodeEditor::GetSelectedNode()
+{
+    int count = nodeEditor::GetSelectedObjectCount();
+    std::vector<nodeEditor::NodeId> selectedNodes(count);
+    int realCount = nodeEditor::GetSelectedNodes(selectedNodes.data(), count);
+    for (int i = 0; i < realCount; ++i)
+    {
+        Node* n = FindNode(selectedNodes[i]);
+        if (n)
+            return n;
+    }
+    return nullptr;
+}
+
 void NodeEditor::OnStart()
 {
     nodeEditor::Config config;

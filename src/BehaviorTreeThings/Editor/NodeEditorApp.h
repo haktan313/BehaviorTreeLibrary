@@ -1,8 +1,15 @@
 #pragma once
+#include <functional>
 #include <unordered_map>
-
-#include "EnemyAI.h"
+#include "Tree.h"
 #include "NodeEditorStructsAndEnums.h"
+
+struct ActionClassInfo
+{
+    std::string NameAsID;
+    std::string Name;
+    std::function<void(BehaviorTreeBuilder&, Node*)> BuildFn;
+};
 
 class NodeEditorApp
 {
@@ -18,13 +25,31 @@ public:
     static void RegisterNodeMapping(const HNode* runtimeNode, nodeEditor::NodeId editorId);
     static Node* GetEditorNodeFor(const HNode* runtimeNode);
 private:
+    static void BlackboardPanel();
     static void BuildBehaviorTree();
     static void BuildPlanForNode(Node* editorNode, std::vector<BuildOp>& ops);
     static std::vector<BuildOp> CreateBuildPlan();
     
     static EnemyAI* m_Enemy;
     static Node* m_LastHoveredNode;
+    static Node* m_LastSelectedNode;
     static BehaviorTree* m_BehaviorTree;
     static std::vector<HNode*> m_ActiveNodes;
     static std::unordered_map<const HNode*, nodeEditor::NodeId> s_NodeToEditorIdMap;
+    static std::unordered_map<std::string, ActionClassInfo> s_ActionClassInfoMap;
+    static std::string s_SelectedActionClassName;
+
+    template<typename ActionClass, typename ParamsStruct>
+    static void AddActionNodeToBuilder(const std::string& nameAsID, const std::string& name = "")
+    {
+        ActionClassInfo actionInfo;
+        actionInfo.NameAsID = nameAsID;
+        actionInfo.Name = name;
+        actionInfo.BuildFn = [](BehaviorTreeBuilder& builder, Node* node)
+        {
+            ParamsStruct params;
+            builder.action<ActionClass>(node->Name, params);
+        };
+        s_ActionClassInfoMap.emplace(name, actionInfo);
+    }
 };

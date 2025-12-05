@@ -14,10 +14,13 @@ enum class PinKind
 
 enum class NodeType
 {
+    None,
     Root,
     Sequence,
     Selector,
-    Action
+    Action,
+    Condition,
+    Decorator
 };
 
 enum class BuildOpType

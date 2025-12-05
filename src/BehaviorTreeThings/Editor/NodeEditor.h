@@ -14,6 +14,7 @@ public:
     static ax::NodeEditor::LinkId GetNextLinkId() { return nodeEditor::LinkId(GetNextID()); }
     static std::vector<Node>& GetNodes() { return m_Nodes; }
     static std::vector<Link>& GetLinks() { return m_Links; }
+    static Node* GetSelectedNode();
     static void OnStart();
     static void OnUpdate();
 
