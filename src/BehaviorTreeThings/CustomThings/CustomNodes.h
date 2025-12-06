@@ -49,15 +49,26 @@ private:
     float m_AcceptanceRadius;
 };
 
+
+struct AlwaysTrueConditionParams : Params
+{
+    bool bInverse = false;
+    void DrawImGui() override
+    {
+        ImGui::Checkbox("Inverse", &bInverse);
+    }
+};
 class AlwaysTrueCondition : public HCondition
 {
 public:
-    AlwaysTrueCondition(const std::string& name) : HCondition(name) {}
+    AlwaysTrueCondition(const std::string& name, const AlwaysTrueConditionParams& params) : HCondition(name), m_bInverse(params.bInverse) {}
 
     void OnStart() override { HCondition::OnStart(); }
     NodeStatus Update() override { return NodeStatus::SUCCESS; }
     void OnFinished() override { HCondition::OnFinished(); }
     void OnAbort() override { HCondition::OnAbort(); }
+private:
+    bool m_bInverse = false;
 };
 
 class AlwaysFalseCondition : public HCondition
@@ -71,10 +82,18 @@ public:
     void OnAbort() override { HCondition::OnAbort(); }
 };
 
+struct CanSeePlayerConditionParams : Params
+{
+    bool bInverse = false;
+    void DrawImGui() override
+    {
+        ImGui::Checkbox("Inverse", &bInverse);
+    }
+};
 class CanSeePlayerCondition : public HCondition
 {
 public:
-    CanSeePlayerCondition(const std::string& name, bool bInverse) : HCondition(name), m_bInverse(bInverse) {}
+    CanSeePlayerCondition(const std::string& name, const CanSeePlayerConditionParams& params) : HCondition(name), m_bInverse(params.bInverse) {}
 
     void OnStart() override { HCondition::OnStart(); }
     NodeStatus Update() override;
@@ -84,13 +103,42 @@ private:
     bool m_bInverse = false;
 };
 
+
+struct InverterDecoratorParams : Params
+{
+    bool dummy = false;
+    void DrawImGui() override
+    {
+        ImGui::Checkbox("Dummy", &dummy);
+    }
+};
 class InverterDecorator : public HDecorator
 {
 public:
-    InverterDecorator(const std::string& name) : HDecorator(name) {}
+    InverterDecorator(const std::string& name, const InverterDecoratorParams& params) : HDecorator(name) {}
 
     void OnStart() override { HDecorator::OnStart(); }
     NodeStatus Update() override;
+    void OnFinished() override { HDecorator::OnFinished(); }
+    void OnAbort() override { HDecorator::OnAbort(); }
+};
+
+
+struct SucceederDecoratorParams : Params
+{
+    int dummy = 0;
+    void DrawImGui() override
+    {
+        ImGui::InputInt("Dummy", &dummy);
+    }
+};
+class SucceederDecorator : public HDecorator
+{
+public:
+    SucceederDecorator(const std::string& name, const SucceederDecoratorParams& params) : HDecorator(name) {}
+
+    void OnStart() override { HDecorator::OnStart(); }
+    NodeStatus Update() override { return NodeStatus::SUCCESS; }
     void OnFinished() override { HDecorator::OnFinished(); }
     void OnAbort() override { HDecorator::OnAbort(); }
 };

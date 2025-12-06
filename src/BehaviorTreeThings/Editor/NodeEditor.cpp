@@ -2,22 +2,24 @@
 #include "NodeEditor.h"
 #include <iostream>
 
+#include "NodeEditorApp.h"
+
 namespace nodeEditor = ax::NodeEditor;
 
-NodeEditor* NodeEditor::s_Instance = nullptr;
+/*NodeEditor* NodeEditor::s_Instance = nullptr;
 std::vector<Node> NodeEditor::m_Nodes;
 std::vector<Link> NodeEditor::m_Links;
 std::map<nodeEditor::NodeId, float, NodeIdLess> NodeEditor::m_NodeTouchTime;
-nodeEditor::PinId NodeEditor::m_RootOutputPinId = 0;
+nodeEditor::PinId NodeEditor::m_RootOutputPinId = 0;*/
 
 static Pin* newLinkPin = nullptr;
 static const float m_TouchTime = 1.0f;
 static nodeEditor::EditorContext* m_EditorContext = nullptr;
 static int m_NextId = 1;
 
-NodeEditor::NodeEditor()
+NodeEditor::NodeEditor(NodeEditorApp* app) : m_App(app)
 {
-    s_Instance = this;
+    //s_Instance = this;
 }
 
 Node* NodeEditor::FindNode(nodeEditor::NodeId id)
@@ -75,7 +77,7 @@ Node* NodeEditor::GetSelectedNode()
 void NodeEditor::OnStart()
 {
     nodeEditor::Config config;
-    config.UserPointer = s_Instance;
+    config.UserPointer = this;
 
     config.LoadNodeSettings = [](nodeEditor::NodeId nodeId, char* data, void* userPointer) -> size_t
     {
@@ -108,6 +110,9 @@ void NodeEditor::OnStart()
     m_EditorContext = nodeEditor::CreateEditor(&config);
     nodeEditor::SetCurrentEditor(m_EditorContext);
     nodeEditor::NavigateToContent();
+
+    SpawnRootNode();
+    
     BuildNodes();
 }
 
@@ -258,7 +263,7 @@ void NodeEditor::SpawnConditionNode(Node* parentNode)
     if (!parentNode)
         return;
     std::cout << "Spawned Condition Node for Parent Node: " << parentNode->Name << " (ID: " << parentNode->ID.Get() << ")" << std::endl;
-    EditorCondition condition("CanSeePlayerCondition");
+    EditorCondition condition("Condition");
     parentNode->Conditions.push_back(condition);
 }
 
@@ -267,7 +272,7 @@ void NodeEditor::SpawnDecoratorNode(Node* parentNode)
     if (!parentNode)
         return;
     std::cout << "Spawned Decorator Node for Parent Node: " << parentNode->Name << " (ID: " << parentNode->ID.Get() << ")" << std::endl;
-    EditorDecorator decorator("InverterDecorator");
+    EditorDecorator decorator("Decorator");
     parentNode->Decorators.push_back(decorator);
 }
 
@@ -353,18 +358,19 @@ void NodeEditor::DrawDecoratorBar(Node& node, ImRect& decoratorRect)
     {
 
         ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.0f);
-        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(20, 2));
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(8, 2));
         ImGui::PushStyleColor(ImGuiCol_Button,        ImColor(24, 64, 128, 255).Value);
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImColor(40, 100, 200, 255).Value);
         ImGui::PushStyleColor(ImGuiCol_ButtonActive,  ImColor(60, 150, 255, 255).Value);
 
         ImRect decoratorsUnion;
         bool hasDecoratorRect = false;
+        float decoratorButtonWidth = 160.0f;
 
         for (int i = 0; i < static_cast<int>(node.Decorators.size()); ++i)
         {
             ImGui::BeginHorizontal(("decorator_row_" + std::to_string(i)).c_str());
-            bool decoClicked = ImGui::Button(node.Decorators[i].Name.c_str());
+            bool decoClicked = ImGui::Button(node.Decorators[i].Name.c_str(), ImVec2(decoratorButtonWidth, 0.0f));
             ImGui::EndHorizontal();
                 
             ImRect thisRect = nodeEditor::Detail::ImGui_GetItemRect();
@@ -379,7 +385,7 @@ void NodeEditor::DrawDecoratorBar(Node& node, ImRect& decoratorRect)
                 decoratorsUnion.Add(thisRect.Max);
             }
             if (decoClicked)
-                std::cout << "Decorator clicked: " << node.Decorators[i].Name << std::endl;
+                m_App->DecoratorNodeSelected(node.Decorators[i]);
         }
         decoratorRect = decoratorsUnion;
 
@@ -393,19 +399,19 @@ void NodeEditor::DrawConditionBar(Node& node, ImRect& conditionRect)
     if (!node.Conditions.empty())
     {
         ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.0f);
-        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(6, 2));
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(8, 2));
         ImGui::PushStyleColor(ImGuiCol_Button,        ImColor(120, 30, 30, 255).Value);
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImColor(160, 40, 40, 255).Value);
         ImGui::PushStyleColor(ImGuiCol_ButtonActive,  ImColor(200, 50, 50, 255).Value);
-
-
+        
         ImRect conditionsUnion;
         bool hasCondRect = false;
+        float conditionButtonWidth = 160.0f;
 
         for (int i = 0; i < (int)node.Conditions.size(); ++i)
         {
             ImGui::BeginHorizontal(("condition_row_" + std::to_string(i)).c_str());
-            bool condClicked = ImGui::Button(node.Conditions[i].Name.c_str());
+            bool condClicked = ImGui::Button(node.Conditions[i].Name.c_str(), ImVec2(conditionButtonWidth, 0.0f));
             ImGui::EndHorizontal();
 
             ImRect thisRect = nodeEditor::Detail::ImGui_GetItemRect();
@@ -421,7 +427,7 @@ void NodeEditor::DrawConditionBar(Node& node, ImRect& conditionRect)
             }
 
             if (condClicked)
-                std::cout << "Condition clicked: " << node.Conditions[i].Name << std::endl;
+                m_App->ConditionNodeSelected(node.Conditions[i]);
         }
 
         conditionRect = conditionsUnion;

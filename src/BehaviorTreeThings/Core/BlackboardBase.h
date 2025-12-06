@@ -22,6 +22,8 @@ protected:
     void CreateIntValue(const std::string& key, int value);
     void CreateFloatValue(const std::string& key, float value);
     void CreateStringValue(const std::string& key, const std::string& value);
+
+    virtual void DrawImGui() = 0;
 private:
     std::unordered_map<std::string, bool> m_BoolValues;
     std::unordered_map<std::string, int> m_IntValues;

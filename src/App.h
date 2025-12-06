@@ -3,6 +3,7 @@
 #include <GLFW/glfw3.h>
 #include "EnemyAI.h"
 #include "Editor/NodeEditor.h"
+#include "Editor/NodeEditorApp.h"
 
 class App
 {
@@ -21,8 +22,8 @@ private:
     EnemyAI* m_EnemyAI;
     GLFWwindow* m_Window;
     ImGuiContext* m_ImGuiContext;
-
-    NodeEditor m_NodeEditor;
+    
+    std::unique_ptr<NodeEditorApp> m_NodeEditorApp;
     
     static App* s_Instance;
 };

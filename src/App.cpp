@@ -11,9 +11,10 @@ App* App::s_Instance = nullptr;
 App::App() : m_EnemyAI(nullptr), m_Window(nullptr)
 {
     s_Instance = this;
+    m_NodeEditorApp = std::make_unique<NodeEditorApp>();
     Root::RootStart();
     m_EnemyAI = new EnemyAI();
-    NodeEditorApp::SetEnemyAI(m_EnemyAI);
+    m_NodeEditorApp->SetEnemyAI(m_EnemyAI);
 }
 
 App::~App()
@@ -57,10 +58,9 @@ void App::Run()
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
         ImGui::Begin("MainWindow_Fullscreen", nullptr, windowFlags);
         ImGui::PopStyleVar();
-
-        NodeEditorApp::Update();
         
-        m_NodeEditor.OnUpdate();
+        m_NodeEditorApp->Update();
+        
         ImGui::End(); 
         ImGui::Render();
 
@@ -117,9 +117,8 @@ bool App::Init()
     ImGui::StyleColorsDark();
     ImGui_ImplGlfw_InitForOpenGL(m_Window, true);
     ImGui_ImplOpenGL3_Init("#version 330");
-
-    m_NodeEditor.OnStart();
-    NodeEditorApp::OnStart();
+    
+    m_NodeEditorApp->OnStart();
     return true;
 }
 

@@ -25,9 +25,7 @@ enum class NodeType
     Root,
     Sequence,
     Selector,
-    Action,
-    Condition,
-    Decorator
+    Action
 };
 
 enum class BuildOpType

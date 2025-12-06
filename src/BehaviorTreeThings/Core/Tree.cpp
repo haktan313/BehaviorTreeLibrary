@@ -12,8 +12,6 @@ BehaviorTree* BehaviorTreeBuilder::build()
 BehaviorTree::~BehaviorTree()
 {
     m_Owner = nullptr;
-    delete m_Blackboard;
-    m_Blackboard = nullptr;
 }
 
 void BehaviorTree::StartTree()
