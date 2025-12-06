@@ -1,4 +1,6 @@
 #include "CustomBlackboard.h"
+#define IMGUI_DEFINE_MATH_OPERATORS
+#include "imgui.h"
 
 EnemyBlackboard::EnemyBlackboard()
 {
@@ -8,16 +10,9 @@ EnemyBlackboard::EnemyBlackboard()
     CreateStringValue("CurrentState", "Idle");
 }
 
-void EnemyBlackboard::DrawImGui()
-{
-}
-
 EnemySoilderBlackboard::EnemySoilderBlackboard()
 {
     CreateBoolValue("CanAttack", true);
     CreateFloatValue("RateAmount", 30.0f);
 }
 
-void EnemySoilderBlackboard::DrawImGui()
-{
-}

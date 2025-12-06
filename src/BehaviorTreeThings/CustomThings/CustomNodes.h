@@ -50,7 +50,7 @@ private:
 };
 
 
-struct AlwaysTrueConditionParams : Params
+struct AlwaysTrueConditionParams : ParamsForCondition
 {
     bool bInverse = false;
     void DrawImGui() override
@@ -82,7 +82,7 @@ public:
     void OnAbort() override { HCondition::OnAbort(); }
 };
 
-struct CanSeePlayerConditionParams : Params
+struct CanSeePlayerConditionParams : ParamsForCondition
 {
     bool bInverse = false;
     void DrawImGui() override

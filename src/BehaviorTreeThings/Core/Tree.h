@@ -25,7 +25,7 @@ public:
 private:
     std::unique_ptr<HNode> m_RootNode;
     EnemyAI* m_Owner;
-    std::unique_ptr<HBlackboard> m_Blackboard;
+    HBlackboard* m_Blackboard;
     bool m_bIsRunning = false;
     friend class BehaviorTreeBuilder;
 };
@@ -35,11 +35,16 @@ class BehaviorTreeBuilder
 public:
     BehaviorTreeBuilder(EnemyAI* owner) : m_Tree(Root::CreateBehaviorTree(owner)) {}
 
-    template<typename BlackboardType>
+    /*template<typename BlackboardType>
     BehaviorTreeBuilder& setBlackboard()
     {
         auto blackboard = std::make_unique<BlackboardType>();
         m_Tree->m_Blackboard = std::move(blackboard);
+        return *this;
+    }*/
+    BehaviorTreeBuilder& setBlackboard(HBlackboard* blackboard)
+    {
+        m_Tree->m_Blackboard = blackboard;
         return *this;
     }
     BehaviorTreeBuilder& root();
@@ -57,8 +62,7 @@ public:
             if (!m_NodeStack.empty())
             {
                 action->SetOwner(m_Tree->m_Owner);
-                auto blackboard = m_Tree->m_Blackboard.get();
-                action->SetBlackboard(blackboard);
+                action->SetBlackboard(m_Tree->m_Blackboard);
                 decoratorNode->AddChild(std::move(action));
                 m_NodeStack.back()->AddChild(std::move(decoratorNode));
             }
@@ -68,8 +72,7 @@ public:
             if (!m_NodeStack.empty())
             {
                 action->SetOwner(m_Tree->m_Owner);
-                auto blackboard = m_Tree->m_Blackboard.get();
-                action->SetBlackboard(blackboard);
+                action->SetBlackboard(m_Tree->m_Blackboard);
                 m_NodeStack.back()->AddChild(std::move(action));
             }
         }
@@ -83,8 +86,7 @@ public:
         if (m_LastCreatedNode)
         {
             condition->SetOwner(m_Tree->m_Owner);
-            auto blackboard = m_Tree->m_Blackboard.get();
-            condition->SetBlackboard(blackboard);
+            condition->SetBlackboard(m_Tree->m_Blackboard);
             condition->SetPriortyMode(priorty);
             m_LastCreatedNode->AddConditionNode(std::move(condition));
         }
@@ -96,8 +98,7 @@ public:
         m_CurrentDecorator = std::make_unique<DecoratorNodeType>(std::forward<Args>(args)...);
         std::cout << "Adding Decorator Node: " << m_CurrentDecorator->GetName() << std::endl;
         m_CurrentDecorator->SetOwner(m_Tree->m_Owner);
-        auto blackboard = m_Tree->m_Blackboard.get();
-        m_CurrentDecorator->SetBlackboard(blackboard);
+        m_CurrentDecorator->SetBlackboard(m_Tree->m_Blackboard);
         return *this;
     }
     BehaviorTreeBuilder& end();

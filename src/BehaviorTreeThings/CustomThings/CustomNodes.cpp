@@ -15,7 +15,7 @@ void ActionNode::OnStart()
 NodeStatus ActionNode::Update()
 {
     HActionNode::Update();
-    if (m_TickCount < 100.0f)
+    if (m_TickCount < 500.0f)
     {
         //std::cout << "Parent Sequence Name:" << m_Parent->GetName() << " Action Node Running: " << m_Name << " (Tick " << m_TickCount + 0.1f << ")" << std::endl;
         m_TickCount += 0.1f;

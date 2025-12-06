@@ -17,13 +17,13 @@ public:
     void SetIntValue(const std::string& key, int value);
     void SetFloatValue(const std::string& key, float value);
     void SetStringValue(const std::string& key, const std::string& value);
+    void DrawImGui();
 protected:
     void CreateBoolValue(const std::string& key, bool value);
     void CreateIntValue(const std::string& key, int value);
     void CreateFloatValue(const std::string& key, float value);
     void CreateStringValue(const std::string& key, const std::string& value);
 
-    virtual void DrawImGui() = 0;
 private:
     std::unordered_map<std::string, bool> m_BoolValues;
     std::unordered_map<std::string, int> m_IntValues;

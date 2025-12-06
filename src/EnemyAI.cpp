@@ -36,7 +36,7 @@ void EnemyAI::BeginPlay()
                 .condition<CanSeePlayerCondition>(PriortyType::LowerPriority,"IsPlayerVisible",false)
                 .action<ActionNode>("ChasePlayerAction", ActionNodeParams{2.f})  
             .end()#1#
-        .decorator<InverterDecorator>("Inverter_CanSeePlayer")
+        .decorator<InverterDecorator>("Inverter_CanSeePlayer", InverterDecoratorParams{})
         .action<ActionNode>("MoveToPatrolPointAction", ActionNodeParams{1.f})
         /*.condition<CanSeePlayerCondition>(PriortyType::Both,"CanSeePlayerCondition",false)#1#
         .action<ActionNode>("ChasePlayerAction", ActionNodeParams{2.f})

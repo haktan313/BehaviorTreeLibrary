@@ -1,5 +1,7 @@
 #include "BlackboardBase.h"
 
+#include "imgui.h"
+
 bool HBlackboard::GetBoolValue(const std::string& key) const
 {
     if (m_BoolValues.find(key) != m_BoolValues.end())
@@ -50,6 +52,37 @@ void HBlackboard::SetStringValue(const std::string& key, const std::string& valu
 {
     if (m_StringValues.find(key) != m_StringValues.end())
         m_StringValues[key] = value;
+}
+
+void HBlackboard::DrawImGui()
+{
+    ImGui::Text("Blackboard Values:");
+    ImGui::Separator();
+    for (auto& [key, value] : m_BoolValues)
+    {
+        bool val = value;
+        if (ImGui::Checkbox(key.c_str(), &val))
+            m_BoolValues[key] = val;
+    }
+    for (auto& [key, value] : m_IntValues)
+    {
+        int val = value;
+        if (ImGui::InputInt(key.c_str(), &val))
+            m_IntValues[key] = val;
+    }
+    for (auto& [key, value] : m_FloatValues)
+    {
+        float val = value;
+        if (ImGui::InputFloat(key.c_str(), &val))
+            m_FloatValues[key] = val;
+    }
+    for (auto& [key, value] : m_StringValues)
+    {
+        char buffer[256];
+        std::strncpy(buffer, value.c_str(), sizeof(buffer));
+        if (ImGui::InputText(key.c_str(), buffer, sizeof(buffer)))
+            m_StringValues[key] = std::string(buffer);
+    }
 }
 
 void HBlackboard::CreateBoolValue(const std::string& key, bool value)

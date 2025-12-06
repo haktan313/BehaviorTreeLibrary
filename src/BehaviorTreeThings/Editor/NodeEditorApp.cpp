@@ -11,11 +11,13 @@ std::vector<HNode*> NodeEditorApp::m_ActiveNodes;
 NodeEditorApp::NodeEditorApp()
 {
     m_NodeEditor = std::make_unique<NodeEditor>(this);
+    Root::RootStart();
 }
 
 NodeEditorApp::~NodeEditorApp()
 {
     ClearNodeMappings();
+    Root::RootStop();
 }
 
 void NodeEditorApp::OnStart()
@@ -37,6 +39,7 @@ void NodeEditorApp::OnStart()
 
 void NodeEditorApp::Update()
 {
+    Root::RootTick();
     if (ImGui::Button("Build", ImVec2(100, 30)))
         BuildBehaviorTree();
     if (ImGui::Button("Start", ImVec2(100, 30)))
@@ -369,22 +372,52 @@ void NodeEditorApp::BlackboardPanel()
         {
             auto parameter = s_NodeToConditionParams.find(nodeKey);
             if (parameter != s_NodeToConditionParams.end() && parameter->second)
+            {
+                PriortyType priorty = PriortyType::None;
+                ImGui::Text("Priorty Type");
+                ImGui::Separator();
+                const char* priortyTypes[] = { "None", "Self", "Lower Priority", "Both" };
+                int currentPriorty = static_cast<int>(parameter->second->Priorty);
+                if (ImGui::Combo("##PriortyTypeCombo", &currentPriorty, priortyTypes, IM_ARRAYSIZE(priortyTypes)))
+                {
+                    parameter->second->Priorty = static_cast<PriortyType>(currentPriorty);
+                }
                 parameter->second->DrawImGui();
+            }
         }
     }
     
     if (!m_LastSelectedNode)
     {
-        if (ImGui::BeginCombo("##BlackboardOptions", "Select Option"))
+        std::string currentLabel = "Select Blackboard";
+        if (!s_SelectedBlackboardClassName.empty())
         {
+            auto info = s_BlackboardClassInfoMap.find(s_SelectedBlackboardClassName);
+            if (info != s_BlackboardClassInfoMap.end())
+                currentLabel = info->second.Name;
+        }
+        if (ImGui::BeginCombo("##BlackboardOptions", currentLabel.c_str()))
+        {
+            for (auto& [id, info] : s_BlackboardClassInfoMap)
+            {
+                bool isSelected = (id == s_SelectedBlackboardClassName);
+                if (ImGui::Selectable(info.Name.c_str(), isSelected))
+                {
+                    s_SelectedBlackboardClassName = id;
+                    m_Blackboard = info.CreateBlackboardFn();
+                }
+            }
             ImGui::EndCombo();
+        }
+        if (!s_SelectedBlackboardClassName.empty())
+        {
+            m_Blackboard->DrawImGui();
         }
     }
 
     ImGui::End();
     s_InitLayout = false;
 }
-
 
 void NodeEditorApp::BuildBehaviorTree()
 {
@@ -393,7 +426,8 @@ void NodeEditorApp::BuildBehaviorTree()
     ClearNodeMappings();
     
     BehaviorTreeBuilder btBuilder(m_Enemy);
-    btBuilder.setBlackboard<EnemyBlackboard>();
+    //btBuilder.setBlackboard<EnemyBlackboard>();
+    btBuilder.setBlackboard(m_Blackboard.get());
     
     btBuilder.root();
     if (auto* runtimeRoot = btBuilder.GetLastCreatedNode())
@@ -450,7 +484,7 @@ void NodeEditorApp::BuildBehaviorTree()
                             auto condParamsIt = s_NodeToConditionParams.find(nodeKey);
                             if (condParamsIt != s_NodeToConditionParams.end() && condParamsIt->second)
                             {
-                                Params& condParams = *condParamsIt->second;
+                                ParamsForCondition& condParams = *condParamsIt->second;
                                 condInfo.BuildFn(btBuilder, node, condParams);
                             }
                         }
@@ -492,7 +526,7 @@ void NodeEditorApp::BuildBehaviorTree()
                             auto condParamsIt = s_NodeToConditionParams.find(nodeKey);
                             if (condParamsIt != s_NodeToConditionParams.end() && condParamsIt->second)
                             {
-                                Params& condParams = *condParamsIt->second;
+                                ParamsForCondition& condParams = *condParamsIt->second;
                                 condInfo.BuildFn(btBuilder, node, condParams);
                             }
                         }
@@ -556,7 +590,7 @@ void NodeEditorApp::BuildBehaviorTree()
                         auto condParamsIt = s_NodeToConditionParams.find(nodeKey);
                         if (condParamsIt != s_NodeToConditionParams.end() && condParamsIt->second)
                         {
-                            Params& condParams = *condParamsIt->second;
+                            ParamsForCondition& condParams = *condParamsIt->second;
                             condInfo.BuildFn(btBuilder, node, condParams);
                         }
                     }

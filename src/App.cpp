@@ -11,15 +11,14 @@ App* App::s_Instance = nullptr;
 App::App() : m_EnemyAI(nullptr), m_Window(nullptr)
 {
     s_Instance = this;
+    
     m_NodeEditorApp = std::make_unique<NodeEditorApp>();
-    Root::RootStart();
     m_EnemyAI = new EnemyAI();
     m_NodeEditorApp->SetEnemyAI(m_EnemyAI);
 }
 
 App::~App()
 {
-    Root::RootStop();
     delete m_EnemyAI;
     m_EnemyAI = nullptr;
 }
@@ -35,7 +34,6 @@ void App::Run()
     ImGui::SetCurrentContext(m_ImGuiContext);
     while (m_EnemyAI != nullptr && !glfwWindowShouldClose(m_Window))
     {
-        Root::RootTick();
         m_EnemyAI->Tick(0.016f);
 
         ImGui_ImplOpenGL3_NewFrame();

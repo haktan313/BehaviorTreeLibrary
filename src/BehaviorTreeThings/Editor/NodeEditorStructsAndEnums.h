@@ -13,6 +13,17 @@ public:
     virtual void DrawImGui() {}
 };
 
+struct ParamsForCondition : public Params
+{
+public:
+    ParamsForCondition() = default;
+    ~ParamsForCondition() = default;
+
+    virtual void DrawImGui() override {}
+
+    PriortyType Priorty = PriortyType::None;
+};
+
 enum class PinKind
 {
     Output,

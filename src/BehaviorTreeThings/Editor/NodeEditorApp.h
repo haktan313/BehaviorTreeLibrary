@@ -20,8 +20,13 @@ struct DecoratorClassInfo
 struct ConditionClassInfo
 {
     std::string Name;
-    std::function<void(BehaviorTreeBuilder&, Node*, Params&)> BuildFn;
-    std::function<std::unique_ptr<Params>()> CreateParamsFn;
+    std::function<void(BehaviorTreeBuilder&, Node*, ParamsForCondition&)> BuildFn;
+    std::function<std::unique_ptr<ParamsForCondition>()> CreateParamsFn;
+};
+struct BlackboardClassInfo
+{
+    std::string Name;
+    std::function<std::unique_ptr<HBlackboard>()> CreateBlackboardFn;
 };
 
 class NodeEditorApp
@@ -71,6 +76,7 @@ private:
     Node* m_LastSelectedNode = nullptr;
     BehaviorTree* m_BehaviorTree = nullptr;
     std::unique_ptr<NodeEditor> m_NodeEditor;
+    std::unique_ptr<HBlackboard> m_Blackboard;
     
     std::unordered_map<const HNode*, nodeEditor::NodeId> s_NodeToEditorIdMap;
     
@@ -86,8 +92,11 @@ private:
 
     std::unordered_map<std::string, ConditionClassInfo> s_ConditionClassInfoMap;
     std::unordered_map<int, std::string> s_NodeToConditionClassId;
-    std::unordered_map<int, std::unique_ptr<Params>> s_NodeToConditionParams;
+    std::unordered_map<int, std::unique_ptr<ParamsForCondition>> s_NodeToConditionParams;
     std::string s_SelectedConditionClassName;
+
+    std::unordered_map<std::string, BlackboardClassInfo> s_BlackboardClassInfoMap;
+    std::string s_SelectedBlackboardClassName;
 
     template<typename ActionClass, typename ParamsStruct>
     void AddActionNodeToBuilder(const std::string& nameAsID, const std::string& name = "")
@@ -131,16 +140,22 @@ private:
         {
             return std::make_unique<ParamsStruct>();
         };
-        conditionInfo.BuildFn = [](BehaviorTreeBuilder& builder, Node* node, Params& baseParams)
+        conditionInfo.BuildFn = [](BehaviorTreeBuilder& builder, Node* node, ParamsForCondition& baseParams)
         {
             auto& params = static_cast<ParamsStruct&>(baseParams);
-            builder.condition<ConditionClass>(PriortyType::Both, node->Name, params);
+            builder.condition<ConditionClass>(baseParams.Priorty, node->Name, params);
         };
         s_ConditionClassInfoMap.emplace(name, std::move(conditionInfo));
     }
     template<typename BlackboardType>
     void AddBlackBoardToEditor(const std::string& name = "")
     {
-
+        BlackboardClassInfo blackboardInfo;
+        blackboardInfo.Name = name;
+        blackboardInfo.CreateBlackboardFn = []()
+        {
+            return std::make_unique<BlackboardType>();
+        };
+        s_BlackboardClassInfoMap.emplace(name, std::move(blackboardInfo));
     }   
 };
