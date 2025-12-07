@@ -31,7 +31,7 @@ void HNode::OnStart()
 
 void HNode::OnFinished()
 {
-    m_EditorApp->RemoveActiveNode();
+    m_EditorApp->RemoveActiveNode(this);
     for (auto& child : m_Childrens)
     {
         if (child->GetStatus() == NodeStatus::RUNNING)
@@ -43,6 +43,7 @@ void HNode::OnFinished()
 void HNode::OnAbort()
 {
     std::cout << "Node Aborted: " << m_Name << std::endl;
+    m_EditorApp->RemoveActiveNode(this);
     for (auto& child : m_Childrens)
     {
         if (child->GetStatus() == NodeStatus::RUNNING)
@@ -95,7 +96,7 @@ void HRootNode::OnFinished()
 {
     m_bIsStarted = false;
     std::cout << "Root Node Finished with result: " << (m_Status == NodeStatus::SUCCESS ? "SUCCESS" : "FAILURE") << std::endl;
-    m_EditorApp->RemoveActiveNode();
+    m_EditorApp->RemoveActiveNode(this);
 }
 
 void HRootNode::OnAbort()

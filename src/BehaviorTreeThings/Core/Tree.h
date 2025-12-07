@@ -54,7 +54,6 @@ public:
     BehaviorTreeBuilder& action(Args&&... args)
     {
         auto action = std::make_unique<ActionNodeType>(std::forward<Args>(args)...);
-        action->SetEditorApp(action->GetParent()->GetEditorApp());
         std::cout << "Adding Action Node: " << action->GetName() << std::endl;
         m_LastCreatedNode = action.get();
         if (m_CurrentDecorator)
@@ -77,6 +76,7 @@ public:
                 m_NodeStack.back()->AddChild(std::move(action));
             }
         }
+        m_LastCreatedNode->SetEditorApp(m_LastCreatedNode->GetParent()->GetEditorApp());
         return *this;
     }
     template<typename ConditionNodeType, typename... Args>

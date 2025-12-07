@@ -11,7 +11,6 @@ BehaviorTree* BehaviorTreeBuilder::build()
 BehaviorTree::~BehaviorTree()
 {
     m_Owner = nullptr;
-    delete m_Blackboard;
     m_Blackboard = nullptr;
 }
 
@@ -55,7 +54,6 @@ BehaviorTreeBuilder& BehaviorTreeBuilder::sequence(const std::string& name)
 {
     std::cout << "Adding Sequence Node: " << name << std::endl;
     auto sequenceNode = std::make_unique<SequenceNode>(name);
-    sequenceNode->SetEditorApp(sequenceNode->GetParent()->GetEditorApp());
     SequenceNode* sequenceNodePtr = sequenceNode.get();
     m_LastCreatedNode = sequenceNodePtr;
     if (m_CurrentDecorator)
@@ -75,6 +73,7 @@ BehaviorTreeBuilder& BehaviorTreeBuilder::sequence(const std::string& name)
             m_NodeStack.back()->AddChild(std::move(sequenceNode));
     }
     m_NodeStack.push_back(sequenceNodePtr);
+    sequenceNodePtr->SetEditorApp(sequenceNode->GetParent()->GetEditorApp());
     return *this;
 }
 
@@ -82,7 +81,6 @@ BehaviorTreeBuilder& BehaviorTreeBuilder::selector(const std::string& name)
 {
     std::cout << "Adding Selector Node: " << name << std::endl;
     auto selectorNode = std::make_unique<SelectorNode>(name);
-    selectorNode->SetEditorApp(selectorNode->GetParent()->GetEditorApp());
     auto selectorNodePtr = selectorNode.get();
     m_LastCreatedNode = selectorNodePtr;
     if (m_CurrentDecorator)
@@ -104,6 +102,7 @@ BehaviorTreeBuilder& BehaviorTreeBuilder::selector(const std::string& name)
             m_NodeStack.back()->AddChild(std::move(selectorNode));
         m_NodeStack.push_back(selectorNodePtr);
     }
+    selectorNodePtr->SetEditorApp(selectorNodePtr->GetParent()->GetEditorApp());
     return *this;
 }
 

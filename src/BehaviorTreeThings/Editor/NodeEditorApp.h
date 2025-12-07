@@ -33,7 +33,7 @@ class NodeEditorApp
 {
 public:
     void AddActiveNode(HNode* node) { m_ActiveNodes.push_back(node); }
-    void RemoveActiveNode() { if (!m_ActiveNodes.empty()) m_ActiveNodes.pop_back(); }
+    void RemoveActiveNode(HNode* node) { m_ActiveNodes.erase(std::remove(m_ActiveNodes.begin(), m_ActiveNodes.end(), node), m_ActiveNodes.end());}
     void ClearActiveNodes() { m_ActiveNodes.clear(); }
     
     NodeEditorApp();

@@ -108,7 +108,7 @@ void SequenceNode::OnFinished()
     std::cout << "Sequence Node Finished: " << m_Name << " result is: " << (m_Status == NodeStatus::SUCCESS ? "SUCCESS" : "FAILURE") << std::endl;
     m_CurrentChildIndex = 0;
     m_bIsStarted = false;
-    m_EditorApp->RemoveActiveNode();
+    m_EditorApp->RemoveActiveNode(this);
 }
 
 void SequenceNode::OnAbort()
@@ -159,7 +159,7 @@ void SelectorNode::OnFinished()
     std::cout << "Selector Node Finished: " << m_Name << " result is: " << (m_Status == NodeStatus::SUCCESS ? "SUCCESS" : "FAILURE") << std::endl;
     m_CurrentChildIndex = 0;
     m_bIsStarted = false;
-    m_EditorApp->RemoveActiveNode();
+    m_EditorApp->RemoveActiveNode(this);
 }
 
 void SelectorNode::OnAbort()
