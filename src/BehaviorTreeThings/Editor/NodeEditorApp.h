@@ -129,7 +129,7 @@ private:
         conditionInfo.BuildFn = [](BehaviorTreeBuilder& builder, Node* node, ParamsForCondition& baseParams)
         {
             auto& params = static_cast<ParamsStruct&>(baseParams);
-            builder.condition<ConditionClass>(baseParams.Priorty, node->Name, params);
+            builder.condition<ConditionClass>(baseParams.Priority, node->Name, params);
         };
         s_ConditionClassInfoMap.emplace(name, std::move(conditionInfo));
     }

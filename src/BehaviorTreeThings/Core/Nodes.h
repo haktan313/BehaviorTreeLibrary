@@ -99,30 +99,30 @@ struct ParamsForCondition : public Params
 
     virtual void DrawImGui() override {}
 
-    PriortyType Priorty = PriortyType::None;
+    PriorityType Priority = PriorityType::None;
 };
 class HCondition : public HNode
 {
 public:
-    HCondition(const std::string& name, const ParamsForCondition& params = ParamsForCondition{}) : HNode(name), m_Owner(nullptr), m_Blackboard(nullptr), m_PriortyMode(PriortyType::None) {}
+    HCondition(const std::string& name, const ParamsForCondition& params = ParamsForCondition{}) : HNode(name), m_Owner(nullptr), m_Blackboard(nullptr), m_PriorityMode(PriorityType::None) {}
 
     virtual void OnStart() override {}
     virtual NodeStatus Update() override = 0;
     virtual void OnFinished() override { m_bIsStarted = false; }
     virtual void OnAbort() override { HNode::OnAbort(); }
 
-    PriortyType GetPriortyMode() const { return m_PriortyMode; }
+    PriorityType GetPriorityMode() const { return m_PriorityMode; }
 protected:
     EnemyAI& GetOwner() const { return *m_Owner; }
     HBlackboard& GetBlackboard() const { return *m_Blackboard; }
 private:
     EnemyAI* m_Owner;
     HBlackboard* m_Blackboard;
-    PriortyType m_PriortyMode;
+    PriorityType m_PriorityMode;
     
     void SetOwner(EnemyAI* owner) { m_Owner = owner; }
     void SetBlackboard(HBlackboard* blackboard) { m_Blackboard = blackboard; }
-    void SetPriortyMode(PriortyType priorty) { m_PriortyMode = priorty; }
+    void SetPriorityMode(PriorityType priority) { m_PriorityMode = priority; }
     friend class BehaviorTreeBuilder;
     friend class BehaviorTree;
 };

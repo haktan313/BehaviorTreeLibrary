@@ -397,14 +397,13 @@ void NodeEditorApp::ShowConditionNodeInBlackboard()
             auto parameter = s_NodeToConditionParams.find(nodeKey);
             if (parameter != s_NodeToConditionParams.end() && parameter->second)
             {
-                PriortyType priorty = PriortyType::None;
-                ImGui::Text("Priorty Type");
+                ImGui::Text("Priority Type");
                 ImGui::Separator();
-                const char* priortyTypes[] = { "None", "Self", "Lower Priority", "Both" };
-                int currentPriorty = static_cast<int>(parameter->second->Priorty);
-                if (ImGui::Combo("##PriortyTypeCombo", &currentPriorty, priortyTypes, IM_ARRAYSIZE(priortyTypes)))
+                const char* priorityTypes[] = { "None", "Self", "Lower Priority", "Both" };
+                int currentPriority = static_cast<int>(parameter->second->Priority);
+                if (ImGui::Combo("##PriorityTypeCombo", &currentPriority, priorityTypes, IM_ARRAYSIZE(priorityTypes)))
                 {
-                    parameter->second->Priorty = static_cast<PriortyType>(currentPriorty);
+                    parameter->second->Priority = static_cast<PriorityType>(currentPriority);
                 }
                 parameter->second->DrawImGui();
             }

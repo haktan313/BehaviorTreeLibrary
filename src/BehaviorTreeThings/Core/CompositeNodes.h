@@ -8,7 +8,7 @@ public:
     
     bool CheckConditions();
     bool CheckConditionsSelfMode();
-    void CheckConditionsLowerPriortyMode(int& currentChildIndex);
+    void CheckConditionsLowerPriorityMode(int& currentChildIndex);
 
     bool CanStart() override;
 protected:

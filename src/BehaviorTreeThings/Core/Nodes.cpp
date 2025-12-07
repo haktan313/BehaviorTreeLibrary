@@ -171,10 +171,10 @@ bool HActionNode::CheckConditionsSelfMode()
     if (!m_ConditionNodes.empty())
         for (auto& condition : m_ConditionNodes)
         {
-            if (condition->GetPriortyMode() == PriortyType::None)
+            if (condition->GetPriorityMode() == PriorityType::None)
                 continue;
             NodeStatus conditionStatus = condition.get()->Tick();
-            if ((condition->GetPriortyMode() == PriortyType::Self || condition->GetPriortyMode() == PriortyType::Both) && conditionStatus == NodeStatus::FAILURE)
+            if ((condition->GetPriorityMode() == PriorityType::Self || condition->GetPriorityMode() == PriorityType::Both) && conditionStatus == NodeStatus::FAILURE)
             {
                 OnAbort();
                 std::cout << "Node Condition Failed at Runtime: " << condition->GetName() << " in " << m_Name << std::endl;

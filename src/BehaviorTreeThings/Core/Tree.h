@@ -80,7 +80,7 @@ public:
         return *this;
     }
     template<typename ConditionNodeType, typename... Args>
-    BehaviorTreeBuilder& condition(PriortyType priorty, Args&&... args)
+    BehaviorTreeBuilder& condition(PriorityType priority, Args&&... args)
     {
         auto condition = std::make_unique<ConditionNodeType>(std::forward<Args>(args)...);
         std::cout << "Adding Condition Node: " << condition->GetName() << std::endl;
@@ -88,7 +88,7 @@ public:
         {
             condition->SetOwner(m_Tree->m_Owner);
             condition->SetBlackboard(m_Tree->m_Blackboard);
-            condition->SetPriortyMode(priorty);
+            condition->SetPriorityMode(priority);
             m_LastCreatedNode->AddConditionNode(std::move(condition));
         }
         return *this;

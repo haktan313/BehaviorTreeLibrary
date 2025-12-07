@@ -7,7 +7,7 @@ enum class NodeStatus
     RUNNING
 };
 
-enum class PriortyType
+enum class PriorityType
 {
     None,
     Self,

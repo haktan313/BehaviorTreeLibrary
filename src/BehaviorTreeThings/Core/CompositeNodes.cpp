@@ -27,10 +27,10 @@ bool HCompositeNode::CheckConditionsSelfMode()
     if (!m_ConditionNodes.empty())
         for (auto& condition : m_ConditionNodes)
         {
-            if (condition->GetPriortyMode() == PriortyType::None)
+            if (condition->GetPriorityMode() == PriorityType::None)
                 continue;
             NodeStatus conditionStatus = condition.get()->Tick();
-            if ((condition->GetPriortyMode() == PriortyType::Self || condition->GetPriortyMode() == PriortyType::Both) && conditionStatus == NodeStatus::FAILURE)
+            if ((condition->GetPriorityMode() == PriorityType::Self || condition->GetPriorityMode() == PriorityType::Both) && conditionStatus == NodeStatus::FAILURE)
             {
                 OnAbort();
                 std::cout << "Node Condition Failed at Runtime: " << condition->GetName() << " in " << m_Name << std::endl;
@@ -40,7 +40,7 @@ bool HCompositeNode::CheckConditionsSelfMode()
     return true;
 }
 
-void HCompositeNode::CheckConditionsLowerPriortyMode(int& currentChildIndex)
+void HCompositeNode::CheckConditionsLowerPriorityMode(int& currentChildIndex)
 {
     if (!m_Childrens.empty())
         for (int i = 0; i < static_cast<int>(m_Childrens.size()); ++i)
@@ -50,10 +50,10 @@ void HCompositeNode::CheckConditionsLowerPriortyMode(int& currentChildIndex)
             auto& child = m_Childrens[i];
             for (auto& condition : child->GetConditionNodes())
             {
-                if (condition->GetPriortyMode() == PriortyType::None)
+                if (condition->GetPriorityMode() == PriorityType::None)
                     continue;
                 NodeStatus conditionStatus = condition.get()->Tick();
-                if ((condition->GetPriortyMode() == PriortyType::LowerPriority || condition->GetPriortyMode() == PriortyType::Both) && conditionStatus == NodeStatus::SUCCESS)
+                if ((condition->GetPriorityMode() == PriorityType::LowerPriority || condition->GetPriorityMode() == PriorityType::Both) && conditionStatus == NodeStatus::SUCCESS)
                 {
                     m_Childrens[currentChildIndex]->OnAbort();
                     currentChildIndex = i;
@@ -133,7 +133,7 @@ NodeStatus SelectorNode::Update()
 {
     if (!CheckConditionsSelfMode())
         return NodeStatus::FAILURE;
-    CheckConditionsLowerPriortyMode(m_CurrentChildIndex);
+    CheckConditionsLowerPriorityMode(m_CurrentChildIndex);
     while (m_CurrentChildIndex < static_cast<int>(m_Childrens.size()))
     {
         NodeStatus status = m_Childrens[m_CurrentChildIndex]->Tick();
