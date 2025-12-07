@@ -107,7 +107,7 @@ public:
     HCondition(const std::string& name, const ParamsForCondition& params = ParamsForCondition{}) : HNode(name), m_Owner(nullptr), m_Blackboard(nullptr), m_PriorityMode(PriorityType::None) {}
 
     virtual void OnStart() override {}
-    virtual NodeStatus Update() override = 0;
+    virtual NodeStatus Update() override { return NodeStatus::SUCCESS; }
     virtual void OnFinished() override { m_bIsStarted = false; }
     virtual void OnAbort() override { HNode::OnAbort(); }
 
@@ -140,7 +140,7 @@ public:
     HDecorator(const std::string& name, const ParamsForDecorator& params = ParamsForDecorator{}) : HNode(name), m_Blackboard(nullptr), m_Owner(nullptr) {}
 
     virtual void OnStart() override {}
-    virtual NodeStatus Update() override = 0;
+    virtual NodeStatus Update() override { return NodeStatus::SUCCESS; }
     virtual void OnFinished() override { m_bIsStarted = false; }
     virtual void OnAbort() override { HNode::OnAbort(); }
 protected:

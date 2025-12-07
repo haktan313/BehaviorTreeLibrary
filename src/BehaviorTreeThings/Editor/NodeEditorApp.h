@@ -85,7 +85,7 @@ private:
     std::string s_SelectedBlackboardClassName;
 
     template<typename ActionClass, typename ParamsStruct>
-    void AddActionNodeToBuilder(const std::string& nameAsID, const std::string& name = "")
+    void AddActionNodeToBuilder(const std::string& name = "")
     {
         ActionClassInfo actionInfo;
         actionInfo.Name = name;
@@ -102,7 +102,7 @@ private:
         s_ActionClassInfoMap.emplace(name, std::move(actionInfo));
     }
     template<typename DecoratorClass, typename ParamsStruct>
-    void AddDecoratorNodeToBuilder(const std::string& nameAsID, const std::string& name = "")
+    void AddDecoratorNodeToBuilder(const std::string& name = "")
     {
         DecoratorClassInfo decoratorInfo;
         decoratorInfo.Name = name;
@@ -118,7 +118,7 @@ private:
         s_DecoratorClassInfoMap.emplace(name, std::move(decoratorInfo));
     }
     template<typename ConditionClass, typename ParamsStruct>
-    void AddConditionNodeToBuilder(const std::string& nameAsID, const std::string& name = "")
+    void AddConditionNodeToBuilder(const std::string& name = "")
     {
         ConditionClassInfo conditionInfo;
         conditionInfo.Name = name;

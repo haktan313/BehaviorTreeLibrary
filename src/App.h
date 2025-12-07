@@ -2,7 +2,6 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include "EnemyAI.h"
-#include "Editor/NodeEditor.h"
 #include "Editor/NodeEditorApp.h"
 
 class App

@@ -1,12 +1,14 @@
 #include "NodeEditorApp.h"
 #include <iostream>
 #define IMGUI_DEFINE_MATH_OPERATORS
-#include "CustomBlackboard.h"
-#include "CustomNodes.h"
 #include "EnemyAI.h"
 #include "imgui.h"
 #include "NodeEditor.h"
 #include "Tree.h"
+#include "CustomsThings/CustomActions.h"
+#include "CustomsThings/CustomBlackboards.h"
+#include "CustomsThings/CustomConditions.h"
+#include "CustomsThings/CustomDecorators.h"
 
 NodeEditorApp::NodeEditorApp()
 {
@@ -23,18 +25,23 @@ NodeEditorApp::~NodeEditorApp()
 void NodeEditorApp::OnStart()
 {
     m_NodeEditor->OnStart();
-    
-    AddActionNodeToBuilder<MoveToNode, MoveToNodeParams>("MoveToNode", "Move To");
-    AddActionNodeToBuilder<ActionNode, ActionNodeParams>("ActionNode", "Generic Action");
-    
-    AddConditionNodeToBuilder<AlwaysTrueCondition, AlwaysTrueConditionParams>("AlwaysTrueCondition", "Always True");
-    AddConditionNodeToBuilder<CanSeePlayerCondition, CanSeePlayerConditionParams>("CanSeePlayerCondition", "Can See Player");
 
-    AddDecoratorNodeToBuilder<InverterDecorator, InverterDecoratorParams>("InverterDecorator", "Inverter");
-    AddDecoratorNodeToBuilder<SucceederDecorator, SucceederDecoratorParams>("SucceederDecorator", "Succeeder");
+    AddBlackBoardToEditor<MeleeEnemyBlackboard>("Melee Enemy Blackboard");
+    AddBlackBoardToEditor<RangedEnemyBlackboard>("Ranged Enemy Blackboard");
 
-    AddBlackBoardToEditor<EnemyBlackboard>("EnemyBlackboard");
-    AddBlackBoardToEditor<EnemySoilderBlackboard>("Enemy Soldier Blackboard");
+    AddActionNodeToBuilder<MoveToAction, MoveToParameters>("Move To Action");
+    AddActionNodeToBuilder<MeleeEnemyAttackAction, MeleeEnemyAttackActionParameters>("Melee Enemy Attack Action");
+    AddActionNodeToBuilder<MeleeEnemyDodgeAction, MeleeEnemyDodgeActionParameters>("Melee Enemy Dodge Action");
+    AddActionNodeToBuilder<RangedEnemyShootAction, RangedEnemyShootActionParameters>("Ranged Enemy Shoot Action");
+    AddActionNodeToBuilder<ReloadPistolAction, ReloadPistolActionParameters>("Reload Pistol Action");
+
+    AddConditionNodeToBuilder<IsPlayerInRangeCondition, IsPlayerInRangeParameters>("Is Player In Range Condition");
+    AddConditionNodeToBuilder<IsPlayerAttackingCondition, IsPlayerAttackingParameters>("Is Player Attacking Condition");
+    AddConditionNodeToBuilder<IsPlayerInSightCondition, IsPlayerInSightParameters>("Is Player In Sight Condition");
+    AddConditionNodeToBuilder<HasAmmoCondition, HasAmmoParameters>("Has Ammo Condition");
+
+    AddDecoratorNodeToBuilder<CooldownDecorator, CooldownDecoratorParameters>("Cooldown Decorator");
+    AddDecoratorNodeToBuilder<TimeLimitDecorator, TimeLimitDecoratorParameters>("Time Limit Decorator");
 }
 
 void NodeEditorApp::Update()

@@ -73,7 +73,7 @@ BehaviorTreeBuilder& BehaviorTreeBuilder::sequence(const std::string& name)
             m_NodeStack.back()->AddChild(std::move(sequenceNode));
     }
     m_NodeStack.push_back(sequenceNodePtr);
-    sequenceNodePtr->SetEditorApp(sequenceNode->GetParent()->GetEditorApp());
+    sequenceNodePtr->SetEditorApp(sequenceNodePtr->GetParent()->GetEditorApp());
     return *this;
 }
 
