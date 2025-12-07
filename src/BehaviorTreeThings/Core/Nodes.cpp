@@ -1,7 +1,5 @@
 #include "Nodes.h"
-
 #include <iostream>
-
 #include "Editor/NodeEditorApp.h"
 
 // HNode methods
@@ -28,12 +26,12 @@ NodeStatus HNode::Tick()
 
 void HNode::OnStart()
 {
-    NodeEditorApp::AddActiveNode(this);
+    m_EditorApp->AddActiveNode(this);
 }
 
 void HNode::OnFinished()
 {
-    NodeEditorApp::RemoveActiveNode();
+    m_EditorApp->RemoveActiveNode();
     for (auto& child : m_Childrens)
     {
         if (child->GetStatus() == NodeStatus::RUNNING)
@@ -69,7 +67,7 @@ void HNode::AddConditionNode(std::unique_ptr<HCondition> conditionNode)
 void HRootNode::OnStart()
 {
     std::cout << "Root Node Started" << std::endl;
-    NodeEditorApp::AddActiveNode(this);
+    m_EditorApp->AddActiveNode(this);
 }
 
 NodeStatus HRootNode::Update()
@@ -97,7 +95,7 @@ void HRootNode::OnFinished()
 {
     m_bIsStarted = false;
     std::cout << "Root Node Finished with result: " << (m_Status == NodeStatus::SUCCESS ? "SUCCESS" : "FAILURE") << std::endl;
-    NodeEditorApp::RemoveActiveNode();
+    m_EditorApp->RemoveActiveNode();
 }
 
 void HRootNode::OnAbort()
@@ -112,7 +110,8 @@ void HRootNode::OnAbort()
 
 void HRootNode::AddChild(std::unique_ptr<HNode> child)
 {
-    child->m_Parent = this;
+    //child->GetParent() = this;
+    child->SetParent(this);
     if (m_Childrens.empty())
         m_Childrens.push_back(std::move(child));
     else

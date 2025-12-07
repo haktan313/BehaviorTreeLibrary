@@ -3,10 +3,10 @@
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "CustomBlackboard.h"
 #include "CustomNodes.h"
+#include "EnemyAI.h"
 #include "imgui.h"
 #include "NodeEditor.h"
-
-std::vector<HNode*> NodeEditorApp::m_ActiveNodes;
+#include "Tree.h"
 
 NodeEditorApp::NodeEditorApp()
 {
@@ -42,10 +42,17 @@ void NodeEditorApp::Update()
     Root::RootTick();
     if (ImGui::Button("Build", ImVec2(100, 30)))
         BuildBehaviorTree();
+    ImGui::SameLine();
     if (ImGui::Button("Start", ImVec2(100, 30)))
     {
         if (m_BehaviorTree)
             m_BehaviorTree->StartTree();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Stop", ImVec2(100, 30)))
+    {
+        if (m_BehaviorTree)
+            m_BehaviorTree->StopTree();
     }
     
     MouseInputHandling();
@@ -183,7 +190,7 @@ void NodeEditorApp::FlowLinks()
 
         if (!activeNode || !nextNode)
             continue;
-        if (nextNode->m_Parent != activeNode)
+        if (nextNode->GetParent() != activeNode)
             continue;
 
         if (activeNode->GetStatus() != NodeStatus::RUNNING ||
@@ -226,18 +233,19 @@ void NodeEditorApp::BlackboardPanel()
     ImVec2 workPos  = viewport->WorkPos;
     ImVec2 workSize = viewport->WorkSize;
     
-    if (s_InitLayout)
-    {
-        ImGui::SetNextWindowPos(
-            ImVec2(workPos.x + workSize.x - s_RightPanelWidth, workPos.y),
-            ImGuiCond_Once
-        );
-        ImGui::SetNextWindowSize(
-            ImVec2(s_RightPanelWidth, workSize.y),
-            ImGuiCond_Once
-        );
-    }
-    ImGui::Begin("Blackboard & Details", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
+    s_RightPanelWidth = std::clamp(s_RightPanelWidth, 200.0f, workSize.x * 0.8f);
+
+    ImVec2 panelPos  = ImVec2(workPos.x + workSize.x - s_RightPanelWidth, workPos.y);
+    ImVec2 panelSize = ImVec2(s_RightPanelWidth, workSize.y);
+
+    ImGui::SetNextWindowPos(panelPos);
+    ImGui::SetNextWindowSize(panelSize);
+
+    ImGui::Begin("Blackboard & Details", nullptr,
+        ImGuiWindowFlags_NoMove |
+        ImGuiWindowFlags_NoCollapse);
+    
+    s_RightPanelWidth = ImGui::GetWindowSize().x;
 
     ImGui::TextUnformatted("Blackboard / Node Details Panel");
     ImGui::Separator();
@@ -423,13 +431,13 @@ void NodeEditorApp::BuildBehaviorTree()
 {
     m_NodeEditor->BuildNodes();
     std::cout << "Building Behavior Tree from Node Editor..." << std::endl;
-    ClearNodeMappings();
+    ClearBuildData();
     
     BehaviorTreeBuilder btBuilder(m_Enemy);
     //btBuilder.setBlackboard<EnemyBlackboard>();
     btBuilder.setBlackboard(m_Blackboard.get());
     
-    btBuilder.root();
+    btBuilder.root(this);
     if (auto* runtimeRoot = btBuilder.GetLastCreatedNode())
         for (auto& n : m_NodeEditor->GetNodes())
         {
@@ -609,6 +617,14 @@ void NodeEditorApp::BuildBehaviorTree()
                 break;
         }
     m_BehaviorTree = btBuilder.build();
+}
+
+void NodeEditorApp::ClearBuildData()
+{
+    ClearNodeMappings();
+    ClearActiveNodes();
+    m_Enemy->m_BehaviorTree = nullptr;
+    m_BehaviorTree = nullptr;
 }
 
 void NodeEditorApp::BuildPlanForNode(Node* editorNode, std::vector<BuildOp>& ops)

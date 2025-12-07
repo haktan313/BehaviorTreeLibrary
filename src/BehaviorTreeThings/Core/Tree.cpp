@@ -1,5 +1,4 @@
 #include "Tree.h"
-
 #include "CompositeNodes.h"
 
 //BehaviorTree methods
@@ -12,6 +11,8 @@ BehaviorTree* BehaviorTreeBuilder::build()
 BehaviorTree::~BehaviorTree()
 {
     m_Owner = nullptr;
+    delete m_Blackboard;
+    m_Blackboard = nullptr;
 }
 
 void BehaviorTree::StartTree()
@@ -38,10 +39,11 @@ void BehaviorTree::StopTree()
 
 // BehaviorTreeBuilder methods
 
-BehaviorTreeBuilder& BehaviorTreeBuilder::root()
+BehaviorTreeBuilder& BehaviorTreeBuilder::root(NodeEditorApp* editorApp)
 {
     std::cout << "Adding Root Node" << std::endl;
     auto rootNode = std::make_unique<HRootNode>();
+    rootNode->SetEditorApp(editorApp);
     HRootNode* rootNodePtr = rootNode.get();
     m_LastCreatedNode = rootNodePtr;
     m_Tree->SetRootNode(std::move(rootNode));
@@ -53,6 +55,7 @@ BehaviorTreeBuilder& BehaviorTreeBuilder::sequence(const std::string& name)
 {
     std::cout << "Adding Sequence Node: " << name << std::endl;
     auto sequenceNode = std::make_unique<SequenceNode>(name);
+    sequenceNode->SetEditorApp(sequenceNode->GetParent()->GetEditorApp());
     SequenceNode* sequenceNodePtr = sequenceNode.get();
     m_LastCreatedNode = sequenceNodePtr;
     if (m_CurrentDecorator)
@@ -79,6 +82,7 @@ BehaviorTreeBuilder& BehaviorTreeBuilder::selector(const std::string& name)
 {
     std::cout << "Adding Selector Node: " << name << std::endl;
     auto selectorNode = std::make_unique<SelectorNode>(name);
+    selectorNode->SetEditorApp(selectorNode->GetParent()->GetEditorApp());
     auto selectorNodePtr = selectorNode.get();
     m_LastCreatedNode = selectorNodePtr;
     if (m_CurrentDecorator)

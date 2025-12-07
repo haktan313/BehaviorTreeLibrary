@@ -7,11 +7,12 @@
 class HCondition;
 class HBlackboard;
 class EnemyAI;
+class NodeEditorApp;
 
 class HNode
 {
 public:
-    HNode(const std::string& name) : m_Name(name), m_Parent(nullptr), m_Status(NodeStatus::RUNNING) {}
+    HNode(const std::string& name) : m_Name(name), m_Parent(nullptr), m_Status(NodeStatus::RUNNING), m_EditorApp(nullptr) {}
     virtual ~HNode() = default;
     
     NodeStatus Tick();
@@ -25,13 +26,17 @@ public:
 
     virtual bool CanStart() { return true; }
     
-    const HNode* GetParent() const { return m_Parent; }
-    const NodeStatus GetStatus() const { return m_Status; }
+    HNode* GetParent() const { return m_Parent; }
+    void SetParent(HNode* parent) { m_Parent = parent; }
+    void SetEditorApp(NodeEditorApp* app) { m_EditorApp = app; }
+    NodeEditorApp* GetEditorApp() { return m_EditorApp; }
+    NodeStatus GetStatus() const { return m_Status; }
     std::string GetName() const { return m_Name; }
     std::vector<std::unique_ptr<HNode>>& GetChildrens() { return m_Childrens; }
     std::vector<std::unique_ptr<HCondition>>& GetConditionNodes() { return m_ConditionNodes; }
-    HNode* m_Parent;
 protected:
+    HNode* m_Parent;
+    NodeEditorApp* m_EditorApp;
     std::string m_Name;
     NodeStatus m_Status;
     bool m_bIsStarted = false;

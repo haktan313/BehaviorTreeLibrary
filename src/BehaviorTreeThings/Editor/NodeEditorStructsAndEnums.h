@@ -6,7 +6,6 @@ namespace nodeEditor = ax::NodeEditor;
 
 struct Params
 {
-public:
     Params() = default;
     ~Params() = default;
     
@@ -15,7 +14,6 @@ public:
 
 struct ParamsForCondition : public Params
 {
-public:
     ParamsForCondition() = default;
     ~ParamsForCondition() = default;
 

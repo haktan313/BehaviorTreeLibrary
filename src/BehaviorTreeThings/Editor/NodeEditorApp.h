@@ -32,9 +32,9 @@ struct BlackboardClassInfo
 class NodeEditorApp
 {
 public:
-    static void AddActiveNode(HNode* node) { m_ActiveNodes.push_back(node); }
-    static void RemoveActiveNode() { if (!m_ActiveNodes.empty()) m_ActiveNodes.pop_back(); }
-    static void ClearActiveNodes() { m_ActiveNodes.clear(); }
+    void AddActiveNode(HNode* node) { m_ActiveNodes.push_back(node); }
+    void RemoveActiveNode() { if (!m_ActiveNodes.empty()) m_ActiveNodes.pop_back(); }
+    void ClearActiveNodes() { m_ActiveNodes.clear(); }
     
     NodeEditorApp();
     ~NodeEditorApp();
@@ -58,10 +58,10 @@ private:
     
     void BlackboardPanel();
     void BuildBehaviorTree();
+    void ClearBuildData();
     void BuildPlanForNode(Node* editorNode, std::vector<BuildOp>& ops);
     std::vector<BuildOp> CreateBuildPlan();
 
-    static std::vector<HNode*> m_ActiveNodes;
 
     bool s_InitLayout = true;
     bool m_bDecoratorSelected = false;
@@ -69,6 +69,7 @@ private:
     
     float s_RightPanelWidth = 320.0f;
     
+    std::vector<HNode*> m_ActiveNodes;
     EditorDecorator* m_LastSelectedDecorator = nullptr;
     EditorCondition* m_LastSelectedCondition = nullptr;
     EnemyAI* m_Enemy = nullptr;

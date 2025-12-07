@@ -35,25 +35,26 @@ class BehaviorTreeBuilder
 public:
     BehaviorTreeBuilder(EnemyAI* owner) : m_Tree(Root::CreateBehaviorTree(owner)) {}
 
-    /*template<typename BlackboardType>
+    template<typename BlackboardType>
     BehaviorTreeBuilder& setBlackboard()
     {
-        auto blackboard = std::make_unique<BlackboardType>();
-        m_Tree->m_Blackboard = std::move(blackboard);
+        auto blackboard = new BlackboardType();
+        m_Tree->m_Blackboard = blackboard;
         return *this;
-    }*/
+    }
     BehaviorTreeBuilder& setBlackboard(HBlackboard* blackboard)
     {
         m_Tree->m_Blackboard = blackboard;
         return *this;
     }
-    BehaviorTreeBuilder& root();
+    BehaviorTreeBuilder& root(NodeEditorApp* editorApp);
     BehaviorTreeBuilder& sequence(const std::string& name);
     BehaviorTreeBuilder& selector(const std::string& name);
     template<typename ActionNodeType, typename... Args>
     BehaviorTreeBuilder& action(Args&&... args)
     {
         auto action = std::make_unique<ActionNodeType>(std::forward<Args>(args)...);
+        action->SetEditorApp(action->GetParent()->GetEditorApp());
         std::cout << "Adding Action Node: " << action->GetName() << std::endl;
         m_LastCreatedNode = action.get();
         if (m_CurrentDecorator)

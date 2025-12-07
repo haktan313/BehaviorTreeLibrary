@@ -78,7 +78,7 @@ bool HCompositeNode::CanStart()
 // SequenceNode methods
 void SequenceNode::OnStart()
 {
-    NodeEditorApp::AddActiveNode(this);
+    m_EditorApp->AddActiveNode(this);
     std::cout << "Sequence Node Started: " << m_Name << " - Parent:" << (m_Parent != nullptr ? m_Parent->GetName() : std::string(" NoParent")) << std::endl;
 }
 
@@ -108,7 +108,7 @@ void SequenceNode::OnFinished()
     std::cout << "Sequence Node Finished: " << m_Name << " result is: " << (m_Status == NodeStatus::SUCCESS ? "SUCCESS" : "FAILURE") << std::endl;
     m_CurrentChildIndex = 0;
     m_bIsStarted = false;
-    NodeEditorApp::RemoveActiveNode();
+    m_EditorApp->RemoveActiveNode();
 }
 
 void SequenceNode::OnAbort()
@@ -125,7 +125,7 @@ void SequenceNode::OnAbort()
 //SelectorNode methods
 void SelectorNode::OnStart()
 {
-    NodeEditorApp::AddActiveNode(this);
+    m_EditorApp->AddActiveNode(this);
     std::cout << "Selector Node Started: " << m_Name << " - Parent:" << (m_Parent != nullptr ? m_Parent->GetName() : std::string(" NoParent")) << std::endl;
 }
 
@@ -159,7 +159,7 @@ void SelectorNode::OnFinished()
     std::cout << "Selector Node Finished: " << m_Name << " result is: " << (m_Status == NodeStatus::SUCCESS ? "SUCCESS" : "FAILURE") << std::endl;
     m_CurrentChildIndex = 0;
     m_bIsStarted = false;
-    NodeEditorApp::RemoveActiveNode();
+    m_EditorApp->RemoveActiveNode();
 }
 
 void SelectorNode::OnAbort()
