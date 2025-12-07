@@ -44,6 +44,7 @@ BehaviorTreeBuilder& BehaviorTreeBuilder::root(NodeEditorApp* editorApp)
     auto rootNode = std::make_unique<HRootNode>();
     rootNode->SetEditorApp(editorApp);
     HRootNode* rootNodePtr = rootNode.get();
+    rootNodePtr->SetType(HNodeType::Root);
     m_LastCreatedNode = rootNodePtr;
     m_Tree->SetRootNode(std::move(rootNode));
     m_NodeStack.push_back(rootNodePtr);
@@ -55,25 +56,23 @@ BehaviorTreeBuilder& BehaviorTreeBuilder::sequence(const std::string& name)
     std::cout << "Adding Sequence Node: " << name << std::endl;
     auto sequenceNode = std::make_unique<SequenceNode>(name);
     SequenceNode* sequenceNodePtr = sequenceNode.get();
+    sequenceNodePtr->SetType(HNodeType::Composite);
     m_LastCreatedNode = sequenceNodePtr;
     if (m_CurrentDecorator)
     {
         auto decoratorNode = std::move(m_CurrentDecorator);
+        auto decoratorNodePtr = decoratorNode.get();
         decoratorNode->AddChild(std::move(sequenceNode));
-        if (m_NodeStack.empty())
-            m_Tree->SetRootNode(std::move(decoratorNode));
-        else
-            m_NodeStack.back()->AddChild(std::move(decoratorNode));
+        m_NodeStack.back()->AddChild(std::move(decoratorNode));
+        sequenceNodePtr->SetEditorApp(decoratorNodePtr->GetParent()->GetEditorApp());
+        m_NodeStack.push_back(sequenceNodePtr);
     }
     else
     {
-        if (m_NodeStack.empty())
-            m_Tree->SetRootNode(std::move(sequenceNode));
-        else
-            m_NodeStack.back()->AddChild(std::move(sequenceNode));
+        m_NodeStack.back()->AddChild(std::move(sequenceNode));
+        m_NodeStack.push_back(sequenceNodePtr);
+        sequenceNodePtr->SetEditorApp(sequenceNodePtr->GetParent()->GetEditorApp());
     }
-    m_NodeStack.push_back(sequenceNodePtr);
-    sequenceNodePtr->SetEditorApp(sequenceNodePtr->GetParent()->GetEditorApp());
     return *this;
 }
 
@@ -82,27 +81,23 @@ BehaviorTreeBuilder& BehaviorTreeBuilder::selector(const std::string& name)
     std::cout << "Adding Selector Node: " << name << std::endl;
     auto selectorNode = std::make_unique<SelectorNode>(name);
     auto selectorNodePtr = selectorNode.get();
+    selectorNodePtr->SetType(HNodeType::Composite);
     m_LastCreatedNode = selectorNodePtr;
     if (m_CurrentDecorator)
     {
         auto decoratorNode = std::move(m_CurrentDecorator);
+        auto decoratorNodePtr = decoratorNode.get();
         decoratorNode->AddChild(std::move(selectorNode));
-        if (m_NodeStack.empty())
-            m_Tree->SetRootNode(std::move(decoratorNode));
-        else
-            m_NodeStack.back()->AddChild(std::move(decoratorNode));
-        
+        m_NodeStack.back()->AddChild(std::move(decoratorNode));
+        selectorNodePtr->SetEditorApp(decoratorNodePtr->GetParent()->GetEditorApp());
         m_NodeStack.push_back(selectorNodePtr);
     }
     else
     {
-        if (m_NodeStack.empty())
-            m_Tree->SetRootNode(std::move(selectorNode));
-        else
-            m_NodeStack.back()->AddChild(std::move(selectorNode));
+        m_NodeStack.back()->AddChild(std::move(selectorNode));
         m_NodeStack.push_back(selectorNodePtr);
+        selectorNodePtr->SetEditorApp(selectorNodePtr->GetParent()->GetEditorApp());
     }
-    selectorNodePtr->SetEditorApp(selectorNodePtr->GetParent()->GetEditorApp());
     return *this;
 }
 

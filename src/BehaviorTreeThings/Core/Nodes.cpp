@@ -183,3 +183,15 @@ bool HActionNode::CheckConditionsSelfMode()
         }
     return true;
 }
+
+NodeStatus HDecorator::Update()
+{
+    if (!m_Childrens[0]->m_bIsStarted)
+        if (!CanExecute())
+            return NodeStatus::FAILURE;
+    
+    NodeStatus status = m_Childrens[0]->Tick();
+    if (status != NodeStatus::RUNNING)
+        OnFinishedResult(status);
+    return status;
+}

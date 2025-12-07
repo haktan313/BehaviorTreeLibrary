@@ -31,17 +31,11 @@ void NodeEditorApp::OnStart()
 
     AddActionNodeToBuilder<MoveToAction, MoveToParameters>("Move To Action");
     AddActionNodeToBuilder<MeleeEnemyAttackAction, MeleeEnemyAttackActionParameters>("Melee Enemy Attack Action");
-    AddActionNodeToBuilder<MeleeEnemyDodgeAction, MeleeEnemyDodgeActionParameters>("Melee Enemy Dodge Action");
-    AddActionNodeToBuilder<RangedEnemyShootAction, RangedEnemyShootActionParameters>("Ranged Enemy Shoot Action");
-    AddActionNodeToBuilder<ReloadPistolAction, ReloadPistolActionParameters>("Reload Pistol Action");
 
     AddConditionNodeToBuilder<IsPlayerInRangeCondition, IsPlayerInRangeParameters>("Is Player In Range Condition");
-    AddConditionNodeToBuilder<IsPlayerAttackingCondition, IsPlayerAttackingParameters>("Is Player Attacking Condition");
-    AddConditionNodeToBuilder<IsPlayerInSightCondition, IsPlayerInSightParameters>("Is Player In Sight Condition");
-    AddConditionNodeToBuilder<HasAmmoCondition, HasAmmoParameters>("Has Ammo Condition");
 
+    AddDecoratorNodeToBuilder<ChangeResultOfTheNodeDecorator, ChangeResultOfTheNodeParameters>("Change Result Of The Node Decorator");
     AddDecoratorNodeToBuilder<CooldownDecorator, CooldownDecoratorParameters>("Cooldown Decorator");
-    AddDecoratorNodeToBuilder<TimeLimitDecorator, TimeLimitDecoratorParameters>("Time Limit Decorator");
 }
 
 void NodeEditorApp::Update()
@@ -191,7 +185,29 @@ void NodeEditorApp::FlowLinks()
 
         if (!activeNode || !nextNode)
             continue;
-        if (nextNode->GetParent() != activeNode)
+        
+        /*if (nextNode->GetParent() != activeNode)
+            continue;*/
+
+        bool isParentChild = false;
+        if (nextNode->GetParent() == activeNode)
+        {
+            isParentChild = true;
+        }
+        else
+        {
+            HNode* directParent = nextNode->GetParent();
+            if (directParent)
+            {
+                if (dynamic_cast<HDecorator*>(directParent) &&
+                    directParent->GetParent() == activeNode)
+                {
+                    isParentChild = true;
+                }
+            }
+        }
+
+        if (!isParentChild)
             continue;
 
         if (activeNode->GetStatus() != NodeStatus::RUNNING ||

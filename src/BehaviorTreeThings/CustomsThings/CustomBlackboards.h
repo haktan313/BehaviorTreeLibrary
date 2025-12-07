@@ -9,6 +9,7 @@ public:
         CreateBoolValue("IsPlayerInRange", false);
         CreateBoolValue("IsPlayerAttacking", false);
         CreateBoolValue("CanAttack", true);
+        CreateBoolValue("IsAttacking", false);
         
         CreateFloatValue("DistanceToPlayer", 200.0f);
         CreateFloatValue("Health", 100.0f);

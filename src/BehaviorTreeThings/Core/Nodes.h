@@ -12,7 +12,7 @@ class NodeEditorApp;
 class HNode
 {
 public:
-    HNode(const std::string& name) : m_Name(name), m_Parent(nullptr), m_Status(NodeStatus::RUNNING), m_EditorApp(nullptr) {}
+    HNode(const std::string& name) : m_Name(name), m_Parent(nullptr), m_Status(NodeStatus::FAILURE), m_EditorApp(nullptr) {}
     virtual ~HNode() = default;
     
     NodeStatus Tick();
@@ -26,20 +26,24 @@ public:
 
     virtual bool CanStart() { return true; }
     
-    HNode* GetParent() const { return m_Parent; }
     void SetParent(HNode* parent) { m_Parent = parent; }
     void SetEditorApp(NodeEditorApp* app) { m_EditorApp = app; }
+    void SetType(HNodeType type) { m_Type = type; }
+    
+    HNode* GetParent() const { return m_Parent; }
     NodeEditorApp* GetEditorApp() { return m_EditorApp; }
     NodeStatus GetStatus() const { return m_Status; }
+    HNodeType GetType() const { return m_Type; }
     std::string GetName() const { return m_Name; }
     std::vector<std::unique_ptr<HNode>>& GetChildrens() { return m_Childrens; }
     std::vector<std::unique_ptr<HCondition>>& GetConditionNodes() { return m_ConditionNodes; }
+    bool m_bIsStarted = false;
 protected:
     HNode* m_Parent;
     NodeEditorApp* m_EditorApp;
     std::string m_Name;
     NodeStatus m_Status;
-    bool m_bIsStarted = false;
+    HNodeType m_Type;
     std::vector<std::unique_ptr<HNode>> m_Childrens;
     std::vector<std::unique_ptr<HCondition>> m_ConditionNodes;
 };
@@ -107,7 +111,7 @@ public:
     HCondition(const std::string& name, const ParamsForCondition& params = ParamsForCondition{}) : HNode(name), m_Owner(nullptr), m_Blackboard(nullptr), m_PriorityMode(PriorityType::None) {}
 
     virtual void OnStart() override {}
-    virtual NodeStatus Update() override { return NodeStatus::SUCCESS; }
+    virtual bool CheckCondition() = 0;
     virtual void OnFinished() override { m_bIsStarted = false; }
     virtual void OnAbort() override { HNode::OnAbort(); }
 
@@ -119,7 +123,8 @@ private:
     EnemyAI* m_Owner;
     HBlackboard* m_Blackboard;
     PriorityType m_PriorityMode;
-    
+
+    virtual NodeStatus Update() override final { return CheckCondition() ? NodeStatus::SUCCESS : NodeStatus::FAILURE; }
     void SetOwner(EnemyAI* owner) { m_Owner = owner; }
     void SetBlackboard(HBlackboard* blackboard) { m_Blackboard = blackboard; }
     void SetPriorityMode(PriorityType priority) { m_PriorityMode = priority; }
@@ -140,7 +145,8 @@ public:
     HDecorator(const std::string& name, const ParamsForDecorator& params = ParamsForDecorator{}) : HNode(name), m_Blackboard(nullptr), m_Owner(nullptr) {}
 
     virtual void OnStart() override {}
-    virtual NodeStatus Update() override { return NodeStatus::SUCCESS; }
+    virtual bool CanExecute() = 0;
+    virtual void OnFinishedResult(NodeStatus& status) = 0;
     virtual void OnFinished() override { m_bIsStarted = false; }
     virtual void OnAbort() override { HNode::OnAbort(); }
 protected:
@@ -150,6 +156,7 @@ private:
     EnemyAI* m_Owner;
     HBlackboard* m_Blackboard;
 
+    virtual NodeStatus Update() override final;
     void SetOwner(EnemyAI* owner) { m_Owner = owner; }
     void SetBlackboard(HBlackboard* blackboard) { m_Blackboard = blackboard; }
     friend class BehaviorTreeBuilder;

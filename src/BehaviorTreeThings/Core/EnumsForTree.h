@@ -14,3 +14,13 @@ enum class PriorityType
     LowerPriority,
     Both
 };
+
+enum class HNodeType
+{
+    None,
+    Action,
+    Condition,
+    Decorator,
+    Composite,
+    Root
+};
