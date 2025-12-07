@@ -5,45 +5,21 @@
 #include "Tree.h"
 #include "NodeEditorStructsAndEnums.h"
 
-struct ActionClassInfo
-{
-    std::string Name;
-    std::function<void(BehaviorTreeBuilder&, Node*, Params&)> BuildFn;
-    std::function<std::unique_ptr<Params>()> CreateParamsFn;
-};
-struct DecoratorClassInfo
-{
-    std::string Name;
-    std::function<void(BehaviorTreeBuilder&, Node*, Params&)> BuildFn;
-    std::function<std::unique_ptr<Params>()> CreateParamsFn;
-};
-struct ConditionClassInfo
-{
-    std::string Name;
-    std::function<void(BehaviorTreeBuilder&, Node*, ParamsForCondition&)> BuildFn;
-    std::function<std::unique_ptr<ParamsForCondition>()> CreateParamsFn;
-};
-struct BlackboardClassInfo
-{
-    std::string Name;
-    std::function<std::unique_ptr<HBlackboard>()> CreateBlackboardFn;
-};
-
 class NodeEditorApp
 {
 public:
     void AddActiveNode(HNode* node) { m_ActiveNodes.push_back(node); }
     void RemoveActiveNode(HNode* node) { m_ActiveNodes.erase(std::remove(m_ActiveNodes.begin(), m_ActiveNodes.end(), node), m_ActiveNodes.end());}
     void ClearActiveNodes() { m_ActiveNodes.clear(); }
+    void SetEnemyAI(EnemyAI* enemy) { m_Enemy = enemy; }
+    void ClearNodeMappings() { s_NodeToEditorIdMap.clear(); }
     
     NodeEditorApp();
     ~NodeEditorApp();
     
     void OnStart();
     void Update();
-    void SetEnemyAI(EnemyAI* enemy) { m_Enemy = enemy; }
 
-    void ClearNodeMappings();
     void RegisterNodeMapping(const HNode* runtimeNode, nodeEditor::NodeId editorId);
     Node* GetEditorNodeFor(const HNode* runtimeNode);
     
@@ -52,17 +28,26 @@ public:
     void DecoratorNodeUnSelected();
     void ConditionNodeUnSelected();
 private:
+    
     void MouseInputHandling();
     void NodeSettingsPanel();
     void FlowLinks();
-    
+
+    void BlackboardPanelSizeSettings();
     void BlackboardPanel();
+    void ShowActionNodeInBlackboard();
+    void ShowDecoratorNodeInBlackboard();
+    void ShowConditionNodeInBlackboard();
+    void ShowBlackboardDetails();
+    
     void BuildBehaviorTree();
+    void BuildSequence(Node* node, BehaviorTreeBuilder& btBuilder);
+    void BuildSelector(Node* node, BehaviorTreeBuilder& btBuilder);
+    void BuildAction(Node* node, BehaviorTreeBuilder& btBuilder);
     void ClearBuildData();
     void BuildPlanForNode(Node* editorNode, std::vector<BuildOp>& ops);
     std::vector<BuildOp> CreateBuildPlan();
-
-
+    
     bool s_InitLayout = true;
     bool m_bDecoratorSelected = false;
     bool m_bConditionSelected = false;
@@ -88,7 +73,7 @@ private:
 
     std::unordered_map<std::string, DecoratorClassInfo> s_DecoratorClassInfoMap;
     std::unordered_map<int, std::string> s_NodeToDecoratorClassId;
-    std::unordered_map<int, std::unique_ptr<Params>> s_NodeToDecoratorParams;
+    std::unordered_map<int, std::unique_ptr<ParamsForDecorator>> s_NodeToDecoratorParams;
     std::string s_SelectedDecoratorClassName;
 
     std::unordered_map<std::string, ConditionClassInfo> s_ConditionClassInfoMap;
@@ -125,7 +110,7 @@ private:
         {
             return std::make_unique<ParamsStruct>();
         };
-        decoratorInfo.BuildFn = [](BehaviorTreeBuilder& builder, Node* node, Params& baseParams)
+        decoratorInfo.BuildFn = [](BehaviorTreeBuilder& builder, Node* node, ParamsForDecorator& baseParams)
         {
             auto& params = static_cast<ParamsStruct&>(baseParams);
             builder.decorator<DecoratorClass>(node->Name, params);

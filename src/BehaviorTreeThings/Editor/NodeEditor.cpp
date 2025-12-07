@@ -6,72 +6,8 @@
 
 namespace nodeEditor = ax::NodeEditor;
 
-/*NodeEditor* NodeEditor::s_Instance = nullptr;
-std::vector<Node> NodeEditor::m_Nodes;
-std::vector<Link> NodeEditor::m_Links;
-std::map<nodeEditor::NodeId, float, NodeIdLess> NodeEditor::m_NodeTouchTime;
-nodeEditor::PinId NodeEditor::m_RootOutputPinId = 0;*/
-
-static Pin* newLinkPin = nullptr;
-static const float m_TouchTime = 1.0f;
-static nodeEditor::EditorContext* m_EditorContext = nullptr;
-static int m_NextId = 1;
-
 NodeEditor::NodeEditor(NodeEditorApp* app) : m_App(app)
 {
-    //s_Instance = this;
-}
-
-Node* NodeEditor::FindNode(nodeEditor::NodeId id)
-{
-    for (auto& node : m_Nodes)
-        if (node.ID == id)
-            return &node;
-
-    return nullptr;
-}
-void NodeEditor::TouchNode(nodeEditor::NodeId id)
-{
-    m_NodeTouchTime[id] = m_TouchTime;
-}
-
-Pin* NodeEditor::FindPin(nodeEditor::PinId id)
-{
-    if (!id)
-        return nullptr;
-
-    for (auto& node : m_Nodes)
-    {
-        for (auto& pin : node.Inputs)
-            if (pin.ID == id)
-                return &pin;
-
-        for (auto& pin : node.Outputs)
-            if (pin.ID == id)
-                return &pin;
-    }
-
-    return nullptr;
-}
-
-int NodeEditor::GetNextID()
-{
-    return m_NextId++;
-}
-
-
-Node* NodeEditor::GetSelectedNode()
-{
-    int count = nodeEditor::GetSelectedObjectCount();
-    std::vector<nodeEditor::NodeId> selectedNodes(count);
-    int realCount = nodeEditor::GetSelectedNodes(selectedNodes.data(), count);
-    for (int i = 0; i < realCount; ++i)
-    {
-        Node* n = FindNode(selectedNodes[i]);
-        if (n)
-            return n;
-    }
-    return nullptr;
 }
 
 void NodeEditor::OnStart()
@@ -196,27 +132,6 @@ void NodeEditor::OnUpdate()
     nodeEditor::End();
 }
 
-void NodeEditor::BuildNode(Node* node)
-{
-    for (auto& input : node->Inputs)
-    {
-        input.Node = node;
-        input.Kind = PinKind::Input;
-    }
-
-    for (auto& output : node->Outputs)
-    {
-        output.Node = node;
-        output.Kind = PinKind::Output;
-    }
-}
-
-void NodeEditor::BuildNodes()
-{
-    for (auto& node : m_Nodes)
-        BuildNode(&node);
-}
-
 Node* NodeEditor::SpawnRootNode()
 {
     m_Nodes.emplace_back(NodeType::Root, GetNextID(), "Root");
@@ -308,22 +223,67 @@ std::vector<Node*> NodeEditor::GetChilderenNodes(Node* parentNode)
     return childrenNodes;
 }
 
-void NodeEditor::StylizeNodes()
+Node* NodeEditor::GetSelectedNode()
 {
-    const float rounding = 5.0f;
+    int count = nodeEditor::GetSelectedObjectCount();
+    std::vector<nodeEditor::NodeId> selectedNodes(count);
+    int realCount = nodeEditor::GetSelectedNodes(selectedNodes.data(), count);
+    for (int i = 0; i < realCount; ++i)
+    {
+        Node* n = FindNode(selectedNodes[i]);
+        if (n)
+            return n;
+    }
+    return nullptr;
+}
 
-    nodeEditor::PushStyleColor(nodeEditor::StyleColor_NodeBg,        ImColor(128, 128, 128, 200)); // Background color
-    nodeEditor::PushStyleColor(nodeEditor::StyleColor_NodeBorder,    ImColor( 32,  32,  32, 200)); // Border color
-    nodeEditor::PushStyleColor(nodeEditor::StyleColor_PinRect,       ImColor( 60, 180, 255, 150)); // When pin is hovered
-    nodeEditor::PushStyleColor(nodeEditor::StyleColor_PinRectBorder, ImColor( 60, 180, 255, 150)); 
+Node* NodeEditor::FindNode(nodeEditor::NodeId id)
+{
+    for (auto& node : m_Nodes)
+        if (node.ID == id)
+            return &node;
 
-    nodeEditor::PushStyleVar(nodeEditor::StyleVar_NodePadding,  ImVec4(0, 0, 0, 0));
-    nodeEditor::PushStyleVar(nodeEditor::StyleVar_NodeRounding, rounding); // Node rounding
-    nodeEditor::PushStyleVar(nodeEditor::StyleVar_SourceDirection, ImVec2(0.0f,  1.0f));
-    nodeEditor::PushStyleVar(nodeEditor::StyleVar_TargetDirection, ImVec2(0.0f, -1.0f));
-    nodeEditor::PushStyleVar(nodeEditor::StyleVar_LinkStrength, 0.0f);// 0.0f = linear, 1.0f = curved
-    nodeEditor::PushStyleVar(nodeEditor::StyleVar_PinBorderWidth, 1.0f);// Pin border width
-    nodeEditor::PushStyleVar(nodeEditor::StyleVar_PinRadius, 5.0f);
+    return nullptr;
+}
+
+Pin* NodeEditor::FindPin(nodeEditor::PinId id)
+{
+    if (!id)
+        return nullptr;
+
+    for (auto& node : m_Nodes)
+    {
+        for (auto& pin : node.Inputs)
+            if (pin.ID == id)
+                return &pin;
+
+        for (auto& pin : node.Outputs)
+            if (pin.ID == id)
+                return &pin;
+    }
+
+    return nullptr;
+}
+
+void NodeEditor::BuildNodes()
+{
+    for (auto& node : m_Nodes)
+        BuildNode(&node);
+}
+
+void NodeEditor::BuildNode(Node* node)
+{
+    for (auto& input : node->Inputs)
+    {
+        input.Node = node;
+        input.Kind = PinKind::Input;
+    }
+
+    for (auto& output : node->Outputs)
+    {
+        output.Node = node;
+        output.Kind = PinKind::Output;
+    }
 }
 
 void NodeEditor::ManageInputs(ImRect& inputsRect, int& inputAlpha, Node& node, float padding)
@@ -461,39 +421,6 @@ void NodeEditor::ManageOutputs(ImRect& outputsRect, int& outputAlpha, Node& node
         ImGui::Dummy(ImVec2(0, padding));   
 }
 
-void NodeEditor::PaintNodeBackground(Node& node, const ImRect& inputsRect, const ImRect& outputsRect, const ImRect& contentRect, const ImVec4& pinBackground,
-    int inputAlpha, int outputAlpha, const ImRect& sequenceRect)
-{
-    nodeEditor::PopStyleVar(7);
-    nodeEditor::PopStyleColor(4);   
-    auto drawList = nodeEditor::GetNodeBackgroundDrawList(node.ID);
-    const auto topRoundCornersFlags = ImDrawFlags_RoundCornersTop;
-    const auto bottomRoundCornersFlags = ImDrawFlags_RoundCornersBottom;
-        
-    drawList->AddRectFilled(inputsRect.GetTL() + ImVec2(0, 1), inputsRect.GetBR(),
-        IM_COL32((int)(255 * pinBackground.x), (int)(255 * pinBackground.y), (int)(255 * pinBackground.z), inputAlpha), 4.0f, bottomRoundCornersFlags);
-    //ImGui::PushStyleVar(ImGuiStyleVar_AntiAliasFringeScale, 1.0f);
-    drawList->AddRect(inputsRect.GetTL() + ImVec2(0, 1), inputsRect.GetBR(),
-        IM_COL32((int)(255 * pinBackground.x), (int)(255 * pinBackground.y), (int)(255 * pinBackground.z), inputAlpha), 4.0f, bottomRoundCornersFlags);
-    //ImGui::PopStyleVar();
-    drawList->AddRectFilled(outputsRect.GetTL(), outputsRect.GetBR() - ImVec2(0, 1),
-        IM_COL32((int)(255 * pinBackground.x), (int)(255 * pinBackground.y), (int)(255 * pinBackground.z), outputAlpha), 4.0f, topRoundCornersFlags);
-    //ImGui::PushStyleVar(ImGuiStyleVar_AntiAliasFringeScale, 1.0f);
-    drawList->AddRect(outputsRect.GetTL(), outputsRect.GetBR() - ImVec2(0, 1),
-        IM_COL32((int)(255 * pinBackground.x), (int)(255 * pinBackground.y), (int)(255 * pinBackground.z), outputAlpha), 4.0f, topRoundCornersFlags);
-    //ImGui::PopStyleVar();
-    drawList->AddRectFilled(contentRect.GetTL(), contentRect.GetBR(), IM_COL32(24, 64, 128, 200), 0.0f);
-    //ImGui::PushStyleVar(ImGuiStyleVar_AntiAliasFringeScale, 1.0f);
-    drawList->AddRect(contentRect.GetTL(), contentRect.GetBR(), IM_COL32(48, 128, 255, 100), 0.0f);
-    //ImGui::PopStyleVar();
-    
-    drawList->AddRectFilled(contentRect.GetTL(), contentRect.GetBR(), IM_COL32(50, 50, 50, 230), 0.0f);
-    drawList->AddRect( contentRect.GetTL(), contentRect.GetBR(), IM_COL32(20, 20, 20, 255), 0.0f);
-    
-    drawList->AddRectFilled( sequenceRect.GetTL(), sequenceRect.GetBR(), IM_COL32(30, 30, 30, 255), 0.0f);
-    drawList->AddRect( sequenceRect.GetTL(), sequenceRect.GetBR(), IM_COL32(10, 10, 10, 255), 0.0f);
-}
-
 void NodeEditor::ManageLinks()
 {
     for (auto& link : m_Links)
@@ -598,7 +525,57 @@ bool NodeEditor::CanCreateLink(Pin* a, Pin* b)
 {
     if (!a || !b || a == b || a->Kind == b->Kind || a->Node == b->Node)
         return false;
-
     return true;
+}
+
+void NodeEditor::StylizeNodes()
+{
+    const float rounding = 5.0f;
+
+    nodeEditor::PushStyleColor(nodeEditor::StyleColor_NodeBg, ImColor(128, 128, 128, 200)); // Background color
+    nodeEditor::PushStyleColor(nodeEditor::StyleColor_NodeBorder, ImColor( 32,  32,  32, 200)); // Border color
+    nodeEditor::PushStyleColor(nodeEditor::StyleColor_PinRect, ImColor( 60, 180, 255, 150)); // When pin is hovered
+    nodeEditor::PushStyleColor(nodeEditor::StyleColor_PinRectBorder, ImColor( 60, 180, 255, 150)); 
+
+    nodeEditor::PushStyleVar(nodeEditor::StyleVar_NodePadding, ImVec4(0, 0, 0, 0));
+    nodeEditor::PushStyleVar(nodeEditor::StyleVar_NodeRounding, rounding); // Node rounding
+    nodeEditor::PushStyleVar(nodeEditor::StyleVar_SourceDirection, ImVec2(0.0f,  1.0f));
+    nodeEditor::PushStyleVar(nodeEditor::StyleVar_TargetDirection, ImVec2(0.0f, -1.0f));
+    nodeEditor::PushStyleVar(nodeEditor::StyleVar_LinkStrength, 0.0f);// 0.0f = linear, 1.0f = curved
+    nodeEditor::PushStyleVar(nodeEditor::StyleVar_PinBorderWidth, 1.0f);// Pin border width
+    nodeEditor::PushStyleVar(nodeEditor::StyleVar_PinRadius, 5.0f);
+}
+
+void NodeEditor::PaintNodeBackground(Node& node, const ImRect& inputsRect, const ImRect& outputsRect, const ImRect& contentRect, const ImVec4& pinBackground,
+    int inputAlpha, int outputAlpha, const ImRect& sequenceRect)
+{
+    nodeEditor::PopStyleVar(7);
+    nodeEditor::PopStyleColor(4);   
+    auto drawList = nodeEditor::GetNodeBackgroundDrawList(node.ID);
+    const auto topRoundCornersFlags = ImDrawFlags_RoundCornersTop;
+    const auto bottomRoundCornersFlags = ImDrawFlags_RoundCornersBottom;
+        
+    drawList->AddRectFilled(inputsRect.GetTL() + ImVec2(0, 1), inputsRect.GetBR(),
+        IM_COL32((int)(255 * pinBackground.x), (int)(255 * pinBackground.y), (int)(255 * pinBackground.z), inputAlpha), 4.0f, bottomRoundCornersFlags);
+    //ImGui::PushStyleVar(ImGuiStyleVar_AntiAliasFringeScale, 1.0f);
+    drawList->AddRect(inputsRect.GetTL() + ImVec2(0, 1), inputsRect.GetBR(),
+        IM_COL32((int)(255 * pinBackground.x), (int)(255 * pinBackground.y), (int)(255 * pinBackground.z), inputAlpha), 4.0f, bottomRoundCornersFlags);
+    //ImGui::PopStyleVar();
+    drawList->AddRectFilled(outputsRect.GetTL(), outputsRect.GetBR() - ImVec2(0, 1),
+        IM_COL32((int)(255 * pinBackground.x), (int)(255 * pinBackground.y), (int)(255 * pinBackground.z), outputAlpha), 4.0f, topRoundCornersFlags);
+    //ImGui::PushStyleVar(ImGuiStyleVar_AntiAliasFringeScale, 1.0f);
+    drawList->AddRect(outputsRect.GetTL(), outputsRect.GetBR() - ImVec2(0, 1),
+        IM_COL32((int)(255 * pinBackground.x), (int)(255 * pinBackground.y), (int)(255 * pinBackground.z), outputAlpha), 4.0f, topRoundCornersFlags);
+    //ImGui::PopStyleVar();
+    drawList->AddRectFilled(contentRect.GetTL(), contentRect.GetBR(), IM_COL32(24, 64, 128, 200), 0.0f);
+    //ImGui::PushStyleVar(ImGuiStyleVar_AntiAliasFringeScale, 1.0f);
+    drawList->AddRect(contentRect.GetTL(), contentRect.GetBR(), IM_COL32(48, 128, 255, 100), 0.0f);
+    //ImGui::PopStyleVar();
+    
+    drawList->AddRectFilled(contentRect.GetTL(), contentRect.GetBR(), IM_COL32(50, 50, 50, 230), 0.0f);
+    drawList->AddRect( contentRect.GetTL(), contentRect.GetBR(), IM_COL32(20, 20, 20, 255), 0.0f);
+    
+    drawList->AddRectFilled( sequenceRect.GetTL(), sequenceRect.GetBR(), IM_COL32(30, 30, 30, 255), 0.0f);
+    drawList->AddRect( sequenceRect.GetTL(), sequenceRect.GetBR(), IM_COL32(10, 10, 10, 255), 0.0f);
 }
 

@@ -104,7 +104,7 @@ private:
 };
 
 
-struct InverterDecoratorParams : Params
+struct InverterDecoratorParams : ParamsForDecorator
 {
     bool dummy = false;
     void DrawImGui() override
@@ -124,7 +124,7 @@ public:
 };
 
 
-struct SucceederDecoratorParams : Params
+struct SucceederDecoratorParams : ParamsForDecorator
 {
     int dummy = 0;
     void DrawImGui() override

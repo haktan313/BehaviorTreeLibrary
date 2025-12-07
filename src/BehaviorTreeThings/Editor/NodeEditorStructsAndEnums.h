@@ -1,33 +1,15 @@
 #pragma once
+#include <functional>
 #include <imgui_node_editor_internal.h>
 #include "Nodes.h"
 
 namespace nodeEditor = ax::NodeEditor;
-
-struct Params
-{
-    Params() = default;
-    ~Params() = default;
-    
-    virtual void DrawImGui() {}
-};
-
-struct ParamsForCondition : public Params
-{
-    ParamsForCondition() = default;
-    ~ParamsForCondition() = default;
-
-    virtual void DrawImGui() override {}
-
-    PriortyType Priorty = PriortyType::None;
-};
 
 enum class PinKind
 {
     Output,
     Input
 };
-
 enum class NodeType
 {
     None,
@@ -36,7 +18,6 @@ enum class NodeType
     Selector,
     Action
 };
-
 enum class BuildOpType
 {
     OpenComposite,
@@ -49,8 +30,29 @@ struct BuildOp
     BuildOpType Type;
     Node* EditorNode;
 };
-
-
+struct ActionClassInfo
+{
+    std::string Name;
+    std::function<void(BehaviorTreeBuilder&, Node*, Params&)> BuildFn;
+    std::function<std::unique_ptr<Params>()> CreateParamsFn;
+};
+struct DecoratorClassInfo
+{
+    std::string Name;
+    std::function<void(BehaviorTreeBuilder&, Node*, ParamsForDecorator&)> BuildFn;
+    std::function<std::unique_ptr<ParamsForDecorator>()> CreateParamsFn;
+};
+struct ConditionClassInfo
+{
+    std::string Name;
+    std::function<void(BehaviorTreeBuilder&, Node*, ParamsForCondition&)> BuildFn;
+    std::function<std::unique_ptr<ParamsForCondition>()> CreateParamsFn;
+};
+struct BlackboardClassInfo
+{
+    std::string Name;
+    std::function<std::unique_ptr<HBlackboard>()> CreateBlackboardFn;
+};
 struct EditorDecorator
 {
     std::string Name;
@@ -61,6 +63,8 @@ struct EditorCondition
     std::string Name;
     EditorCondition(const std::string& name) : Name(name) {}
 };
+
+
 
 struct Pin
 {
@@ -74,7 +78,6 @@ struct Pin
     {
     }
 };
-
 struct Node
 {
     NodeType Type;
@@ -95,7 +98,6 @@ struct Node
     {
     }
 };
-
 struct Link
 {
     nodeEditor::LinkId ID;
@@ -110,23 +112,10 @@ struct Link
     {
     }
 };
-
 struct NodeIdLess
 {
     bool operator()(const nodeEditor::NodeId& lhs, const nodeEditor::NodeId& rhs) const
     {
         return lhs.AsPointer() < rhs.AsPointer();
     }
-};
-
-enum class PinType
-{
-    Flow,
-    Bool,
-    Int,
-    Float,
-    String,
-    Object,
-    Function,
-    Delegate,
 };

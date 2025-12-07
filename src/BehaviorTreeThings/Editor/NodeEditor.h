@@ -6,16 +6,14 @@ class NodeEditor
 {
     NodeEditorApp* m_App;
 public:
-    NodeEditor(NodeEditorApp* app = nullptr);
-    
-    Node* FindNode(nodeEditor::NodeId id);
-    void TouchNode(nodeEditor::NodeId id);
-    Pin* FindPin(nodeEditor::PinId id);
-    int GetNextID();
-    ax::NodeEditor::LinkId GetNextLinkId() { return nodeEditor::LinkId(GetNextID()); }
+    int GetNextID() { return m_NextId++; }
+    void TouchNode(nodeEditor::NodeId id) { m_NodeTouchTime[id] = m_TouchTime; }
+    nodeEditor::LinkId GetNextLinkId() { return nodeEditor::LinkId(GetNextID()); }
     std::vector<Node>& GetNodes() { return m_Nodes; }
     std::vector<Link>& GetLinks() { return m_Links; }
-    Node* GetSelectedNode();
+
+    NodeEditor(NodeEditorApp* app = nullptr);
+    
     void OnStart();
     void OnUpdate();
 
@@ -25,24 +23,34 @@ public:
     Node* SpawnActionNode(ImVec2 position);
     void SpawnConditionNode(Node* parentNode);
     void SpawnDecoratorNode(Node* parentNode);
+    
     std::vector<Node*> GetChilderenNodes(Node* parentNode);
-private:
-    void BuildNode(Node* node);
-public:
+    Node* GetSelectedNode();
+    Node* FindNode(nodeEditor::NodeId id);
+    Pin* FindPin(nodeEditor::PinId id);
+    
     void BuildNodes();
 private:
-    void StylizeNodes();
+    void BuildNode(Node* node);
+    
     void ManageInputs(ImRect& inputsRect, int& inputAlpha, Node& node, float padding);
+    
     void DrawDecoratorBar(Node& node, ImRect& decoratorRect);
     void DrawConditionBar(Node& node, ImRect& conditionRect);
+    
     void ManageOutputs(ImRect& outputsRect, int& outputAlpha, Node& node, float padding);
-    void PaintNodeBackground(Node& node, const ImRect& inputsRect, const ImRect& outputsRect, const ImRect& contentRect, const ImVec4& pinBackground, int inputAlpha, int outputAlpha, const ImRect& sequenceRect);
     void ManageLinks();
     bool CanCreateLink(Pin* a, Pin* b);
     
+    void StylizeNodes();
+    void PaintNodeBackground(Node& node, const ImRect& inputsRect, const ImRect& outputsRect, const ImRect& contentRect, const ImVec4& pinBackground, int inputAlpha, int outputAlpha, const ImRect& sequenceRect);
+    
+    int m_NextId = 1;
+    float m_TouchTime = 1.0f;
+    Pin* newLinkPin = nullptr;
+    nodeEditor::EditorContext* m_EditorContext = nullptr;
     nodeEditor::PinId m_RootOutputPinId;
     std::vector<Node> m_Nodes;
     std::vector<Link> m_Links;
     std::map<nodeEditor::NodeId, float, NodeIdLess> m_NodeTouchTime;
-    //static NodeEditor* s_Instance;
 };

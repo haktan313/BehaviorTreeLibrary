@@ -58,10 +58,17 @@ public:
     void AddConditionNode(std::unique_ptr<HCondition> conditionNode) override {}
 };
 
+struct Params
+{
+    Params() = default;
+    ~Params() = default;
+    
+    virtual void DrawImGui() {}
+};
 class HActionNode : public HNode
 {
 public:
-    HActionNode(const std::string& name) : HNode(name), m_Owner(nullptr), m_Blackboard(nullptr) {}
+    HActionNode(const std::string& name, const Params& params = Params{}) : HNode(name), m_Owner(nullptr), m_Blackboard(nullptr) {}
     
     virtual void OnStart() override;
     virtual NodeStatus Update() override;
@@ -85,10 +92,19 @@ private:
     friend class BehaviorTree;
 };
 
+struct ParamsForCondition : public Params
+{
+    ParamsForCondition() = default;
+    ~ParamsForCondition() = default;
+
+    virtual void DrawImGui() override {}
+
+    PriortyType Priorty = PriortyType::None;
+};
 class HCondition : public HNode
 {
 public:
-    HCondition(const std::string& name) : HNode(name), m_Owner(nullptr), m_Blackboard(nullptr), m_PriortyMode(PriortyType::None) {}
+    HCondition(const std::string& name, const ParamsForCondition& params = ParamsForCondition{}) : HNode(name), m_Owner(nullptr), m_Blackboard(nullptr), m_PriortyMode(PriortyType::None) {}
 
     virtual void OnStart() override {}
     virtual NodeStatus Update() override = 0;
@@ -111,10 +127,17 @@ private:
     friend class BehaviorTree;
 };
 
+struct ParamsForDecorator : public Params
+{
+    ParamsForDecorator() = default;
+    ~ParamsForDecorator() = default;
+
+    virtual void DrawImGui() override {}
+}; 
 class HDecorator : public HNode
 {
 public:
-    HDecorator(const std::string& name) : HNode(name), m_Blackboard(nullptr), m_Owner(nullptr) {}
+    HDecorator(const std::string& name, const ParamsForDecorator& params = ParamsForDecorator{}) : HNode(name), m_Blackboard(nullptr), m_Owner(nullptr) {}
 
     virtual void OnStart() override {}
     virtual NodeStatus Update() override = 0;
