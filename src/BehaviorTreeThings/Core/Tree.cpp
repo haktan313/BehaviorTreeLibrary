@@ -24,6 +24,7 @@ void BehaviorTree::TickTree()
 {
     if (m_RootNode && m_bIsRunning)
         m_RootNode->Tick();
+    m_Blackboard->ClearValuesChangedFlag();
 }
 
 void BehaviorTree::StopTree()

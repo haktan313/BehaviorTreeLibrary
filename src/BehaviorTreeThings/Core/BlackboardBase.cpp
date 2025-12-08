@@ -34,24 +34,28 @@ void HBlackboard::SetBoolValue(const std::string& key, bool value)
 {
     if (m_BoolValues.find(key) != m_BoolValues.end())
         m_BoolValues[key] = value;
+    m_bValuesChanged = true;
 }
 
 void HBlackboard::SetIntValue(const std::string& key, int value)
 {
     if (m_IntValues.find(key) != m_IntValues.end())
         m_IntValues[key] = value;
+    m_bValuesChanged = true;
 }
 
 void HBlackboard::SetFloatValue(const std::string& key, float value)
 {
     if (m_FloatValues.find(key) != m_FloatValues.end())
         m_FloatValues[key] = value;
+    m_bValuesChanged = true;
 }
 
 void HBlackboard::SetStringValue(const std::string& key, const std::string& value)
 {
     if (m_StringValues.find(key) != m_StringValues.end())
         m_StringValues[key] = value;
+    m_bValuesChanged = true;
 }
 
 void HBlackboard::DrawImGui()

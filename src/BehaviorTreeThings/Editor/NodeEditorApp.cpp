@@ -117,9 +117,22 @@ bool NodeEditorApp::CheckConditionsSelfMode(HNode* node, std::vector<std::unique
     if (!m_ConditionNodes.empty())
         for (auto& condition : m_ConditionNodes)
         {
+            if (condition->GetLastStatus() != NodeStatus::RUNNING && !m_Blackboard->IsValuesChanged())
+            {
+                if ((condition->GetPriorityMode() == PriorityType::Self || condition->GetPriorityMode() == PriorityType::Both)
+                    && condition->GetLastStatus() == NodeStatus::FAILURE)
+                {
+                    node->OnAbort();
+                    std::cout << "Node Condition Failed at Runtime: " << condition->GetName() << " in " << node->GetName() << std::endl;
+                    return false;
+                }
+                continue;
+            }
+            condition->SetLastStatus(NodeStatus::RUNNING);
             if (condition->GetPriorityMode() == PriorityType::None)
                 continue;
             NodeStatus conditionStatus = condition.get()->Tick();
+            condition->SetLastStatus(conditionStatus);
             if ((condition->GetPriorityMode() == PriorityType::Self || condition->GetPriorityMode() == PriorityType::Both)
                 && conditionStatus == NodeStatus::FAILURE)
             {
@@ -142,9 +155,24 @@ void NodeEditorApp::CheckConditionsLowerPriorityMode(int& currentChildIndex, HNo
             auto& child = m_Childrens[i];
             for (auto& condition : child->GetConditionNodes())
             {
+                if (condition->GetLastStatus() != NodeStatus::RUNNING && !m_Blackboard->IsValuesChanged())
+                {
+                    if ((condition->GetPriorityMode() == PriorityType::LowerPriority || condition->GetPriorityMode() == PriorityType::Both)
+                    && condition->GetLastStatus() == NodeStatus::SUCCESS)
+                    {
+                        m_Childrens[currentChildIndex]->OnAbort();
+                        currentChildIndex = i;
+                        std::cout << "Node Condition Succeeded at Runtime: " << condition->GetName() << " in " << node->GetName() << std::endl;
+                        return;
+                    }
+                    continue;
+                }
+                condition->SetLastStatus(NodeStatus::RUNNING);
                 if (condition->GetPriorityMode() == PriorityType::None)
                     continue;
                 NodeStatus conditionStatus = condition.get()->Tick();
+                condition->SetLastStatus(conditionStatus);
+                
                 if ((condition->GetPriorityMode() == PriorityType::LowerPriority || condition->GetPriorityMode() == PriorityType::Both)
                     && conditionStatus == NodeStatus::SUCCESS)
                 {

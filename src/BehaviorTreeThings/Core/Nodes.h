@@ -201,7 +201,8 @@ struct ParamsForCondition : public Params
 class HCondition : public HNode
 {
 public:
-    HCondition(const std::string& name, const ParamsForCondition& params = ParamsForCondition{}) : HNode(name), m_Owner(nullptr), m_Blackboard(nullptr), m_PriorityMode(PriorityType::None) {}
+    HCondition(const std::string& name, const ParamsForCondition& params = ParamsForCondition{})
+        : HNode(name), m_Owner(nullptr), m_Blackboard(nullptr), m_PriorityMode(PriorityType::None), m_LastStatus(NodeStatus::RUNNING) {}
 
     virtual void OnStart() override {}
     virtual bool CheckCondition() = 0;

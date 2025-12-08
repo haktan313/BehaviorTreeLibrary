@@ -13,6 +13,9 @@ public:
     float GetFloatValue(const std::string& key) const;
     std::string GetStringValue(const std::string& key) const;
 
+    bool IsValuesChanged() const { return m_bValuesChanged; }
+    void ClearValuesChangedFlag() { m_bValuesChanged = false; }
+
     std::unordered_map<std::string, bool>& GetBoolValues() { return m_BoolValues; }
     std::unordered_map<std::string, int>& GetIntValues() { return m_IntValues; }
     std::unordered_map<std::string, float>& GetFloatValues() { return m_FloatValues; }
@@ -34,5 +37,6 @@ private:
     std::unordered_map<std::string, int> m_IntValues;
     std::unordered_map<std::string, float> m_FloatValues;
     std::unordered_map<std::string, std::string> m_StringValues;
-    
+
+    bool m_bValuesChanged = false;
 };
