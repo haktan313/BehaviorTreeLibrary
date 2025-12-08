@@ -7,8 +7,8 @@ public:
     HCompositeNode(const std::string& name) : HNode(name) {}
     
     bool CheckConditions();
-    bool CheckConditionsSelfMode();
-    void CheckConditionsLowerPriorityMode(int& currentChildIndex);
+    /*bool CheckConditionsSelfMode();
+    void CheckConditionsLowerPriorityMode(int& currentChildIndex);*/
 
     bool CanStart() override;
 protected:

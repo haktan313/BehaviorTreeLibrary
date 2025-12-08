@@ -12,6 +12,11 @@ public:
     int GetIntValue(const std::string& key) const;
     float GetFloatValue(const std::string& key) const;
     std::string GetStringValue(const std::string& key) const;
+
+    std::unordered_map<std::string, bool>& GetBoolValues() { return m_BoolValues; }
+    std::unordered_map<std::string, int>& GetIntValues() { return m_IntValues; }
+    std::unordered_map<std::string, float>& GetFloatValues() { return m_FloatValues; }
+    std::unordered_map<std::string, std::string>& GetStringValues() { return m_StringValues; }
     
     void SetBoolValue(const std::string& key, bool value);
     void SetIntValue(const std::string& key, int value);

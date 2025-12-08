@@ -9,6 +9,8 @@ void IsPlayerInRangeCondition::OnStart()
 {
     HCondition::OnStart();
     std::cout << "IsPlayerInRangeCondition started.\n";
+    float distance = GetBlackboard().GetFloatValue(m_DistanceToPlayer);
+    std::cout << "Distance to player from blackboard: " << distance << "\n";
 }
 
 bool IsPlayerInRangeCondition::CheckCondition()

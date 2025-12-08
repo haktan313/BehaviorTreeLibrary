@@ -27,6 +27,10 @@ public:
     void ConditionNodeSelected(EditorCondition& condition);
     void DecoratorNodeUnSelected();
     void ConditionNodeUnSelected();
+    bool CheckConditionsSelfMode(HNode* node, std::vector<std::unique_ptr<HCondition>>& m_ConditionNodes);
+    void CheckConditionsLowerPriorityMode(int& currentChildIndex, HNode* node,
+                                          std::vector<std::unique_ptr<HNode>>& m_Childrens);
+
 private:
     
     void MouseInputHandling();

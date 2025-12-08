@@ -22,7 +22,7 @@ bool HCompositeNode::CheckConditions()
     return true;
 }
 
-bool HCompositeNode::CheckConditionsSelfMode()
+/*bool HCompositeNode::CheckConditionsSelfMode()
 {
     if (!m_ConditionNodes.empty())
         for (auto& condition : m_ConditionNodes)
@@ -30,7 +30,8 @@ bool HCompositeNode::CheckConditionsSelfMode()
             if (condition->GetPriorityMode() == PriorityType::None)
                 continue;
             NodeStatus conditionStatus = condition.get()->Tick();
-            if ((condition->GetPriorityMode() == PriorityType::Self || condition->GetPriorityMode() == PriorityType::Both) && conditionStatus == NodeStatus::FAILURE)
+            if ((condition->GetPriorityMode() == PriorityType::Self || condition->GetPriorityMode() == PriorityType::Both)
+                && conditionStatus == NodeStatus::FAILURE)
             {
                 OnAbort();
                 std::cout << "Node Condition Failed at Runtime: " << condition->GetName() << " in " << m_Name << std::endl;
@@ -53,7 +54,8 @@ void HCompositeNode::CheckConditionsLowerPriorityMode(int& currentChildIndex)
                 if (condition->GetPriorityMode() == PriorityType::None)
                     continue;
                 NodeStatus conditionStatus = condition.get()->Tick();
-                if ((condition->GetPriorityMode() == PriorityType::LowerPriority || condition->GetPriorityMode() == PriorityType::Both) && conditionStatus == NodeStatus::SUCCESS)
+                if ((condition->GetPriorityMode() == PriorityType::LowerPriority || condition->GetPriorityMode() == PriorityType::Both)
+                    && conditionStatus == NodeStatus::SUCCESS)
                 {
                     m_Childrens[currentChildIndex]->OnAbort();
                     currentChildIndex = i;
@@ -62,7 +64,7 @@ void HCompositeNode::CheckConditionsLowerPriorityMode(int& currentChildIndex)
                 }
             }
         }
-}
+}*/
 
 bool HCompositeNode::CanStart()
 {
@@ -84,7 +86,7 @@ void SequenceNode::OnStart()
 
 NodeStatus SequenceNode::Update()
 {
-    if (!CheckConditionsSelfMode())
+    if (!m_EditorApp->CheckConditionsSelfMode(this, m_ConditionNodes))
         return NodeStatus::FAILURE;
     
     while (m_CurrentChildIndex < static_cast<int>(m_Childrens.size()))
@@ -131,9 +133,9 @@ void SelectorNode::OnStart()
 
 NodeStatus SelectorNode::Update()
 {
-    if (!CheckConditionsSelfMode())
+    if (!m_EditorApp->CheckConditionsSelfMode(this, m_ConditionNodes))
         return NodeStatus::FAILURE;
-    CheckConditionsLowerPriorityMode(m_CurrentChildIndex);
+    m_EditorApp->CheckConditionsLowerPriorityMode(m_CurrentChildIndex, this, m_Childrens);
     while (m_CurrentChildIndex < static_cast<int>(m_Childrens.size()))
     {
         NodeStatus status = m_Childrens[m_CurrentChildIndex]->Tick();

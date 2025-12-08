@@ -112,6 +112,51 @@ void NodeEditorApp::ConditionNodeUnSelected()
     m_LastSelectedCondition = nullptr;
 }
 
+bool NodeEditorApp::CheckConditionsSelfMode(HNode* node, std::vector<std::unique_ptr<HCondition>>& m_ConditionNodes)
+{
+    if (!m_ConditionNodes.empty())
+        for (auto& condition : m_ConditionNodes)
+        {
+            if (condition->GetPriorityMode() == PriorityType::None)
+                continue;
+            NodeStatus conditionStatus = condition.get()->Tick();
+            if ((condition->GetPriorityMode() == PriorityType::Self || condition->GetPriorityMode() == PriorityType::Both)
+                && conditionStatus == NodeStatus::FAILURE)
+            {
+                node->OnAbort();
+                std::cout << "Node Condition Failed at Runtime: " << condition->GetName() << " in " << node->GetName() << std::endl;
+                return false;
+            }
+        }
+    return true;
+}
+
+void NodeEditorApp::CheckConditionsLowerPriorityMode(int& currentChildIndex, HNode* node,
+    std::vector<std::unique_ptr<HNode>>& m_Childrens)
+{
+    if (!m_Childrens.empty())
+        for (int i = 0; i < static_cast<int>(m_Childrens.size()); ++i)
+        {
+            if (i >= currentChildIndex)
+                continue;
+            auto& child = m_Childrens[i];
+            for (auto& condition : child->GetConditionNodes())
+            {
+                if (condition->GetPriorityMode() == PriorityType::None)
+                    continue;
+                NodeStatus conditionStatus = condition.get()->Tick();
+                if ((condition->GetPriorityMode() == PriorityType::LowerPriority || condition->GetPriorityMode() == PriorityType::Both)
+                    && conditionStatus == NodeStatus::SUCCESS)
+                {
+                    m_Childrens[currentChildIndex]->OnAbort();
+                    currentChildIndex = i;
+                    std::cout << "Node Condition Succeeded at Runtime: " << condition->GetName() << " in " << node->GetName() << std::endl;
+                    return;
+                }
+            }
+        }
+}
+
 void NodeEditorApp::MouseInputHandling()
 {
     ImGuiIO& io = ImGui::GetIO();
@@ -329,7 +374,7 @@ void NodeEditorApp::ShowActionNodeInBlackboard()
     {
         auto parameter = s_NodeToParams.find(nodeKey);
         if (parameter != s_NodeToParams.end() && parameter->second)
-            parameter->second->DrawImGui();
+            parameter->second->DrawImGui(m_Blackboard.get());
     }
 }
 
@@ -374,7 +419,7 @@ void NodeEditorApp::ShowDecoratorNodeInBlackboard()
     {
         auto parameter = s_NodeToDecoratorParams.find(nodeKey);
         if (parameter != s_NodeToDecoratorParams.end() && parameter->second)
-            parameter->second->DrawImGui();
+            parameter->second->DrawImGui(m_Blackboard.get());
     }
 }
 
@@ -428,7 +473,7 @@ void NodeEditorApp::ShowConditionNodeInBlackboard()
                 {
                     parameter->second->Priority = static_cast<PriorityType>(currentPriority);
                 }
-                parameter->second->DrawImGui();
+                parameter->second->DrawImGui(m_Blackboard.get());
             }
         }
 }

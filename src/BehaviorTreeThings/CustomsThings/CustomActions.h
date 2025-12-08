@@ -8,11 +8,11 @@ struct MoveToParameters : Params
     bool bToPlayer = true;
     float StopDistance = 10.0f;
     float MoveSpeed = 5.0f;
-    void DrawImGui() override
+    void DrawImGui(HBlackboard* blackboard) override
     {
-        ImGui::Checkbox("Move To Player", &bToPlayer);
-        ImGui::InputFloat("Stop Distance", &StopDistance);
-        ImGui::InputFloat("Move Speed", &MoveSpeed);
+        DrawBoolValue("Move To Player", bToPlayer);
+        DrawFloatValue("Stop Distance", StopDistance);
+        DrawFloatValue("Move Speed", MoveSpeed);
     }
 };
 class MoveToAction : public HActionNode
@@ -33,25 +33,26 @@ private:
 
 struct MeleeEnemyAttackActionParameters : Params
 {
-    int AttackPower = 10;
+    HBlackboardKeyValue AttackPowerKey;
     float AttackDuration = 10.0f;
-    void DrawImGui() override
+    void DrawImGui(HBlackboard* blackboard) override
     {
-        ImGui::InputInt("Attack Power", &AttackPower);
+        DrawBlackboardIntKeySelector("Attack Power", AttackPowerKey, blackboard);
+        DrawFloatValue("Attack Duration", AttackDuration);
     }
 };
 class MeleeEnemyAttackAction : public HActionNode
 {
 public:
     MeleeEnemyAttackAction(const std::string& name, const MeleeEnemyAttackActionParameters& params = MeleeEnemyAttackActionParameters{})
-        : HActionNode(name, params), m_AttackPower(params.AttackPower), m_AttackDuration(params.AttackDuration) {}
+        : HActionNode(name, params), m_AttackPowerKey(params.AttackPowerKey), m_AttackDuration(params.AttackDuration) {}
 
     void OnStart() override;
     NodeStatus Update() override;
     void OnFinished() override;
     void OnAbort() override;
 private:
-    int m_AttackPower;
+    HBlackboardKeyValue m_AttackPowerKey;
     float m_AttackDuration;
     float m_ElapsedTime = 0.0f;
 };

@@ -24,3 +24,5 @@ enum class HNodeType
     Composite,
     Root
 };
+
+typedef std::string HBlackboardKeyValue;

@@ -5,7 +5,7 @@
 struct ChangeResultOfTheNodeParameters : ParamsForDecorator
 {
     NodeStatus NewResult = NodeStatus::SUCCESS;
-    void DrawImGui() override
+    void DrawImGui(HBlackboard* blackboard) override
     {
         const char* items[] = { "SUCCESS", "FAILURE", "RUNNING" };
         int currentItem = static_cast<int>(NewResult);
@@ -32,9 +32,9 @@ private:
 struct CooldownDecoratorParameters : ParamsForDecorator
 {
     float CooldownTime = 5.0f;
-    void DrawImGui() override
+    void DrawImGui(HBlackboard* blackboard) override
     {
-        ImGui::InputFloat("Cooldown Time", &CooldownTime);
+        DrawFloatValue("Cooldown Time", CooldownTime);
     }
 };
 class CooldownDecorator : public HDecorator

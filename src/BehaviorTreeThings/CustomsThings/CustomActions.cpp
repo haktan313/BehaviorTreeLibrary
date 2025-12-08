@@ -52,7 +52,7 @@ NodeStatus MeleeEnemyAttackAction::Update()
     if (m_ElapsedTime >= m_AttackDuration)
     {
         std::cout << "MeleeEnemyAttackAction completed attack." << std::endl;
-        int attackPower = GetBlackboard().GetIntValue("AttackPower");
+        int attackPower = GetBlackboard().GetIntValue(m_AttackPowerKey);
         std::cout << "Dealt " << attackPower << " damage to the player." << std::endl;
         GetBlackboard().SetBoolValue("IsAttacking", false);
         m_ElapsedTime = 0.0f;
