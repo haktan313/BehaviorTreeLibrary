@@ -26,12 +26,14 @@ NodeStatus HNode::Tick()
 
 void HNode::OnStart()
 {
-    m_EditorApp->AddActiveNode(this);
+    if (m_EditorApp)
+        m_EditorApp->AddActiveNode(this);
 }
 
 void HNode::OnFinished()
 {
-    m_EditorApp->RemoveActiveNode(this);
+    if (m_EditorApp)
+        m_EditorApp->RemoveActiveNode(this);
     for (auto& child : m_Childrens)
     {
         if (child->GetStatus() == NodeStatus::RUNNING)
@@ -43,12 +45,11 @@ void HNode::OnFinished()
 void HNode::OnAbort()
 {
     std::cout << "Node Aborted: " << m_Name << std::endl;
-    m_EditorApp->RemoveActiveNode(this);
+    if (m_EditorApp)
+        m_EditorApp->RemoveActiveNode(this);
     for (auto& child : m_Childrens)
-    {
         if (child->GetStatus() == NodeStatus::RUNNING)
             child->OnAbort();
-    }
     m_bIsStarted = false;
     m_Status = NodeStatus::FAILURE;
 }

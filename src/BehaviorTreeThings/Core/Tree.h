@@ -72,7 +72,10 @@ public:
                 action->SetBlackboard(m_Tree->m_Blackboard);
                 decoratorNode->AddChild(std::move(action));
                 m_NodeStack.back()->AddChild(std::move(decoratorNode));
-                m_LastCreatedNode->SetEditorApp(decoratorNodePtr->GetParent()->GetEditorApp());
+                auto editorApp = decoratorNodePtr->GetParent()->GetEditorApp();
+                if (editorApp == nullptr)
+                    std::cout << "editor app null" << std::endl;
+                m_LastCreatedNode->SetEditorApp(editorApp);
             }
         }
         else
@@ -82,7 +85,10 @@ public:
                 action->SetType(HNodeType::Action);
                 action->SetBlackboard(m_Tree->m_Blackboard);
                 m_NodeStack.back()->AddChild(std::move(action));
-                m_LastCreatedNode->SetEditorApp(m_LastCreatedNode->GetParent()->GetEditorApp());
+                auto editorApp = m_LastCreatedNode->GetParent()->GetEditorApp();
+                if (editorApp == nullptr)
+                    std::cout << "editor app null" << std::endl;
+                m_LastCreatedNode->SetEditorApp(editorApp);
             }
         return *this;
     }

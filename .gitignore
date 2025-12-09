@@ -3,6 +3,7 @@ bin/
 bin-int/
 
 *.sln
+*.sln.dotsettings
 *.vcxproj
 *.vcxproj.filters
 *.vcxproj.user

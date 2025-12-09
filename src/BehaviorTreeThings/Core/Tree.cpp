@@ -69,14 +69,20 @@ BehaviorTreeBuilder& BehaviorTreeBuilder::sequence(const std::string& name)
         auto decoratorNodePtr = decoratorNode.get();
         decoratorNode->AddChild(std::move(sequenceNode));
         m_NodeStack.back()->AddChild(std::move(decoratorNode));
-        sequenceNodePtr->SetEditorApp(decoratorNodePtr->GetParent()->GetEditorApp());
+        auto editorApp = decoratorNodePtr->GetParent()->GetEditorApp();
+        if (editorApp == nullptr)
+            std::cout << "editor app null" << std::endl;
+        sequenceNodePtr->SetEditorApp(editorApp);
         m_NodeStack.push_back(sequenceNodePtr);
     }
     else
     {
         m_NodeStack.back()->AddChild(std::move(sequenceNode));
         m_NodeStack.push_back(sequenceNodePtr);
-        sequenceNodePtr->SetEditorApp(sequenceNodePtr->GetParent()->GetEditorApp());
+        auto editorApp = sequenceNodePtr->GetParent()->GetEditorApp();
+        if (editorApp == nullptr)
+            std::cout << "editor app null" << std::endl;
+        sequenceNodePtr->SetEditorApp(editorApp);
     }
     return *this;
 }
@@ -94,14 +100,20 @@ BehaviorTreeBuilder& BehaviorTreeBuilder::selector(const std::string& name)
         auto decoratorNodePtr = decoratorNode.get();
         decoratorNode->AddChild(std::move(selectorNode));
         m_NodeStack.back()->AddChild(std::move(decoratorNode));
-        selectorNodePtr->SetEditorApp(decoratorNodePtr->GetParent()->GetEditorApp());
+        auto editorApp = decoratorNodePtr->GetParent()->GetEditorApp();
+        if (editorApp == nullptr)
+            std::cout << "editor app null" << std::endl;
+        selectorNodePtr->SetEditorApp(editorApp);
         m_NodeStack.push_back(selectorNodePtr);
     }
     else
     {
         m_NodeStack.back()->AddChild(std::move(selectorNode));
         m_NodeStack.push_back(selectorNodePtr);
-        selectorNodePtr->SetEditorApp(selectorNodePtr->GetParent()->GetEditorApp());
+        auto editorApp = selectorNodePtr->GetParent()->GetEditorApp();
+        if (editorApp == nullptr)
+            std::cout << "editor app null" << std::endl;
+        selectorNodePtr->SetEditorApp(editorApp);
     }
     return *this;
 }
