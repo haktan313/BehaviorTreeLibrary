@@ -7,7 +7,7 @@ class NodeEditorHelper
     NodeEditorApp* m_App;
 public:
     int GetNextID() { return m_NextId++; }
-    void TouchNode(nodeEditor::NodeId id) { m_NodeTouchTime[id] = m_TouchTime; }
+    //void TouchNode(nodeEditor::NodeId id) { m_NodeTouchTime[id] = m_TouchTime; }
     nodeEditor::LinkId GetNextLinkId() { return nodeEditor::LinkId(GetNextID()); }
     const std::vector<Node>& GetNodes() const { return m_Nodes; }
     const std::vector<Link>& GetLinks() const { return m_Links; }
@@ -48,12 +48,12 @@ private:
     void PaintNodeBackground(Node& node, const ImRect& inputsRect, const ImRect& outputsRect, const ImRect& contentRect, const ImVec4& pinBackground, int inputAlpha, int outputAlpha, const ImRect& sequenceRect);
     
     int m_NextId = 1;
-    float m_TouchTime = 1.0f;
+    //float m_TouchTime = 1.0f;
     Pin* newLinkPin = nullptr;
     Node* m_ActiveNode = nullptr;
     nodeEditor::EditorContext* m_EditorContext = nullptr;
     nodeEditor::PinId m_RootOutputPinId;
     std::vector<Node> m_Nodes;
     std::vector<Link> m_Links;
-    std::map<nodeEditor::NodeId, float, NodeIdLess> m_NodeTouchTime;
+    //std::map<nodeEditor::NodeId, float, NodeIdLess> m_NodeTouchTime;
 };
