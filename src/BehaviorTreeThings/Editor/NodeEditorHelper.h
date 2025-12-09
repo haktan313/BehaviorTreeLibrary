@@ -9,8 +9,8 @@ public:
     int GetNextID() { return m_NextId++; }
     //void TouchNode(nodeEditor::NodeId id) { m_NodeTouchTime[id] = m_TouchTime; }
     nodeEditor::LinkId GetNextLinkId() { return nodeEditor::LinkId(GetNextID()); }
-    const std::vector<Node>& GetNodes() const { return m_Nodes; }
-    const std::vector<Link>& GetLinks() const { return m_Links; }
+    std::vector<Node>& GetNodes() { return m_Nodes; }
+    std::vector<Link>& GetLinks() { return m_Links; }
 
     NodeEditorHelper(NodeEditorApp* app = nullptr);
     
