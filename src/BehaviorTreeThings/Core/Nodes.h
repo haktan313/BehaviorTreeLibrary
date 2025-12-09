@@ -2,21 +2,18 @@
 #include <memory>
 #include <string>
 #include <vector>
-
+#include "EnumsStructsForTree.h"
 #include "BlackboardBase.h"
-#include "EnumsForTree.h"
-#define IMGUI_DEFINE_MATH_OPERATORS
-#include "imgui.h"
 
 class HCondition;
-class HBlackboard;
 class EnemyAI;
 class NodeEditorApp;
 
 class HNode
 {
 public:
-    HNode(const std::string& name) : m_Name(name), m_Parent(nullptr), m_Status(NodeStatus::FAILURE), m_EditorApp(nullptr) {}
+    HNode(const std::string& name)
+        : m_Name(name), m_Parent(nullptr), m_Status(NodeStatus::FAILURE), m_EditorApp(nullptr), m_Type(HNodeType::None) {}
     virtual ~HNode() = default;
     
     NodeStatus Tick();
@@ -34,18 +31,20 @@ public:
     void SetEditorApp(NodeEditorApp* app) { m_EditorApp = app; }
     void SetType(HNodeType type) { m_Type = type; }
     
+    NodeEditorApp* GetEditorApp() const { return m_EditorApp; }
     HNode* GetParent() const { return m_Parent; }
-    NodeEditorApp* GetEditorApp() { return m_EditorApp; }
     NodeStatus GetStatus() const { return m_Status; }
     HNodeType GetType() const { return m_Type; }
-    std::string GetName() const { return m_Name; }
-    std::vector<std::unique_ptr<HNode>>& GetChildrens() { return m_Childrens; }
-    std::vector<std::unique_ptr<HCondition>>& GetConditionNodes() { return m_ConditionNodes; }
+    
+    const std::string& GetName() const { return m_Name; }
+    const std::vector<std::unique_ptr<HNode>>& GetChildrens() const { return m_Childrens; }
+    const std::vector<std::unique_ptr<HCondition>>& GetConditionNodes() const { return m_ConditionNodes; }
+
     bool m_bIsStarted = false;
 protected:
+    const std::string m_Name;
     HNode* m_Parent;
     NodeEditorApp* m_EditorApp;
-    std::string m_Name;
     NodeStatus m_Status;
     HNodeType m_Type;
     std::vector<std::unique_ptr<HNode>> m_Childrens;
@@ -57,115 +56,27 @@ class HRootNode : public HNode
 public:
     HRootNode() : HNode("Root") {}
 
-    virtual void OnStart() override;
-    virtual NodeStatus Update() override;
-    virtual void OnFinished() override;
-    virtual void OnAbort() override;
+    void OnStart() override;
+    NodeStatus Update() override;
+    void OnFinished() override;
+    void OnAbort() override;
 
     void AddChild(std::unique_ptr<HNode> child) override;
     void AddConditionNode(std::unique_ptr<HCondition> conditionNode) override {}
 };
 
-struct Params
+
+struct ParamsForAction : Params
 {
-    Params() = default;
-    ~Params() = default;
-    
-    virtual void DrawImGui(HBlackboard* blackboard) {}
-    void DrawFloatValue(const std::string& label, float& value)
-    {
-        ImGui::InputFloat(label.c_str(), &value);
-    }
-    void DrawIntValue(const std::string& label, int& value)
-    {
-        ImGui::InputInt(label.c_str(), &value);
-    }
-    void DrawBoolValue(const std::string& label, bool& value)
-    {
-        ImGui::Checkbox(label.c_str(), &value);
-    }
-    void DrawStringValue(const std::string& label, std::string& value)
-    {
-        char buffer[256];
-        std::strncpy(buffer, value.c_str(), sizeof(buffer));
-        if (ImGui::InputText(label.c_str(), buffer, sizeof(buffer)))
-        {
-            value = std::string(buffer);
-        }
-    }
-    void DrawBlackboardFloatKeySelector(const std::string& label, std::string& key, HBlackboard* blackboard)
-    {
-        const char* preview = key.empty() ? "Select float key..." : key.c_str();
-        if (ImGui::BeginCombo(label.c_str(), preview))
-        {
-            if (blackboard)
-                for (const auto& [bbKey, value] : blackboard->GetFloatValues())
-                {
-                    bool isSelected = (key == bbKey);
-                    if (ImGui::Selectable(bbKey.c_str(), isSelected))
-                        key = bbKey;
-                    if (isSelected)
-                        ImGui::SetItemDefaultFocus();
-                }
-            ImGui::EndCombo();
-        }
-    }
-    void DrawBlackboardIntKeySelector(const std::string& label, std::string& key, HBlackboard* blackboard)
-    {
-        const char* preview = key.empty() ? "Select int key..." : key.c_str();
-        if (ImGui::BeginCombo(label.c_str(), preview))
-        {
-            if (blackboard)
-                for (const auto& [bbKey, value] : blackboard->GetIntValues())
-                {
-                    bool isSelected = (key == bbKey);
-                    if (ImGui::Selectable(bbKey.c_str(), isSelected))
-                        key = bbKey;
-                    if (isSelected)
-                        ImGui::SetItemDefaultFocus();
-                }
-            ImGui::EndCombo();
-        }
-    }
-    void DrawBlackboardBoolKeySelector(const std::string& label, std::string& key, HBlackboard* blackboard)
-    {
-        const char* preview = key.empty() ? "Select bool key..." : key.c_str();
-        if (ImGui::BeginCombo(label.c_str(), preview))
-        {
-            if (blackboard)
-                for (const auto& [bbKey, value] : blackboard->GetBoolValues())
-                {
-                    bool isSelected = (key == bbKey);
-                    if (ImGui::Selectable(bbKey.c_str(), isSelected))
-                        key = bbKey;
-                    if (isSelected)
-                        ImGui::SetItemDefaultFocus();
-                }
-            ImGui::EndCombo();
-        }
-    }
-    void DrawBlackboardStringKeySelector(const std::string& label, std::string& key, HBlackboard* blackboard)
-    {
-        const char* preview = key.empty() ? "Select string key..." : key.c_str();
-        if (ImGui::BeginCombo(label.c_str(), preview))
-        {
-            if (blackboard)
-                for (const auto& [bbKey, value] : blackboard->GetStringValues())
-                {
-                    bool isSelected = (key == bbKey);
-                    if (ImGui::Selectable(bbKey.c_str(), isSelected))
-                        key = bbKey;
-                    if (isSelected)
-                        ImGui::SetItemDefaultFocus();
-                }
-            ImGui::EndCombo();
-        }
-    }
+    ParamsForAction() = default;
+    ~ParamsForAction() = default;
+
+    virtual void DrawImGui(HBlackboard* blackboard) override {}
 };
 class HActionNode : public HNode
 {
 public:
-    HActionNode(const std::string& name, const Params& params = Params{}) : HNode(name), m_Owner(nullptr), m_Blackboard(nullptr) {}
+    HActionNode(const std::string& name, const ParamsForAction& params = ParamsForAction{}) : HNode(name), m_Owner(nullptr), m_Blackboard(nullptr) {}
     
     virtual void OnStart() override;
     virtual NodeStatus Update() override;
@@ -189,7 +100,7 @@ private:
     friend class BehaviorTree;
 };
 
-struct ParamsForCondition : public Params
+struct ParamsForCondition : Params
 {
     ParamsForCondition() = default;
     ~ParamsForCondition() = default;
@@ -222,7 +133,7 @@ private:
     PriorityType m_PriorityMode;
     NodeStatus m_LastStatus;
 
-    virtual NodeStatus Update() override final { return CheckCondition() ? NodeStatus::SUCCESS : NodeStatus::FAILURE; }
+    NodeStatus Update() override final { return CheckCondition() ? NodeStatus::SUCCESS : NodeStatus::FAILURE; }
     void SetOwner(EnemyAI* owner) { m_Owner = owner; }
     void SetBlackboard(HBlackboard* blackboard) { m_Blackboard = blackboard; }
     void SetPriorityMode(PriorityType priority) { m_PriorityMode = priority; }

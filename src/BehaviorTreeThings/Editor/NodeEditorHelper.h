@@ -2,20 +2,22 @@
 #include "NodeEditorStructsAndEnums.h"
 
 class NodeEditorApp;
-class NodeEditor
+class NodeEditorHelper
 {
     NodeEditorApp* m_App;
 public:
     int GetNextID() { return m_NextId++; }
     void TouchNode(nodeEditor::NodeId id) { m_NodeTouchTime[id] = m_TouchTime; }
     nodeEditor::LinkId GetNextLinkId() { return nodeEditor::LinkId(GetNextID()); }
-    std::vector<Node>& GetNodes() { return m_Nodes; }
-    std::vector<Link>& GetLinks() { return m_Links; }
+    const std::vector<Node>& GetNodes() const { return m_Nodes; }
+    const std::vector<Link>& GetLinks() const { return m_Links; }
 
-    NodeEditor(NodeEditorApp* app = nullptr);
+    NodeEditorHelper(NodeEditorApp* app = nullptr);
     
     void OnStart();
     void OnUpdate();
+
+    void SetActiveNode(Node* node) { m_ActiveNode = node; }
 
     Node* SpawnRootNode();
     Node* SpawnSequenceNode(ImVec2 position);
@@ -48,6 +50,7 @@ private:
     int m_NextId = 1;
     float m_TouchTime = 1.0f;
     Pin* newLinkPin = nullptr;
+    Node* m_ActiveNode = nullptr;
     nodeEditor::EditorContext* m_EditorContext = nullptr;
     nodeEditor::PinId m_RootOutputPinId;
     std::vector<Node> m_Nodes;

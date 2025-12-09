@@ -21,6 +21,7 @@ App::~App()
 {
     delete m_EnemyAI;
     m_EnemyAI = nullptr;
+    
 }
 
 void App::Run()

@@ -7,7 +7,6 @@
 #include "Root.h"
 
 class EnemyAI;
-class BehaviorTree;
 
 class BehaviorTree
 {
@@ -20,13 +19,15 @@ public:
     void StopTree();
     
     void SetRootNode(std::unique_ptr<HNode> root) { m_RootNode = std::move(root); }
-    HNode* GetRootNode() const { return m_RootNode.get(); }
+    const HNode* GetRootNode() const { return m_RootNode.get(); }
 
 private:
-    std::unique_ptr<HNode> m_RootNode;
-    EnemyAI* m_Owner;
-    HBlackboard* m_Blackboard;
+    bool m_bOwnsBlackboard = false;
     bool m_bIsRunning = false;
+    EnemyAI* m_Owner;
+    std::unique_ptr<HNode> m_RootNode;
+    HBlackboard* m_Blackboard;
+
     friend class BehaviorTreeBuilder;
 };
 
@@ -38,13 +39,16 @@ public:
     template<typename BlackboardType>
     BehaviorTreeBuilder& setBlackboard()
     {
+        static_assert(std::is_base_of_v<HBlackboard, BlackboardType>, "BlackboardType must derive from HBlackboard");
         auto blackboard = new BlackboardType();
         m_Tree->m_Blackboard = blackboard;
+        m_Tree->m_bOwnsBlackboard = true;
         return *this;
     }
     BehaviorTreeBuilder& setBlackboard(HBlackboard* blackboard)
     {
         m_Tree->m_Blackboard = blackboard;
+        m_Tree->m_bOwnsBlackboard = false;
         return *this;
     }
     BehaviorTreeBuilder& root(NodeEditorApp* editorApp);
@@ -53,6 +57,7 @@ public:
     template<typename ActionNodeType, typename... Args>
     BehaviorTreeBuilder& action(Args&&... args)
     {
+        static_assert(std::is_base_of_v<HActionNode, ActionNodeType>, "ActionNodeType must derive from HAction");
         auto action = std::make_unique<ActionNodeType>(std::forward<Args>(args)...);
         std::cout << "Adding Action Node: " << action->GetName() << std::endl;
         m_LastCreatedNode = action.get();
@@ -71,7 +76,6 @@ public:
             }
         }
         else
-        {
             if (!m_NodeStack.empty())
             {
                 action->SetOwner(m_Tree->m_Owner);
@@ -80,12 +84,12 @@ public:
                 m_NodeStack.back()->AddChild(std::move(action));
                 m_LastCreatedNode->SetEditorApp(m_LastCreatedNode->GetParent()->GetEditorApp());
             }
-        }
         return *this;
     }
     template<typename ConditionNodeType, typename... Args>
     BehaviorTreeBuilder& condition(PriorityType priority, Args&&... args)
     {
+        static_assert(std::is_base_of_v<HCondition, ConditionNodeType>, "ConditionNodeType must derive from HCondition");
         auto condition = std::make_unique<ConditionNodeType>(std::forward<Args>(args)...);
         std::cout << "Adding Condition Node: " << condition->GetName() << std::endl;
         if (m_LastCreatedNode)
@@ -101,6 +105,7 @@ public:
     template<typename DecoratorNodeType, typename... Args>
     BehaviorTreeBuilder& decorator(Args&&... args)
     {
+        static_assert(std::is_base_of_v<HDecorator, DecoratorNodeType>, "DecoratorNodeType must derive from HDecorator");
         m_CurrentDecorator = std::make_unique<DecoratorNodeType>(std::forward<Args>(args)...);
         std::cout << "Adding Decorator Node: " << m_CurrentDecorator->GetName() << std::endl;
         m_CurrentDecorator->SetOwner(m_Tree->m_Owner);
@@ -109,12 +114,12 @@ public:
         return *this;
     }
     BehaviorTreeBuilder& end();
-    BehaviorTree* build();
+    BehaviorTree* build() const;
 
-    HNode* GetLastCreatedNode() const { return m_LastCreatedNode; }
+    const HNode* GetLastCreatedNode() const { return m_LastCreatedNode; }
 private:
     BehaviorTree* m_Tree;
-    std::vector<HNode*> m_NodeStack;
-    std::unique_ptr<HDecorator> m_CurrentDecorator;
     HNode* m_LastCreatedNode = nullptr;
+    std::unique_ptr<HDecorator> m_CurrentDecorator;
+    std::vector<HNode*> m_NodeStack;
 };

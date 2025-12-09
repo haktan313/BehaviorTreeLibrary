@@ -1,7 +1,6 @@
 #pragma once
-#include <functional>
 #include <unordered_map>
-#include "NodeEditor.h"
+#include "NodeEditorHelper.h"
 #include "Tree.h"
 #include "NodeEditorStructsAndEnums.h"
 
@@ -27,9 +26,8 @@ public:
     void ConditionNodeSelected(EditorCondition& condition);
     void DecoratorNodeUnSelected();
     void ConditionNodeUnSelected();
-    bool CheckConditionsSelfMode(HNode* node, std::vector<std::unique_ptr<HCondition>>& m_ConditionNodes);
-    void CheckConditionsLowerPriorityMode(int& currentChildIndex, HNode* node,
-                                          std::vector<std::unique_ptr<HNode>>& m_Childrens);
+    bool CheckConditionsSelfMode(HNode* node, const std::vector<std::unique_ptr<HCondition>>& conditionNodes);
+    void CheckConditionsLowerPriorityMode(int& currentChildIndex, HNode* node, const std::vector<std::unique_ptr<HNode>>& childrens);
 
 private:
     
@@ -59,20 +57,21 @@ private:
     float s_RightPanelWidth = 320.0f;
     
     std::vector<HNode*> m_ActiveNodes;
+    
     EditorDecorator* m_LastSelectedDecorator = nullptr;
     EditorCondition* m_LastSelectedCondition = nullptr;
     EnemyAI* m_Enemy = nullptr;
     Node* m_LastHoveredNode = nullptr;
     Node* m_LastSelectedNode = nullptr;
     BehaviorTree* m_BehaviorTree = nullptr;
-    std::unique_ptr<NodeEditor> m_NodeEditor;
+    std::unique_ptr<NodeEditorHelper> m_NodeEditor;
     std::unique_ptr<HBlackboard> m_Blackboard;
     
     std::unordered_map<const HNode*, nodeEditor::NodeId> s_NodeToEditorIdMap;
     
     std::unordered_map<std::string, ActionClassInfo> s_ActionClassInfoMap;
     std::unordered_map<int, std::string> s_NodeToActionClassId;
-    std::unordered_map<int, std::unique_ptr<Params>> s_NodeToParams;
+    std::unordered_map<int, std::unique_ptr<ParamsForAction>> s_NodeToParams;
     std::string s_SelectedActionClassName;
 
     std::unordered_map<std::string, DecoratorClassInfo> s_DecoratorClassInfoMap;
@@ -98,7 +97,7 @@ private:
             return std::make_unique<ParamsStruct>();
         };
 
-        actionInfo.BuildFn = [](BehaviorTreeBuilder& builder, Node* node, Params& baseParams)
+        actionInfo.BuildFn = [](BehaviorTreeBuilder& builder, Node* node, ParamsForAction& baseParams)
         {
             auto& params = static_cast<ParamsStruct&>(baseParams);
             builder.action<ActionClass>(node->Name, params);

@@ -2,7 +2,7 @@
 #include "CompositeNodes.h"
 
 //BehaviorTree methods
-BehaviorTree* BehaviorTreeBuilder::build()
+BehaviorTree* BehaviorTreeBuilder::build() const 
 {
     std::cout << "Behavior Tree Built" << std::endl;
     return m_Tree;
@@ -11,6 +11,8 @@ BehaviorTree* BehaviorTreeBuilder::build()
 BehaviorTree::~BehaviorTree()
 {
     m_Owner = nullptr;
+    if (m_bOwnsBlackboard)
+        delete m_Blackboard;
     m_Blackboard = nullptr;
 }
 
@@ -22,9 +24,11 @@ void BehaviorTree::StartTree()
 
 void BehaviorTree::TickTree()
 {
-    if (m_RootNode && m_bIsRunning)
+    if (m_RootNode && m_bIsRunning && m_Blackboard)
+    {
         m_RootNode->Tick();
-    m_Blackboard->ClearValuesChangedFlag();
+        m_Blackboard->ClearValuesChangedFlag();
+    }
 }
 
 void BehaviorTree::StopTree()

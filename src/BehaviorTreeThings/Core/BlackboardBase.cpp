@@ -23,7 +23,7 @@ float HBlackboard::GetFloatValue(const std::string& key) const
     return 0.0f;
 }
 
-std::string HBlackboard::GetStringValue(const std::string& key) const
+const std::string& HBlackboard::GetStringValue(const std::string& key) const
 {
     if (m_StringValues.find(key) != m_StringValues.end())
         return m_StringValues.at(key);

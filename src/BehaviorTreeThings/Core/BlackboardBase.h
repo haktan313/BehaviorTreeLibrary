@@ -11,15 +11,15 @@ public:
     bool GetBoolValue(const std::string& key) const;
     int GetIntValue(const std::string& key) const;
     float GetFloatValue(const std::string& key) const;
-    std::string GetStringValue(const std::string& key) const;
+    const std::string& GetStringValue(const std::string& key) const;
 
     bool IsValuesChanged() const { return m_bValuesChanged; }
     void ClearValuesChangedFlag() { m_bValuesChanged = false; }
 
-    std::unordered_map<std::string, bool>& GetBoolValues() { return m_BoolValues; }
-    std::unordered_map<std::string, int>& GetIntValues() { return m_IntValues; }
-    std::unordered_map<std::string, float>& GetFloatValues() { return m_FloatValues; }
-    std::unordered_map<std::string, std::string>& GetStringValues() { return m_StringValues; }
+    const std::unordered_map<std::string, bool>& GetBoolValues() const { return m_BoolValues; }
+    const std::unordered_map<std::string, int>& GetIntValues() const { return m_IntValues; }
+    const std::unordered_map<std::string, float>& GetFloatValues() const { return m_FloatValues; }
+    const std::unordered_map<std::string, std::string>& GetStringValues() const { return m_StringValues; }
     
     void SetBoolValue(const std::string& key, bool value);
     void SetIntValue(const std::string& key, int value);

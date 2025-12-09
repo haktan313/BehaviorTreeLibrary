@@ -33,8 +33,8 @@ struct BuildOp
 struct ActionClassInfo
 {
     std::string Name;
-    std::function<void(BehaviorTreeBuilder&, Node*, Params&)> BuildFn;
-    std::function<std::unique_ptr<Params>()> CreateParamsFn;
+    std::function<void(BehaviorTreeBuilder&, Node*, ParamsForAction&)> BuildFn;
+    std::function<std::unique_ptr<ParamsForAction>()> CreateParamsFn;
 };
 struct DecoratorClassInfo
 {

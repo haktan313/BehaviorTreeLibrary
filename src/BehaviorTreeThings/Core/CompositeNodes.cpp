@@ -22,50 +22,6 @@ bool HCompositeNode::CheckConditions()
     return true;
 }
 
-/*bool HCompositeNode::CheckConditionsSelfMode()
-{
-    if (!m_ConditionNodes.empty())
-        for (auto& condition : m_ConditionNodes)
-        {
-            if (condition->GetPriorityMode() == PriorityType::None)
-                continue;
-            NodeStatus conditionStatus = condition.get()->Tick();
-            if ((condition->GetPriorityMode() == PriorityType::Self || condition->GetPriorityMode() == PriorityType::Both)
-                && conditionStatus == NodeStatus::FAILURE)
-            {
-                OnAbort();
-                std::cout << "Node Condition Failed at Runtime: " << condition->GetName() << " in " << m_Name << std::endl;
-                return false;
-            }
-        }
-    return true;
-}
-
-void HCompositeNode::CheckConditionsLowerPriorityMode(int& currentChildIndex)
-{
-    if (!m_Childrens.empty())
-        for (int i = 0; i < static_cast<int>(m_Childrens.size()); ++i)
-        {
-            if (i >= currentChildIndex)
-                continue;
-            auto& child = m_Childrens[i];
-            for (auto& condition : child->GetConditionNodes())
-            {
-                if (condition->GetPriorityMode() == PriorityType::None)
-                    continue;
-                NodeStatus conditionStatus = condition.get()->Tick();
-                if ((condition->GetPriorityMode() == PriorityType::LowerPriority || condition->GetPriorityMode() == PriorityType::Both)
-                    && conditionStatus == NodeStatus::SUCCESS)
-                {
-                    m_Childrens[currentChildIndex]->OnAbort();
-                    currentChildIndex = i;
-                    std::cout << "Node Condition Succeeded at Runtime: " << condition->GetName() << " in " << m_Name << std::endl;
-                    return;
-                }
-            }
-        }
-}*/
-
 bool HCompositeNode::CanStart()
 {
     if (!CheckConditions())

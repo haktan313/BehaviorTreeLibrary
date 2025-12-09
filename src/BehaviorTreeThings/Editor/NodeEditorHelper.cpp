@@ -1,23 +1,23 @@
 
-#include "NodeEditor.h"
+#include "NodeEditorHelper.h"
 #include <iostream>
 
 #include "NodeEditorApp.h"
 
 namespace nodeEditor = ax::NodeEditor;
 
-NodeEditor::NodeEditor(NodeEditorApp* app) : m_App(app)
+NodeEditorHelper::NodeEditorHelper(NodeEditorApp* app) : m_App(app)
 {
 }
 
-void NodeEditor::OnStart()
+void NodeEditorHelper::OnStart()
 {
     nodeEditor::Config config;
     config.UserPointer = this;
 
-    config.LoadNodeSettings = [](nodeEditor::NodeId nodeId, char* data, void* userPointer) -> size_t
+    /*config.LoadNodeSettings = [](nodeEditor::NodeId nodeId, char* data, void* userPointer) -> size_t
     {
-        auto self = static_cast<NodeEditor*>(userPointer);
+        auto self = static_cast<NodeEditorHelper*>(userPointer);
 
         auto node = self->FindNode(nodeId);
         if (!node)
@@ -30,7 +30,7 @@ void NodeEditor::OnStart()
 
     config.SaveNodeSettings = [](nodeEditor::NodeId nodeId, const char* data, size_t size, nodeEditor::SaveReasonFlags reason, void* userPointer) -> bool
     {
-        auto self = static_cast<NodeEditor*>(userPointer);
+        auto self = static_cast<NodeEditorHelper*>(userPointer);
 
         auto node = self->FindNode(nodeId);
         if (!node)
@@ -41,7 +41,7 @@ void NodeEditor::OnStart()
         self->TouchNode(nodeId);
 
         return true;
-    };
+    };*/
     
     m_EditorContext = nodeEditor::CreateEditor(&config);
     nodeEditor::SetCurrentEditor(m_EditorContext);
@@ -52,7 +52,7 @@ void NodeEditor::OnStart()
     BuildNodes();
 }
 
-void NodeEditor::OnUpdate()
+void NodeEditorHelper::OnUpdate()
 {
     ImGui::Separator();
     nodeEditor::SetCurrentEditor(m_EditorContext);
@@ -132,7 +132,7 @@ void NodeEditor::OnUpdate()
     nodeEditor::End();
 }
 
-Node* NodeEditor::SpawnRootNode()
+Node* NodeEditorHelper::SpawnRootNode()
 {
     m_Nodes.emplace_back(NodeType::Root, GetNextID(), "Root");
     m_Nodes.back().Outputs.emplace_back(GetNextID(), "");
@@ -142,7 +142,7 @@ Node* NodeEditor::SpawnRootNode()
     return &m_Nodes.back();
 }
 
-Node* NodeEditor::SpawnSequenceNode(ImVec2 position)
+Node* NodeEditorHelper::SpawnSequenceNode(ImVec2 position)
 {
     m_Nodes.emplace_back(NodeType::Sequence, GetNextID(), "Sequence");
     m_Nodes.back().Inputs.emplace_back(GetNextID(), "");
@@ -154,7 +154,7 @@ Node* NodeEditor::SpawnSequenceNode(ImVec2 position)
     return &m_Nodes.back();
 }
 
-Node* NodeEditor::SpawnSelectorNode(ImVec2 position)
+Node* NodeEditorHelper::SpawnSelectorNode(ImVec2 position)
 {
     m_Nodes.emplace_back(NodeType::Selector, GetNextID(), "Selector");
     m_Nodes.back().Inputs.emplace_back(GetNextID(), "");
@@ -164,7 +164,7 @@ Node* NodeEditor::SpawnSelectorNode(ImVec2 position)
     return &m_Nodes.back();
 }
 
-Node* NodeEditor::SpawnActionNode(ImVec2 position)
+Node* NodeEditorHelper::SpawnActionNode(ImVec2 position)
 {
     m_Nodes.emplace_back(NodeType::Action, GetNextID(), "Action");
     m_Nodes.back().Inputs.emplace_back(GetNextID(), "");
@@ -173,7 +173,7 @@ Node* NodeEditor::SpawnActionNode(ImVec2 position)
     return &m_Nodes.back();
 }
 
-void NodeEditor::SpawnConditionNode(Node* parentNode)
+void NodeEditorHelper::SpawnConditionNode(Node* parentNode)
 {
     if (!parentNode)
         return;
@@ -182,7 +182,7 @@ void NodeEditor::SpawnConditionNode(Node* parentNode)
     parentNode->Conditions.push_back(condition);
 }
 
-void NodeEditor::SpawnDecoratorNode(Node* parentNode)
+void NodeEditorHelper::SpawnDecoratorNode(Node* parentNode)
 {
     if (!parentNode)
         return;
@@ -191,7 +191,7 @@ void NodeEditor::SpawnDecoratorNode(Node* parentNode)
     parentNode->Decorators.push_back(decorator);
 }
 
-std::vector<Node*> NodeEditor::GetChilderenNodes(Node* parentNode)
+std::vector<Node*> NodeEditorHelper::GetChilderenNodes(Node* parentNode)
 {
     std::vector<Node*> childrenNodes;
     if (!parentNode || parentNode->Outputs.empty())
@@ -223,7 +223,7 @@ std::vector<Node*> NodeEditor::GetChilderenNodes(Node* parentNode)
     return childrenNodes;
 }
 
-Node* NodeEditor::GetSelectedNode()
+Node* NodeEditorHelper::GetSelectedNode()
 {
     int count = nodeEditor::GetSelectedObjectCount();
     std::vector<nodeEditor::NodeId> selectedNodes(count);
@@ -237,7 +237,7 @@ Node* NodeEditor::GetSelectedNode()
     return nullptr;
 }
 
-Node* NodeEditor::FindNode(nodeEditor::NodeId id)
+Node* NodeEditorHelper::FindNode(nodeEditor::NodeId id)
 {
     for (auto& node : m_Nodes)
         if (node.ID == id)
@@ -246,7 +246,7 @@ Node* NodeEditor::FindNode(nodeEditor::NodeId id)
     return nullptr;
 }
 
-Pin* NodeEditor::FindPin(nodeEditor::PinId id)
+Pin* NodeEditorHelper::FindPin(nodeEditor::PinId id)
 {
     if (!id)
         return nullptr;
@@ -265,13 +265,13 @@ Pin* NodeEditor::FindPin(nodeEditor::PinId id)
     return nullptr;
 }
 
-void NodeEditor::BuildNodes()
+void NodeEditorHelper::BuildNodes()
 {
     for (auto& node : m_Nodes)
         BuildNode(&node);
 }
 
-void NodeEditor::BuildNode(Node* node)
+void NodeEditorHelper::BuildNode(Node* node)
 {
     for (auto& input : node->Inputs)
     {
@@ -286,7 +286,7 @@ void NodeEditor::BuildNode(Node* node)
     }
 }
 
-void NodeEditor::ManageInputs(ImRect& inputsRect, int& inputAlpha, Node& node, float padding)
+void NodeEditorHelper::ManageInputs(ImRect& inputsRect, int& inputAlpha, Node& node, float padding)
 {
     if (!node.Inputs.empty())
     {
@@ -312,7 +312,7 @@ void NodeEditor::ManageInputs(ImRect& inputsRect, int& inputAlpha, Node& node, f
         ImGui::Dummy(ImVec2(0, padding));   
 }
 
-void NodeEditor::DrawDecoratorBar(Node& node, ImRect& decoratorRect)
+void NodeEditorHelper::DrawDecoratorBar(Node& node, ImRect& decoratorRect)
 {
     if (!node.Decorators.empty())
     {
@@ -354,7 +354,7 @@ void NodeEditor::DrawDecoratorBar(Node& node, ImRect& decoratorRect)
     }
 }
 
-void NodeEditor::DrawConditionBar(Node& node, ImRect& conditionRect)
+void NodeEditorHelper::DrawConditionBar(Node& node, ImRect& conditionRect)
 {
     if (!node.Conditions.empty())
     {
@@ -397,7 +397,7 @@ void NodeEditor::DrawConditionBar(Node& node, ImRect& conditionRect)
     }
 }
 
-void NodeEditor::ManageOutputs(ImRect& outputsRect, int& outputAlpha, Node& node, float padding)
+void NodeEditorHelper::ManageOutputs(ImRect& outputsRect, int& outputAlpha, Node& node, float padding)
 {
     if (!node.Outputs.empty())
     {
@@ -421,7 +421,7 @@ void NodeEditor::ManageOutputs(ImRect& outputsRect, int& outputAlpha, Node& node
         ImGui::Dummy(ImVec2(0, padding));   
 }
 
-void NodeEditor::ManageLinks()
+void NodeEditorHelper::ManageLinks()
 {
     for (auto& link : m_Links)
         nodeEditor::Link(link.ID, link.StartPinID, link.EndPinID, link.Color, 2.0f);
@@ -521,14 +521,14 @@ void NodeEditor::ManageLinks()
     
 }
 
-bool NodeEditor::CanCreateLink(Pin* a, Pin* b)
+bool NodeEditorHelper::CanCreateLink(Pin* a, Pin* b)
 {
     if (!a || !b || a == b || a->Kind == b->Kind || a->Node == b->Node)
         return false;
     return true;
 }
 
-void NodeEditor::StylizeNodes()
+void NodeEditorHelper::StylizeNodes()
 {
     const float rounding = 5.0f;
 
@@ -546,7 +546,7 @@ void NodeEditor::StylizeNodes()
     nodeEditor::PushStyleVar(nodeEditor::StyleVar_PinRadius, 5.0f);
 }
 
-void NodeEditor::PaintNodeBackground(Node& node, const ImRect& inputsRect, const ImRect& outputsRect, const ImRect& contentRect, const ImVec4& pinBackground,
+void NodeEditorHelper::PaintNodeBackground(Node& node, const ImRect& inputsRect, const ImRect& outputsRect, const ImRect& contentRect, const ImVec4& pinBackground,
     int inputAlpha, int outputAlpha, const ImRect& sequenceRect)
 {
     nodeEditor::PopStyleVar(7);
@@ -577,5 +577,33 @@ void NodeEditor::PaintNodeBackground(Node& node, const ImRect& inputsRect, const
     
     drawList->AddRectFilled( sequenceRect.GetTL(), sequenceRect.GetBR(), IM_COL32(30, 30, 30, 255), 0.0f);
     drawList->AddRect( sequenceRect.GetTL(), sequenceRect.GetBR(), IM_COL32(10, 10, 10, 255), 0.0f);
+
+    if (&node == m_ActiveNode)
+    {
+        auto glowColor = IM_COL32(0, 255, 0, 200);
+        auto borderColor = IM_COL32(0, 180, 0, 255);
+        
+        ImRect highlightRect = contentRect;
+        highlightRect.Expand(6.0f);
+        
+        drawList->AddRect(
+            highlightRect.Min,
+            highlightRect.Max,
+            glowColor,
+            6.0f,
+            ImDrawFlags_RoundCornersAll,
+            4.0f
+        );
+        
+        highlightRect.Expand(-2.0f);
+        drawList->AddRect(
+            highlightRect.Min,
+            highlightRect.Max,
+            borderColor,
+            6.0f,
+            ImDrawFlags_RoundCornersAll,
+            2.0f
+        );
+    }
 }
 

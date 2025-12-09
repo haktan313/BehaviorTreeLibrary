@@ -3,7 +3,7 @@
 #include "Nodes.h"
 
 
-struct MoveToParameters : Params
+struct MoveToParameters : ParamsForAction
 {
     bool bToPlayer = true;
     float StopDistance = 10.0f;
@@ -31,7 +31,7 @@ private:
     float m_DistanceToTarget;
 };
 
-struct MeleeEnemyAttackActionParameters : Params
+struct MeleeEnemyAttackActionParameters : ParamsForAction
 {
     HBlackboardKeyValue AttackPowerKey;
     float AttackDuration = 10.0f;

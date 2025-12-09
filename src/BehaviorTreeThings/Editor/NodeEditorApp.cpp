@@ -1,18 +1,18 @@
 #include "NodeEditorApp.h"
 #include <iostream>
-#define IMGUI_DEFINE_MATH_OPERATORS
 #include "EnemyAI.h"
-#include "imgui.h"
-#include "NodeEditor.h"
+#include "NodeEditorHelper.h"
 #include "Tree.h"
 #include "CustomsThings/CustomActions.h"
 #include "CustomsThings/CustomBlackboards.h"
 #include "CustomsThings/CustomConditions.h"
 #include "CustomsThings/CustomDecorators.h"
+#define IMGUI_DEFINE_MATH_OPERATORS
+#include "imgui.h"
 
 NodeEditorApp::NodeEditorApp()
 {
-    m_NodeEditor = std::make_unique<NodeEditor>(this);
+    m_NodeEditor = std::make_unique<NodeEditorHelper>(this);
     Root::RootStart();
 }
 
@@ -54,6 +54,7 @@ void NodeEditorApp::Update()
     {
         if (m_BehaviorTree)
             m_BehaviorTree->StopTree();
+        m_NodeEditor->SetActiveNode(nullptr);
     }
     
     MouseInputHandling();
@@ -112,10 +113,10 @@ void NodeEditorApp::ConditionNodeUnSelected()
     m_LastSelectedCondition = nullptr;
 }
 
-bool NodeEditorApp::CheckConditionsSelfMode(HNode* node, std::vector<std::unique_ptr<HCondition>>& m_ConditionNodes)
+bool NodeEditorApp::CheckConditionsSelfMode(HNode* node, const std::vector<std::unique_ptr<HCondition>>& conditionNodes)
 {
-    if (!m_ConditionNodes.empty())
-        for (auto& condition : m_ConditionNodes)
+    if (!conditionNodes.empty())
+        for (auto& condition : conditionNodes)
         {
             if (condition->GetLastStatus() != NodeStatus::RUNNING && !m_Blackboard->IsValuesChanged())
             {
@@ -145,14 +146,14 @@ bool NodeEditorApp::CheckConditionsSelfMode(HNode* node, std::vector<std::unique
 }
 
 void NodeEditorApp::CheckConditionsLowerPriorityMode(int& currentChildIndex, HNode* node,
-    std::vector<std::unique_ptr<HNode>>& m_Childrens)
+    const std::vector<std::unique_ptr<HNode>>& childrens)
 {
-    if (!m_Childrens.empty())
-        for (int i = 0; i < static_cast<int>(m_Childrens.size()); ++i)
+    if (!childrens.empty())
+        for (int i = 0; i < static_cast<int>(childrens.size()); ++i)
         {
             if (i >= currentChildIndex)
                 continue;
-            auto& child = m_Childrens[i];
+            auto& child = childrens[i];
             for (auto& condition : child->GetConditionNodes())
             {
                 if (condition->GetLastStatus() != NodeStatus::RUNNING && !m_Blackboard->IsValuesChanged())
@@ -160,7 +161,7 @@ void NodeEditorApp::CheckConditionsLowerPriorityMode(int& currentChildIndex, HNo
                     if ((condition->GetPriorityMode() == PriorityType::LowerPriority || condition->GetPriorityMode() == PriorityType::Both)
                     && condition->GetLastStatus() == NodeStatus::SUCCESS)
                     {
-                        m_Childrens[currentChildIndex]->OnAbort();
+                        childrens[currentChildIndex]->OnAbort();
                         currentChildIndex = i;
                         std::cout << "Node Condition Succeeded at Runtime: " << condition->GetName() << " in " << node->GetName() << std::endl;
                         return;
@@ -176,7 +177,7 @@ void NodeEditorApp::CheckConditionsLowerPriorityMode(int& currentChildIndex, HNo
                 if ((condition->GetPriorityMode() == PriorityType::LowerPriority || condition->GetPriorityMode() == PriorityType::Both)
                     && conditionStatus == NodeStatus::SUCCESS)
                 {
-                    m_Childrens[currentChildIndex]->OnAbort();
+                    childrens[currentChildIndex]->OnAbort();
                     currentChildIndex = i;
                     std::cout << "Node Condition Succeeded at Runtime: " << condition->GetName() << " in " << node->GetName() << std::endl;
                     return;
@@ -264,20 +265,13 @@ void NodeEditorApp::FlowLinks()
 
         bool isParentChild = false;
         if (nextNode->GetParent() == activeNode)
-        {
             isParentChild = true;
-        }
         else
         {
             HNode* directParent = nextNode->GetParent();
             if (directParent)
-            {
-                if (dynamic_cast<HDecorator*>(directParent) &&
-                    directParent->GetParent() == activeNode)
-                {
+                if (dynamic_cast<HDecorator*>(directParent) && directParent->GetParent() == activeNode)
                     isParentChild = true;
-                }
-            }
         }
 
         if (!isParentChild)
@@ -303,17 +297,18 @@ void NodeEditorApp::FlowLinks()
         auto linkID = nodeEditor::LinkId::Invalid;
 
         for (auto& link : m_NodeEditor->GetLinks())
-        {
             if (link.StartPinID == outputPinID && link.EndPinID == inputPinID)
             {
                 linkID = link.ID;
                 linkExists = true;
                 break;
             }
-        }
 
         if (linkExists && linkID != nodeEditor::LinkId::Invalid)
             nodeEditor::Flow(linkID); //in imgui_node_editor in line 2964 i changed the duration for fade out
+        auto lastActiveNode = m_ActiveNodes.back();
+        auto lastEditorNode = GetEditorNodeFor(lastActiveNode);
+        m_NodeEditor->SetActiveNode(lastEditorNode);
     }
 }
 
@@ -694,7 +689,7 @@ void NodeEditorApp::BuildAction(Node* node, BehaviorTreeBuilder& btBuilder)
     if (paramsIt == s_NodeToParams.end() || !paramsIt->second)
         return;
     
-    Params& params = *paramsIt->second;
+    ParamsForAction& params = *paramsIt->second;
         
     auto decoClassIt = s_NodeToDecoratorClassId.find(nodeKey);
     if (decoClassIt != s_NodeToDecoratorClassId.end())
