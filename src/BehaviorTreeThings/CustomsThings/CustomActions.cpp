@@ -77,3 +77,47 @@ void MeleeEnemyAttackAction::OnAbort()
     std::cout << "MeleeEnemyAttackAction aborted." << std::endl;
 }
 
+void HeavyAttackAction::OnStart()
+{
+    HActionNode::OnStart();
+    GetBlackboard().SetBoolValue("IsAttacking", true);
+    float currentStamina = GetBlackboard().GetFloatValue("Stamina");
+    std::cout << "HeavyAttackAction started." << "Current Stamina: " << currentStamina << std::endl;
+}
+
+NodeStatus HeavyAttackAction::Update()
+{
+    m_ElapsedTime += .1f;
+    if (m_ElapsedTime >= m_AttackDuration)
+    {
+        int attackPower = GetBlackboard().GetIntValue(m_AttackPowerKey);
+        std::cout << "HeavyAttackAction completed heavy attack." << std::endl;
+        std::cout << "Dealt " << attackPower << " damage to the player." << std::endl;
+
+        GetBlackboard().SetBoolValue("IsAttacking", false);
+        m_ElapsedTime = 0.0f;
+        return NodeStatus::SUCCESS;
+    }
+    std::cout << "HeavyAttackAction performing heavy attack... Elapsed Time: " << m_ElapsedTime << std::endl;
+    return NodeStatus::RUNNING;
+}
+
+void HeavyAttackAction::OnFinished()
+{
+    HActionNode::OnFinished();
+    m_ElapsedTime = 0.0f;
+    std::cout << "HeavyAttackAction finished." << std::endl;
+    float currentStamina = GetBlackboard().GetFloatValue(m_StaminaKey);
+    currentStamina -= m_StaminaCost;
+    GetBlackboard().SetFloatValue(m_StaminaKey, currentStamina);
+    std::cout << "Stamina after heavy attack: " << currentStamina << std::endl;
+}
+
+void HeavyAttackAction::OnAbort()
+{
+    HActionNode::OnAbort();
+    GetBlackboard().SetBoolValue("IsAttacking", false);
+    m_ElapsedTime = 0.0f;
+    std::cout << "HeavyAttackAction aborted." << std::endl;
+}
+

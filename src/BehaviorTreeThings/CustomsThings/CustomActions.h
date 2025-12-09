@@ -56,3 +56,36 @@ private:
     float m_AttackDuration;
     float m_ElapsedTime = 0.0f;
 };
+
+struct HeavyAttackActionParameters : ParamsForAction
+{
+    HBlackboardKeyValue AttackPowerKey;
+    HBlackboardKeyValue StaminaKey;
+    float AttackDuration = 15.0f;
+    float StaminaCost = 30.0f;
+    void DrawImGui(HBlackboard* blackboard) override
+    {
+        DrawBlackboardIntKeySelector("Attack Power", AttackPowerKey, blackboard);
+        DrawBlackboardFloatKeySelector("Stamina", StaminaKey, blackboard);
+        DrawFloatValue("Attack Duration", AttackDuration);
+        DrawFloatValue("Stamina Cost", StaminaCost);
+    }
+};
+class HeavyAttackAction : public HActionNode
+{
+public:
+    HeavyAttackAction(const std::string& name, const HeavyAttackActionParameters& params = HeavyAttackActionParameters{})
+        : HActionNode(name, params), m_AttackPowerKey(params.AttackPowerKey), m_StaminaKey(params.StaminaKey),
+            m_AttackDuration(params.AttackDuration), m_StaminaCost(params.StaminaCost) {}
+
+    void OnStart() override;
+    NodeStatus Update() override;
+    void OnFinished() override;
+    void OnAbort() override;
+private:
+    HBlackboardKeyValue m_AttackPowerKey;
+    HBlackboardKeyValue m_StaminaKey;
+    float m_AttackDuration;
+    float m_StaminaCost;
+    float m_ElapsedTime = 0.0f;
+};

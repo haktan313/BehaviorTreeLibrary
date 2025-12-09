@@ -31,8 +31,10 @@ void NodeEditorApp::OnStart()
 
     AddActionNodeToBuilder<MoveToAction, MoveToParameters>("Move To Action");
     AddActionNodeToBuilder<MeleeEnemyAttackAction, MeleeEnemyAttackActionParameters>("Melee Enemy Attack Action");
+    AddActionNodeToBuilder<HeavyAttackAction, HeavyAttackActionParameters>("Heavy Attack Action");
 
     AddConditionNodeToBuilder<IsPlayerInRangeCondition, IsPlayerInRangeParameters>("Is Player In Range Condition");
+    AddConditionNodeToBuilder<CanAttackCondition, CanAttackParameters>("Can Attack Condition");
 
     AddDecoratorNodeToBuilder<ChangeResultOfTheNodeDecorator, ChangeResultOfTheNodeParameters>("Change Result Of The Node Decorator");
     AddDecoratorNodeToBuilder<CooldownDecorator, CooldownDecoratorParameters>("Cooldown Decorator");
@@ -252,6 +254,8 @@ void NodeEditorApp::NodeSettingsPanel()
 
 void NodeEditorApp::FlowLinks()
 {
+    if (m_ActiveNodes.empty())
+        m_NodeEditor->SetActiveNode(nullptr);
     for (int i = 0; i + 1 < (int)m_ActiveNodes.size(); ++i)
     {
         HNode* activeNode = m_ActiveNodes[i];

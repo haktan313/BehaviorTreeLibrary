@@ -13,6 +13,7 @@ public:
         
         CreateFloatValue("DistanceToPlayer", 200.0f);
         CreateFloatValue("Health", 100.0f);
+        CreateFloatValue("Stamina", 50.0f);
         
         CreateIntValue("AttackPower", 10);
         
