@@ -18,9 +18,16 @@ project "BehaviorTreeProject"
         "src/**.hpp",
         "src/**.cpp",
         "libs/glad/src/glad.c", 
-        "libs/imgui-1.92.4/*.cpp",
-        "libs/imgui-1.92.4/backends/imgui_impl_glfw.cpp",
-        "libs/imgui-1.92.4/backends/imgui_impl_opengl3.cpp",
+        
+        "libs/imgui/imgui.cpp",
+        "libs/imgui/imgui.h",
+        "libs/imgui/imgui_draw.cpp",
+        "libs/imgui/imgui_widgets.cpp",
+        "libs/imgui/imgui_tables.cpp",
+        "libs/imgui/imgui_demo.cpp",
+        
+        "libs/imgui/backends/imgui_impl_glfw.cpp",
+        "libs/imgui/backends/imgui_impl_opengl3.cpp",
 
         "libs/imgui-node-editor/crude_json.cpp",
         "libs/imgui-node-editor/imgui_canvas.cpp",
@@ -35,8 +42,8 @@ project "BehaviorTreeProject"
         "src/BehaviorTreeThings/CustomThings",
         "libs/glad/include",
         "libs/glfw-3.4.bin.WIN64/include",
-        "libs/imgui-1.92.4",
-        "libs/imgui-1.92.4/backends",
+        "libs/imgui",
+        "libs/imgui/backends",
         "libs/imgui-node-editor"
     }
 

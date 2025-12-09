@@ -5,10 +5,10 @@ class HCompositeNode : public HNode
 {
 public:
     HCompositeNode(const std::string& name) : HNode(name) {}
-
+    
     bool CheckConditions();
-    bool CheckConditionsSelfMode();
-    void CheckConditionsLowerPriortyMode(int& currentChildIndex);
+    
+    bool CanStart() override;
 protected:
     int m_CurrentChildIndex = 0;
 };

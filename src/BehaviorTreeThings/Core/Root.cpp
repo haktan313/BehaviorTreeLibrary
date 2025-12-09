@@ -1,5 +1,4 @@
 #include "Root.h"
-
 #include "Tree.h"
 
 std::vector<BehaviorTree*> Root::m_BehaviorTrees;

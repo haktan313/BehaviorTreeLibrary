@@ -1,0 +1,805 @@
+#include "NodeEditorApp.h"
+#include <iostream>
+#include "EnemyAI.h"
+#include "NodeEditorHelper.h"
+#include "Tree.h"
+#include "CustomsThings/CustomActions.h"
+#include "CustomsThings/CustomBlackboards.h"
+#include "CustomsThings/CustomConditions.h"
+#include "CustomsThings/CustomDecorators.h"
+#define IMGUI_DEFINE_MATH_OPERATORS
+#include "imgui.h"
+
+NodeEditorApp::NodeEditorApp()
+{
+    m_NodeEditor = std::make_unique<NodeEditorHelper>(this);
+    Root::RootStart();
+}
+
+NodeEditorApp::~NodeEditorApp()
+{
+    ClearNodeMappings();
+    Root::RootStop();
+}
+
+void NodeEditorApp::OnStart()
+{
+    m_NodeEditor->OnStart();
+
+    AddBlackBoardToEditor<MeleeEnemyBlackboard>("Melee Enemy Blackboard");
+    AddBlackBoardToEditor<RangedEnemyBlackboard>("Ranged Enemy Blackboard");
+
+    AddActionNodeToBuilder<MoveToAction, MoveToParameters>("Move To Action");
+    AddActionNodeToBuilder<MeleeEnemyAttackAction, MeleeEnemyAttackActionParameters>("Melee Enemy Attack Action");
+
+    AddConditionNodeToBuilder<IsPlayerInRangeCondition, IsPlayerInRangeParameters>("Is Player In Range Condition");
+
+    AddDecoratorNodeToBuilder<ChangeResultOfTheNodeDecorator, ChangeResultOfTheNodeParameters>("Change Result Of The Node Decorator");
+    AddDecoratorNodeToBuilder<CooldownDecorator, CooldownDecoratorParameters>("Cooldown Decorator");
+}
+
+void NodeEditorApp::Update()
+{
+    Root::RootTick();
+    if (ImGui::Button("Build", ImVec2(100, 30)))
+        BuildBehaviorTree();
+    ImGui::SameLine();
+    if (ImGui::Button("Start", ImVec2(100, 30)))
+    {
+        if (m_BehaviorTree)
+            m_BehaviorTree->StartTree();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Stop", ImVec2(100, 30)))
+    {
+        if (m_BehaviorTree)
+            m_BehaviorTree->StopTree();
+        m_NodeEditor->SetActiveNode(nullptr);
+    }
+    
+    MouseInputHandling();
+    NodeSettingsPanel();
+    
+    int linkAmount = (int)m_NodeEditor->GetLinks().size();
+    ImGui::Text("Links: %d", linkAmount);
+
+    BlackboardPanel();
+    FlowLinks();
+    m_NodeEditor->OnUpdate();
+}
+
+void NodeEditorApp::RegisterNodeMapping(const HNode* runtimeNode, nodeEditor::NodeId editorId)
+{
+    if (!runtimeNode)
+        return;
+    s_NodeToEditorIdMap[runtimeNode] = editorId;
+}
+
+Node* NodeEditorApp::GetEditorNodeFor(const HNode* runtimeNode)
+{
+    if (!runtimeNode)
+        return nullptr;
+
+    auto it = s_NodeToEditorIdMap.find(runtimeNode);
+    if (it == s_NodeToEditorIdMap.end())
+        return nullptr;
+
+    return m_NodeEditor->FindNode(it->second);
+}
+
+void NodeEditorApp::DecoratorNodeSelected(EditorDecorator& decorator)
+{
+    m_bDecoratorSelected = true; m_bConditionSelected = false;
+    std::cout << "Decorator Selected: " << decorator.Name << std::endl;
+    m_LastSelectedDecorator = &decorator;
+}
+
+void NodeEditorApp::ConditionNodeSelected(EditorCondition& condition)
+{
+    m_bConditionSelected = true; m_bDecoratorSelected = false;
+    std::cout << "Condition Selected: " << condition.Name << std::endl;
+    m_LastSelectedCondition = &condition;
+}
+
+void NodeEditorApp::DecoratorNodeUnSelected()
+{
+    m_bDecoratorSelected = false;
+    m_LastSelectedDecorator = nullptr;
+}
+
+void NodeEditorApp::ConditionNodeUnSelected()
+{
+    m_bConditionSelected = false;
+    m_LastSelectedCondition = nullptr;
+}
+
+bool NodeEditorApp::CheckConditionsSelfMode(HNode* node, const std::vector<std::unique_ptr<HCondition>>& conditionNodes)
+{
+    if (!conditionNodes.empty())
+        for (auto& condition : conditionNodes)
+        {
+            if (condition->GetLastStatus() != NodeStatus::RUNNING && !m_Blackboard->IsValuesChanged())
+            {
+                if ((condition->GetPriorityMode() == PriorityType::Self || condition->GetPriorityMode() == PriorityType::Both)
+                    && condition->GetLastStatus() == NodeStatus::FAILURE)
+                {
+                    node->OnAbort();
+                    std::cout << "Node Condition Failed at Runtime: " << condition->GetName() << " in " << node->GetName() << std::endl;
+                    return false;
+                }
+                continue;
+            }
+            condition->SetLastStatus(NodeStatus::RUNNING);
+            if (condition->GetPriorityMode() == PriorityType::None)
+                continue;
+            NodeStatus conditionStatus = condition.get()->Tick();
+            condition->SetLastStatus(conditionStatus);
+            if ((condition->GetPriorityMode() == PriorityType::Self || condition->GetPriorityMode() == PriorityType::Both)
+                && conditionStatus == NodeStatus::FAILURE)
+            {
+                node->OnAbort();
+                std::cout << "Node Condition Failed at Runtime: " << condition->GetName() << " in " << node->GetName() << std::endl;
+                return false;
+            }
+        }
+    return true;
+}
+
+void NodeEditorApp::CheckConditionsLowerPriorityMode(int& currentChildIndex, HNode* node,
+    const std::vector<std::unique_ptr<HNode>>& childrens)
+{
+    if (!childrens.empty())
+        for (int i = 0; i < static_cast<int>(childrens.size()); ++i)
+        {
+            if (i >= currentChildIndex)
+                continue;
+            auto& child = childrens[i];
+            for (auto& condition : child->GetConditionNodes())
+            {
+                if (condition->GetLastStatus() != NodeStatus::RUNNING && !m_Blackboard->IsValuesChanged())
+                {
+                    if ((condition->GetPriorityMode() == PriorityType::LowerPriority || condition->GetPriorityMode() == PriorityType::Both)
+                    && condition->GetLastStatus() == NodeStatus::SUCCESS)
+                    {
+                        childrens[currentChildIndex]->OnAbort();
+                        currentChildIndex = i;
+                        std::cout << "Node Condition Succeeded at Runtime: " << condition->GetName() << " in " << node->GetName() << std::endl;
+                        return;
+                    }
+                    continue;
+                }
+                condition->SetLastStatus(NodeStatus::RUNNING);
+                if (condition->GetPriorityMode() == PriorityType::None)
+                    continue;
+                NodeStatus conditionStatus = condition.get()->Tick();
+                condition->SetLastStatus(conditionStatus);
+                
+                if ((condition->GetPriorityMode() == PriorityType::LowerPriority || condition->GetPriorityMode() == PriorityType::Both)
+                    && conditionStatus == NodeStatus::SUCCESS)
+                {
+                    childrens[currentChildIndex]->OnAbort();
+                    currentChildIndex = i;
+                    std::cout << "Node Condition Succeeded at Runtime: " << condition->GetName() << " in " << node->GetName() << std::endl;
+                    return;
+                }
+            }
+        }
+}
+
+void NodeEditorApp::MouseInputHandling()
+{
+    ImGuiIO& io = ImGui::GetIO();
+    m_LastSelectedNode = m_NodeEditor->GetSelectedNode();
+    auto lastHoveredNodeID = nodeEditor::GetHoveredNode();
+    if (ImGui::IsMouseClicked(ImGuiMouseButton_Right) && !io.KeyAlt)
+    {
+        bool isNodeHovered = nodeEditor::GetHoveredNode() || nodeEditor::GetHoveredPin() || nodeEditor::GetHoveredLink();
+        if (!isNodeHovered)
+        {
+            m_LastHoveredNode = nullptr;
+            ImGui::OpenPopup("Node Context");
+        }
+        else
+        {
+            m_LastHoveredNode = m_NodeEditor->FindNode(lastHoveredNodeID);
+            if (m_LastHoveredNode->Type == NodeType::Sequence || m_LastHoveredNode->Type == NodeType::Selector || m_LastHoveredNode->Type == NodeType::Action)
+                ImGui::OpenPopup("Node Options");
+        }
+    }
+    if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && !io.KeyAlt)
+    {
+        bool isNodeHovered = nodeEditor::GetHoveredNode() || nodeEditor::GetHoveredPin() || nodeEditor::GetHoveredLink();
+        if (isNodeHovered)
+        {
+            m_LastHoveredNode = m_NodeEditor->FindNode(lastHoveredNodeID);
+            if (m_LastHoveredNode->Type == NodeType::Sequence || m_LastHoveredNode->Type == NodeType::Selector || m_LastHoveredNode->Type == NodeType::Action)
+            {
+                m_bConditionSelected = false;
+                m_bDecoratorSelected = false;
+            }
+        }
+    }
+}
+
+void NodeEditorApp::NodeSettingsPanel()
+{
+    if (ImGui::BeginPopup("Node Context"))
+    {
+        ImGui::TextUnformatted("Node Context Menu");
+        ImGui::Separator();
+
+        ImVec2 mouseScreenPos = ImGui::GetMousePosOnOpeningCurrentPopup();
+        ImVec2 mouseCanvasPos = nodeEditor::ScreenToCanvas(mouseScreenPos);
+        if (ImGui::MenuItem("Create Sequence"))
+            m_NodeEditor->SpawnSequenceNode(mouseCanvasPos);
+        if (ImGui::MenuItem("Create Selector"))
+            m_NodeEditor->SpawnSelectorNode(mouseCanvasPos);
+        if (ImGui::MenuItem("Create Action"))
+            m_NodeEditor->SpawnActionNode(mouseCanvasPos);
+        ImGui::EndPopup();
+    }
+    if (ImGui::BeginPopup("Node Options"))
+    {
+        ImGui::TextUnformatted("Node Options Menu");
+        ImGui::Separator();
+        if (ImGui::MenuItem("Create Decorator"))
+            m_NodeEditor->SpawnDecoratorNode(m_LastHoveredNode);
+        if (ImGui::MenuItem("Create Condition"))
+            m_NodeEditor->SpawnConditionNode(m_LastHoveredNode);
+        ImGui::EndPopup();
+    }
+}
+
+void NodeEditorApp::FlowLinks()
+{
+    for (int i = 0; i + 1 < (int)m_ActiveNodes.size(); ++i)
+    {
+        HNode* activeNode = m_ActiveNodes[i];
+        HNode* nextNode = m_ActiveNodes[i + 1];
+
+        if (!activeNode || !nextNode)
+            continue;
+        
+        /*if (nextNode->GetParent() != activeNode)
+            continue;*/
+
+        bool isParentChild = false;
+        if (nextNode->GetParent() == activeNode)
+            isParentChild = true;
+        else
+        {
+            HNode* directParent = nextNode->GetParent();
+            if (directParent)
+                if (dynamic_cast<HDecorator*>(directParent) && directParent->GetParent() == activeNode)
+                    isParentChild = true;
+        }
+
+        if (!isParentChild)
+            continue;
+
+        if (activeNode->GetStatus() != NodeStatus::RUNNING ||
+            nextNode->GetStatus() != NodeStatus::RUNNING)
+            continue;
+        
+        Node* activeEditorNode = GetEditorNodeFor(activeNode);
+        Node* nextEditorNode = GetEditorNodeFor(nextNode);
+
+        if (!activeEditorNode || !nextEditorNode)
+            continue;
+
+        if (activeEditorNode->Outputs.empty() || nextEditorNode->Inputs.empty())
+            continue;
+
+        auto outputPinID = activeEditorNode->Outputs[0].ID;
+        auto inputPinID  = nextEditorNode->Inputs[0].ID;
+
+        bool linkExists = false;
+        auto linkID = nodeEditor::LinkId::Invalid;
+
+        for (auto& link : m_NodeEditor->GetLinks())
+            if (link.StartPinID == outputPinID && link.EndPinID == inputPinID)
+            {
+                linkID = link.ID;
+                linkExists = true;
+                break;
+            }
+
+        if (linkExists && linkID != nodeEditor::LinkId::Invalid)
+            nodeEditor::Flow(linkID); //in imgui_node_editor in line 2964 i changed the duration for fade out
+        auto lastActiveNode = m_ActiveNodes.back();
+        auto lastEditorNode = GetEditorNodeFor(lastActiveNode);
+        m_NodeEditor->SetActiveNode(lastEditorNode);
+    }
+}
+
+void NodeEditorApp::BlackboardPanelSizeSettings()
+{
+    ImGuiViewport* viewport = ImGui::GetMainViewport();
+    ImVec2 workPos  = viewport->WorkPos;
+    ImVec2 workSize = viewport->WorkSize;
+    
+    s_RightPanelWidth = std::clamp(s_RightPanelWidth, 200.0f, workSize.x * 0.8f);
+
+    ImVec2 panelPos  = ImVec2(workPos.x + workSize.x - s_RightPanelWidth, workPos.y);
+    ImVec2 panelSize = ImVec2(s_RightPanelWidth, workSize.y);
+
+    ImGui::SetNextWindowPos(panelPos);
+    ImGui::SetNextWindowSize(panelSize);
+
+    ImGui::Begin("Blackboard & Details", nullptr,
+        ImGuiWindowFlags_NoMove |
+        ImGuiWindowFlags_NoCollapse);
+    
+    s_RightPanelWidth = ImGui::GetWindowSize().x;
+}
+
+void NodeEditorApp::BlackboardPanel()
+{
+    BlackboardPanelSizeSettings();
+
+    ImGui::TextUnformatted("Blackboard / Node Details Panel");
+    ImGui::Separator();
+    
+    if (m_LastSelectedNode && m_LastSelectedNode->Type == NodeType::Action && !m_bDecoratorSelected && !m_bConditionSelected)
+        ShowActionNodeInBlackboard();
+    else if (m_LastSelectedNode && m_bDecoratorSelected)
+        ShowDecoratorNodeInBlackboard();
+    else if (m_LastSelectedNode && m_bConditionSelected)
+        ShowConditionNodeInBlackboard();
+    
+    if (!m_LastSelectedNode)
+        ShowBlackboardDetails();
+
+    ImGui::End();
+    s_InitLayout = false;
+}
+
+void NodeEditorApp::ShowActionNodeInBlackboard()
+{
+    int nodeKey = (int)m_LastSelectedNode->ID.Get();
+
+    ImGui::Text("Action Class");
+    ImGui::Separator();
+
+    std::string currentIdString;
+    auto it = s_NodeToActionClassId.find(nodeKey);
+    if (it != s_NodeToActionClassId.end())
+        currentIdString = it->second;
+
+    std::string currentLabel = "Select Action";
+    if (!currentIdString.empty())
+    {
+        auto info = s_ActionClassInfoMap.find(currentIdString);
+        if (info != s_ActionClassInfoMap.end())
+            currentLabel = info->second.Name;
+    }
+
+    if (ImGui::BeginCombo("##ActionList", currentLabel.c_str()))
+    {
+        for (auto& [id, info] : s_ActionClassInfoMap)
+        {
+            bool isSelected = (id == currentIdString);
+            if (ImGui::Selectable(info.Name.c_str(), isSelected))
+            {
+                s_NodeToActionClassId[nodeKey] = id;
+                s_NodeToParams[nodeKey] = info.CreateParamsFn();
+                if (m_LastSelectedNode)
+                    m_LastSelectedNode->Name = info.Name;
+            }
+        }
+        ImGui::EndCombo();
+    }
+
+    ImGui::Text("Parameters");
+    ImGui::Separator();
+
+    if (!currentIdString.empty())
+    {
+        auto parameter = s_NodeToParams.find(nodeKey);
+        if (parameter != s_NodeToParams.end() && parameter->second)
+            parameter->second->DrawImGui(m_Blackboard.get());
+    }
+}
+
+void NodeEditorApp::ShowDecoratorNodeInBlackboard()
+{
+    int nodeKey = (int)m_LastSelectedNode->ID.Get();
+
+    ImGui::Text("Decorator Class");
+    ImGui::Separator();
+
+    std::string currentIdString;
+    auto it = s_NodeToDecoratorClassId.find(nodeKey);
+    if (it != s_NodeToDecoratorClassId.end())
+        currentIdString = it->second;
+
+    std::string currentLabel = "Select Condition";
+    if (!currentIdString.empty())
+    {
+        auto info = s_DecoratorClassInfoMap.find(currentIdString);
+        if (info != s_DecoratorClassInfoMap.end())
+            currentLabel = info->second.Name;
+    }
+    if (ImGui::BeginCombo("##ConditionList", currentLabel.c_str()))
+    {
+        for (auto& [id, info] : s_DecoratorClassInfoMap)
+        {
+            bool isSelected = (id == currentIdString);
+            if (ImGui::Selectable(info.Name.c_str(), isSelected))
+            {
+                s_NodeToDecoratorClassId[nodeKey] = id;
+                s_NodeToDecoratorParams[nodeKey] = info.CreateParamsFn();
+                if (m_LastSelectedDecorator)
+                    m_LastSelectedDecorator->Name = info.Name;
+            }
+        }
+        ImGui::EndCombo();
+    }
+    ImGui::Text("Parameters");
+    ImGui::Separator();
+
+    if (!currentIdString.empty())
+    {
+        auto parameter = s_NodeToDecoratorParams.find(nodeKey);
+        if (parameter != s_NodeToDecoratorParams.end() && parameter->second)
+            parameter->second->DrawImGui(m_Blackboard.get());
+    }
+}
+
+void NodeEditorApp::ShowConditionNodeInBlackboard()
+{
+    int nodeKey = (int)m_LastSelectedNode->ID.Get();
+
+        ImGui::Text("Condition Class");
+        ImGui::Separator();
+
+        std::string currentIdString;
+        auto it = s_NodeToConditionClassId.find(nodeKey);
+        if (it != s_NodeToConditionClassId.end())
+            currentIdString = it->second;
+
+        std::string currentLabel = "Select Condition";
+        if (!currentIdString.empty())
+        {
+            auto info = s_ConditionClassInfoMap.find(currentIdString);
+            if (info != s_ConditionClassInfoMap.end())
+                currentLabel = info->second.Name;
+        }
+        if (ImGui::BeginCombo("##ConditionList", currentLabel.c_str()))
+        {
+            for (auto& [id, info] : s_ConditionClassInfoMap)
+            {
+                bool isSelected = (id == currentIdString);
+                if (ImGui::Selectable(info.Name.c_str(), isSelected))
+                {
+                    s_NodeToConditionClassId[nodeKey] = id;
+                    s_NodeToConditionParams[nodeKey] = info.CreateParamsFn();
+                    if (m_LastSelectedCondition)
+                        m_LastSelectedCondition->Name = info.Name;
+                }
+            }
+            ImGui::EndCombo();
+        }
+        ImGui::Text("Parameters");
+        ImGui::Separator();
+
+        if (!currentIdString.empty())
+        {
+            auto parameter = s_NodeToConditionParams.find(nodeKey);
+            if (parameter != s_NodeToConditionParams.end() && parameter->second)
+            {
+                ImGui::Text("Priority Type");
+                ImGui::Separator();
+                const char* priorityTypes[] = { "None", "Self", "Lower Priority", "Both" };
+                int currentPriority = static_cast<int>(parameter->second->Priority);
+                if (ImGui::Combo("##PriorityTypeCombo", &currentPriority, priorityTypes, IM_ARRAYSIZE(priorityTypes)))
+                {
+                    parameter->second->Priority = static_cast<PriorityType>(currentPriority);
+                }
+                parameter->second->DrawImGui(m_Blackboard.get());
+            }
+        }
+}
+
+void NodeEditorApp::ShowBlackboardDetails()
+{
+    std::string currentLabel = "Select Blackboard";
+    if (!s_SelectedBlackboardClassName.empty())
+    {
+        auto info = s_BlackboardClassInfoMap.find(s_SelectedBlackboardClassName);
+        if (info != s_BlackboardClassInfoMap.end())
+            currentLabel = info->second.Name;
+    }
+    if (ImGui::BeginCombo("##BlackboardOptions", currentLabel.c_str()))
+    {
+        for (auto& [id, info] : s_BlackboardClassInfoMap)
+        {
+            bool isSelected = (id == s_SelectedBlackboardClassName);
+            if (ImGui::Selectable(info.Name.c_str(), isSelected))
+            {
+                s_SelectedBlackboardClassName = id;
+                m_Blackboard = info.CreateBlackboardFn();
+            }
+        }
+        ImGui::EndCombo();
+    }
+    if (!s_SelectedBlackboardClassName.empty())
+    {
+        m_Blackboard->DrawImGui();
+    }
+}
+
+void NodeEditorApp::BuildBehaviorTree()
+{
+    m_NodeEditor->BuildNodes();
+    std::cout << "Building Behavior Tree from Node Editor..." << std::endl;
+    ClearBuildData();
+    
+    BehaviorTreeBuilder btBuilder(m_Enemy);
+    //btBuilder.setBlackboard<EnemyBlackboard>();
+    btBuilder.setBlackboard(m_Blackboard.get());
+    
+    btBuilder.root(this);
+    if (auto* runtimeRoot = btBuilder.GetLastCreatedNode())
+        for (auto& n : m_NodeEditor->GetNodes())
+        {
+            if (n.Type == NodeType::Root)
+            {
+                RegisterNodeMapping(runtimeRoot, n.ID);
+                break;
+            }
+        }
+    
+    auto buildOps = CreateBuildPlan();
+    for (BuildOp& op : buildOps)
+        switch (op.Type)
+        {
+            case BuildOpType::OpenComposite:
+            {
+                Node* node = op.EditorNode;
+                if (node->Type == NodeType::Sequence)
+                    BuildSequence(node, btBuilder);
+                else if (node->Type == NodeType::Selector)
+                    BuildSelector(node, btBuilder);
+                    
+                if (auto* runtimeNode = btBuilder.GetLastCreatedNode())
+                    RegisterNodeMapping(runtimeNode, node->ID);
+                break;
+            }
+            case BuildOpType::Action:
+            {    
+                Node* node =  op.EditorNode;  
+                BuildAction(node, btBuilder);    
+                if (auto* runtimeNode = btBuilder.GetLastCreatedNode())
+                    RegisterNodeMapping(runtimeNode, node->ID);
+                break;
+            }
+            case BuildOpType::CloseComposite:
+            {
+                btBuilder.end();
+                break;
+            }
+            default:
+                break;
+        }
+    m_BehaviorTree = btBuilder.build();
+}
+
+void NodeEditorApp::BuildSequence(Node* node, BehaviorTreeBuilder& btBuilder)
+{
+    int nodeKey = (int)node->ID.Get();
+                    
+    auto classIt = s_NodeToDecoratorClassId.find(nodeKey);
+    if (classIt != s_NodeToDecoratorClassId.end())
+    {
+        const std::string& classId = classIt->second;
+
+        auto infoIt = s_DecoratorClassInfoMap.find(classId);
+        if (infoIt != s_DecoratorClassInfoMap.end())
+        {
+            DecoratorClassInfo& info = infoIt->second;
+
+            auto paramsIt = s_NodeToDecoratorParams.find(nodeKey);
+            if (paramsIt != s_NodeToDecoratorParams.end() && paramsIt->second)
+            {
+                ParamsForDecorator& decoParams = *paramsIt->second;
+                info.BuildFn(btBuilder, node, decoParams);
+            }
+        }
+    }
+    btBuilder.sequence(node->Name);
+
+    auto condClassIt = s_NodeToConditionClassId.find(nodeKey);
+    if (condClassIt != s_NodeToConditionClassId.end())
+    {
+        const std::string& condClassId = condClassIt->second;
+
+        auto condInfoIt = s_ConditionClassInfoMap.find(condClassId);
+        if (condInfoIt != s_ConditionClassInfoMap.end())
+        {
+            ConditionClassInfo& condInfo = condInfoIt->second;
+
+            auto condParamsIt = s_NodeToConditionParams.find(nodeKey);
+            if (condParamsIt != s_NodeToConditionParams.end() && condParamsIt->second)
+            {
+                ParamsForCondition& condParams = *condParamsIt->second;
+                condInfo.BuildFn(btBuilder, node, condParams);
+            }
+        }
+    }
+}
+
+void NodeEditorApp::BuildSelector(Node* node, BehaviorTreeBuilder& btBuilder)
+{
+    int nodeKey = (int)node->ID.Get();
+
+    auto classIt = s_NodeToDecoratorClassId.find(nodeKey);
+    if (classIt != s_NodeToDecoratorClassId.end())
+    {
+        const std::string& classId = classIt->second;
+
+        auto infoIt = s_DecoratorClassInfoMap.find(classId);
+        if (infoIt != s_DecoratorClassInfoMap.end())
+        {
+            DecoratorClassInfo& info = infoIt->second;
+
+            auto paramsIt = s_NodeToDecoratorParams.find(nodeKey);
+            if (paramsIt != s_NodeToDecoratorParams.end() && paramsIt->second)
+            {
+                ParamsForDecorator& decoParams = *paramsIt->second;
+                info.BuildFn(btBuilder, node, decoParams);
+            }
+        }
+    }
+    btBuilder.selector(node->Name);
+    auto condClassIt = s_NodeToConditionClassId.find(nodeKey);
+    if (condClassIt != s_NodeToConditionClassId.end())
+    {
+        const std::string& condClassId = condClassIt->second;
+
+        auto condInfoIt = s_ConditionClassInfoMap.find(condClassId);
+        if (condInfoIt != s_ConditionClassInfoMap.end())
+        {
+            ConditionClassInfo& condInfo = condInfoIt->second;
+
+            auto condParamsIt = s_NodeToConditionParams.find(nodeKey);
+            if (condParamsIt != s_NodeToConditionParams.end() && condParamsIt->second)
+            {
+                ParamsForCondition& condParams = *condParamsIt->second;
+                condInfo.BuildFn(btBuilder, node, condParams);
+            }
+        }
+    }
+}
+
+void NodeEditorApp::BuildAction(Node* node, BehaviorTreeBuilder& btBuilder)
+{
+    int nodeKey = (int)node->ID.Get();
+    auto classIt = s_NodeToActionClassId.find(nodeKey);
+    if (classIt == s_NodeToActionClassId.end())
+        return;
+    
+    const std::string& classId = classIt->second;
+    auto infoIt = s_ActionClassInfoMap.find(classId);
+    if (infoIt == s_ActionClassInfoMap.end())
+        return;
+    
+    ActionClassInfo& info = infoIt->second;
+    auto paramsIt = s_NodeToParams.find(nodeKey);
+    if (paramsIt == s_NodeToParams.end() || !paramsIt->second)
+        return;
+    
+    ParamsForAction& params = *paramsIt->second;
+        
+    auto decoClassIt = s_NodeToDecoratorClassId.find(nodeKey);
+    if (decoClassIt != s_NodeToDecoratorClassId.end())
+    {
+        const std::string& decoClassId = decoClassIt->second;
+    
+        auto decoInfoIt = s_DecoratorClassInfoMap.find(decoClassId);
+        if (decoInfoIt != s_DecoratorClassInfoMap.end())
+        {
+            DecoratorClassInfo& decoInfo = decoInfoIt->second;
+    
+            auto decoParamsIt = s_NodeToDecoratorParams.find(nodeKey);
+            if (decoParamsIt != s_NodeToDecoratorParams.end() && decoParamsIt->second)
+            {
+                ParamsForDecorator& decoParams = *decoParamsIt->second;
+                decoInfo.BuildFn(btBuilder, node, decoParams);
+            }
+        }
+    }
+        
+    info.BuildFn(btBuilder, node, params);
+        
+    auto condClassIt = s_NodeToConditionClassId.find(nodeKey);
+    if (condClassIt != s_NodeToConditionClassId.end())
+    {
+        const std::string& condClassId = condClassIt->second;
+    
+        auto condInfoIt = s_ConditionClassInfoMap.find(condClassId);
+        if (condInfoIt != s_ConditionClassInfoMap.end())
+        {
+            ConditionClassInfo& condInfo = condInfoIt->second;
+    
+            auto condParamsIt = s_NodeToConditionParams.find(nodeKey);
+            if (condParamsIt != s_NodeToConditionParams.end() && condParamsIt->second)
+            {
+                ParamsForCondition& condParams = *condParamsIt->second;
+                condInfo.BuildFn(btBuilder, node, condParams);
+            }
+        }
+    }
+}
+
+void NodeEditorApp::ClearBuildData()
+{
+    ClearNodeMappings();
+    ClearActiveNodes();
+    m_Enemy->m_BehaviorTree = nullptr;
+    m_BehaviorTree = nullptr;
+}
+
+void NodeEditorApp::BuildPlanForNode(Node* editorNode, std::vector<BuildOp>& ops)
+{
+    switch (editorNode->Type)
+    {
+    case NodeType::Root:
+        {
+            auto children = m_NodeEditor->GetChilderenNodes(editorNode);
+            if (!children.empty())
+                BuildPlanForNode(children[0], ops);
+            break;
+        }
+    case NodeType::Sequence:
+    case NodeType::Selector:
+        {
+            ops.push_back({ BuildOpType::OpenComposite, editorNode });
+            
+            auto children = m_NodeEditor->GetChilderenNodes(editorNode);
+            std::sort(children.begin(), children.end(),
+                [](Node* a, Node* b)
+                {
+                    ImVec2 pa = nodeEditor::GetNodePosition(a->ID);
+                    ImVec2 pb = nodeEditor::GetNodePosition(b->ID);
+                    if (pa.x == pb.x)
+                        return pa.y < pb.y;
+                    return pa.x < pb.x;
+                });         
+            for (Node* child : children)
+                BuildPlanForNode(child, ops);
+            
+            ops.push_back({ BuildOpType::CloseComposite, nullptr });
+            break;
+        }
+    case NodeType::Action:
+        {
+            ops.push_back({ BuildOpType::Action, editorNode });
+            break;
+        }
+    default:
+        break;
+    }
+}
+
+std::vector<BuildOp> NodeEditorApp::CreateBuildPlan()
+{
+    std::vector<BuildOp> ops;
+    
+    Node* rootEditorNode = nullptr;
+    for (auto& n : m_NodeEditor->GetNodes())
+        if (n.Type == NodeType::Root)
+        {
+            rootEditorNode = &n;
+            break;
+        }
+
+    if (!rootEditorNode)
+    {
+        std::cerr << "Root editor node not found!\n";
+        return ops;
+    }
+
+    BuildPlanForNode(rootEditorNode, ops);
+    return ops;
+}
