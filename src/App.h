@@ -17,6 +17,7 @@ public:
     static void SizeCallback(GLFWwindow* window, int width, int height);
 
     static App* Get() { return s_Instance; }
+    static NodeEditorApp* GetNodeEditorApp() { return s_Instance->m_NodeEditorApp.get(); }
 private:
     EnemyAI* m_EnemyAI;
     GLFWwindow* m_Window;
