@@ -1,5 +1,5 @@
-# Behavior Tree System
-Custom Behavior Tree framework in C++ with visual and script based tree creation, blackboards, actions, decorators, conditions, and live node flow debugging.
+# Behavior Tree Library
+Behavior Tree library provides a framework in C++ with visual and script based tree creation, blackboards, actions, decorators, conditions, and live node flow debugging.
 The node visuals are created using **imgui-node-editor**. You can find **example implementations** in the **CustomThings** folder.
 - For cloning repo `git clone https://github.com/haktan313/NavigationmeshSystem.git`
 - Then run the Generation.bat file
