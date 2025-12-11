@@ -3,10 +3,10 @@
 
 #include "App.h"
 #include "Tree.h"
-#include "CustomsThings/CustomActions.h"
-#include "CustomsThings/CustomBlackboards.h"
-#include "CustomsThings/CustomConditions.h"
-#include "CustomsThings/CustomDecorators.h"
+#include "CustomThings/CustomActions.h"
+#include "CustomThings/CustomBlackboards.h"
+#include "CustomThings/CustomConditions.h"
+#include "CustomThings/CustomDecorators.h"
 
 EnemyAI::EnemyAI()
 {
