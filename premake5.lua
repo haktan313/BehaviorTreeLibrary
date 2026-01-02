@@ -32,7 +32,9 @@ project "BehaviorTreeProject"
         "libs/imgui-node-editor/crude_json.cpp",
         "libs/imgui-node-editor/imgui_canvas.cpp",
         "libs/imgui-node-editor/imgui_node_editor.cpp",
-        "libs/imgui-node-editor/imgui_node_editor_api.cpp"
+        "libs/imgui-node-editor/imgui_node_editor_api.cpp",
+
+        "libs/yaml-cpp/include/**.h"        
     }
  
     includedirs {
@@ -44,7 +46,8 @@ project "BehaviorTreeProject"
         "libs/glfw-3.4.bin.WIN64/include",
         "libs/imgui",
         "libs/imgui/backends",
-        "libs/imgui-node-editor"
+        "libs/imgui-node-editor",
+        "libs/yaml-cpp/include"
     }
 
     libdirs {
