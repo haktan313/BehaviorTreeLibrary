@@ -3,6 +3,10 @@
 #include "BlackboardBase.h"
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "imgui.h"
+#include <string>
+#include <iostream>
+
+#include "yaml-cpp/emitter.h"
 
 enum class NodeStatus
 {
@@ -126,4 +130,37 @@ struct Params
             ImGui::EndCombo();
         }
     }
+    
+    virtual void Serialize(YAML::Emitter& out) const {}
+    virtual void Deserialize() {}
+    
+    void SerializeBool(const std::string& name, bool value, YAML::Emitter& out) const
+    {
+        out << YAML::Key << name << YAML::Value << value;
+    }
+    void SerializeInt(const std::string& name, int value, YAML::Emitter& out) const
+    {
+        out << YAML::Key << name << YAML::Value << value;
+    }
+    void SerializeFloat(const std::string& name, float value, YAML::Emitter& out) const
+    {
+        out << YAML::Key << name << YAML::Value << value;
+    }
+    void SerializeString(const std::string& name, const std::string& value, YAML::Emitter& out) const
+    {
+        out << YAML::Key << name << YAML::Value << value;
+    }
+    void SerializeBlackboardFloatKey(const std::string& name, const HBlackboardKeyValue& key, YAML::Emitter& out) const {}
+    void SerializeBlackboardIntKey(const std::string& name, const HBlackboardKeyValue& key, YAML::Emitter& out) const {}
+    void SerializeBlackboardBoolKey(const std::string& name, const HBlackboardKeyValue& key, YAML::Emitter& out) const {}
+    void SerializeBlackboardStringKey(const std::string& name, const HBlackboardKeyValue& key, YAML::Emitter& out) const {}
+    
+    void DeserializeBool(const std::string& name, bool& value) {}
+    void DeserializeInt(const std::string& name, int& value) {}
+    void DeserializeFloat(const std::string& name, float& value) {}
+    void DeserializeString(const std::string& name, std::string& value) {}
+    void DeserializeBlackboardFloatKey(const std::string& name, HBlackboardKeyValue& key) {}
+    void DeserializeBlackboardIntKey(const std::string& name, HBlackboardKeyValue& key) {}
+    void DeserializeBlackboardBoolKey(const std::string& name, HBlackboardKeyValue& key) {}
+    void DeserializeBlackboardStringKey(const std::string& name, HBlackboardKeyValue& key) {}
 };

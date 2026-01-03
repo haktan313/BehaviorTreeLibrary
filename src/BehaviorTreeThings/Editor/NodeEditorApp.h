@@ -87,6 +87,8 @@ private:
     std::unordered_map<std::string, BlackboardClassInfo> s_BlackboardClassInfoMap;
     std::string s_SelectedBlackboardClassName;
 
+    std::string m_CurrentBTFilePath;
+
     template<typename ActionClass, typename ParamsStruct>
     void AddActionNodeToBuilder(const std::string& name = "")
     {
@@ -113,10 +115,10 @@ private:
         {
             return std::make_unique<ParamsStruct>();
         };
-        decoratorInfo.BuildFn = [](BehaviorTreeBuilder& builder, Node* node, ParamsForDecorator& baseParams)
+        decoratorInfo.BuildFn = [name](BehaviorTreeBuilder& builder, ParamsForDecorator& baseParams)
         {
             auto& params = static_cast<ParamsStruct&>(baseParams);
-            builder.decorator<DecoratorClass>(node->Name, params);
+            builder.decorator<DecoratorClass>(name, params);
         };
         s_DecoratorClassInfoMap.emplace(name, std::move(decoratorInfo));
     }
@@ -129,10 +131,10 @@ private:
         {
             return std::make_unique<ParamsStruct>();
         };
-        conditionInfo.BuildFn = [](BehaviorTreeBuilder& builder, Node* node, ParamsForCondition& baseParams)
+        conditionInfo.BuildFn = [name](BehaviorTreeBuilder& builder, ParamsForCondition& baseParams)
         {
             auto& params = static_cast<ParamsStruct&>(baseParams);
-            builder.condition<ConditionClass>(baseParams.Priority, node->Name, params);
+            builder.condition<ConditionClass>(baseParams.Priority, name, params);
         };
         s_ConditionClassInfoMap.emplace(name, std::move(conditionInfo));
     }

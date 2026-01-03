@@ -8,11 +8,18 @@ struct MoveToParameters : ParamsForAction
     bool bToPlayer = true;
     float StopDistance = 10.0f;
     float MoveSpeed = 5.0f;
+    
     void DrawImGui(HBlackboard* blackboard) override
     {
         DrawBoolValue("Move To Player", bToPlayer);
         DrawFloatValue("Stop Distance", StopDistance);
         DrawFloatValue("Move Speed", MoveSpeed);
+    }
+    void Serialize(YAML::Emitter& out) const override
+    {
+        SerializeBool("bToPlayer", bToPlayer, out);
+        SerializeFloat("StopDistance", StopDistance, out);
+        SerializeFloat("MoveSpeed", MoveSpeed, out);
     }
 };
 class MoveToAction : public HActionNode
@@ -39,6 +46,11 @@ struct MeleeEnemyAttackActionParameters : ParamsForAction
     {
         DrawBlackboardIntKeySelector("Attack Power", AttackPowerKey, blackboard);
         DrawFloatValue("Attack Duration", AttackDuration);
+    }
+    void Serialize(YAML::Emitter& out) const override
+    {
+        SerializeBlackboardFloatKey("AttackPowerKey", AttackPowerKey, out);
+        SerializeFloat("AttackDuration", AttackDuration, out);
     }
 };
 class MeleeEnemyAttackAction : public HActionNode
@@ -70,6 +82,7 @@ struct HeavyAttackActionParameters : ParamsForAction
         DrawFloatValue("Attack Duration", AttackDuration);
         DrawFloatValue("Stamina Cost", StaminaCost);
     }
+
 };
 class HeavyAttackAction : public HActionNode
 {

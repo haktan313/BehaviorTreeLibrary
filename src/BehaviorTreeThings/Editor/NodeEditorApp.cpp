@@ -8,7 +8,9 @@
 #include "CustomThings/CustomConditions.h"
 #include "CustomThings/CustomDecorators.h"
 #define IMGUI_DEFINE_MATH_OPERATORS
+#include "BTSerializer.h"
 #include "imgui.h"
+#include "PlatformUtilsBT.h"
 
 NodeEditorApp::NodeEditorApp()
 {
@@ -58,6 +60,43 @@ void NodeEditorApp::Update()
             m_BehaviorTree->StopTree();
         m_NodeEditor->SetActiveNode(nullptr);
     }
+    ImGui::Separator();
+    if (ImGui::Button("Save", ImVec2(150, 30)))
+    {
+        std::cout << "Save Button Clicked" << std::endl;
+        if (m_CurrentBTFilePath.empty())
+        {
+            std::string filePath = PlatformUtilsBT::SaveFile("Behavior Tree File (*.btree)\0*.btree\0");
+            std::cout << "Selected File Path: " << filePath << std::endl;
+            BTSerializer serializer(*m_BehaviorTree);
+            serializer.Serialize(filePath);
+            m_CurrentBTFilePath = filePath;
+            return;
+        }
+        BTSerializer serializer(*m_BehaviorTree);
+        serializer.Serialize(m_CurrentBTFilePath);
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Load", ImVec2(150, 30)))
+    {
+        std::cout << "Load Button Clicked" << std::endl;
+        std::string filePath = PlatformUtilsBT::OpenFile("Behavior Tree File (*.btree)\0*.btree\0");
+        std::cout << "Selected File Path: " << filePath << std::endl;
+        BTSerializer serializer(*m_BehaviorTree);
+        serializer.Deserialize(filePath);
+        m_CurrentBTFilePath = filePath;
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Save As", ImVec2(150, 30)))
+    {
+        std::cout << "Save As Button Clicked" << std::endl;
+        std::string filePath = PlatformUtilsBT::SaveFile("Behavior Tree File (*.btree)\0*.btree\0");
+        std::cout << "Selected File Path: " << filePath << std::endl;
+        BTSerializer serializer(*m_BehaviorTree);
+        serializer.Serialize(filePath);
+        m_CurrentBTFilePath = filePath;
+    }
+    
     
     MouseInputHandling();
     NodeSettingsPanel();
@@ -156,7 +195,7 @@ void NodeEditorApp::CheckConditionsLowerPriorityMode(int& currentChildIndex, HNo
             if (i >= currentChildIndex)
                 continue;
             auto& child = childrens[i];
-            for (auto& condition : child->GetConditionNodes())
+            for (auto& condition : child->GetConditionNodesUnique())
             {
                 if (condition->GetLastStatus() != NodeStatus::RUNNING && !m_Blackboard->IsValuesChanged())
                 {
@@ -607,7 +646,7 @@ void NodeEditorApp::BuildSequence(Node* node, BehaviorTreeBuilder& btBuilder)
             if (paramsIt != s_NodeToDecoratorParams.end() && paramsIt->second)
             {
                 ParamsForDecorator& decoParams = *paramsIt->second;
-                info.BuildFn(btBuilder, node, decoParams);
+                info.BuildFn(btBuilder, decoParams);
             }
         }
     }
@@ -627,7 +666,7 @@ void NodeEditorApp::BuildSequence(Node* node, BehaviorTreeBuilder& btBuilder)
             if (condParamsIt != s_NodeToConditionParams.end() && condParamsIt->second)
             {
                 ParamsForCondition& condParams = *condParamsIt->second;
-                condInfo.BuildFn(btBuilder, node, condParams);
+                condInfo.BuildFn(btBuilder, condParams);
             }
         }
     }
@@ -651,7 +690,7 @@ void NodeEditorApp::BuildSelector(Node* node, BehaviorTreeBuilder& btBuilder)
             if (paramsIt != s_NodeToDecoratorParams.end() && paramsIt->second)
             {
                 ParamsForDecorator& decoParams = *paramsIt->second;
-                info.BuildFn(btBuilder, node, decoParams);
+                info.BuildFn(btBuilder, decoParams);
             }
         }
     }
@@ -670,7 +709,7 @@ void NodeEditorApp::BuildSelector(Node* node, BehaviorTreeBuilder& btBuilder)
             if (condParamsIt != s_NodeToConditionParams.end() && condParamsIt->second)
             {
                 ParamsForCondition& condParams = *condParamsIt->second;
-                condInfo.BuildFn(btBuilder, node, condParams);
+                condInfo.BuildFn(btBuilder, condParams);
             }
         }
     }
@@ -709,13 +748,13 @@ void NodeEditorApp::BuildAction(Node* node, BehaviorTreeBuilder& btBuilder)
             if (decoParamsIt != s_NodeToDecoratorParams.end() && decoParamsIt->second)
             {
                 ParamsForDecorator& decoParams = *decoParamsIt->second;
-                decoInfo.BuildFn(btBuilder, node, decoParams);
+                decoInfo.BuildFn(btBuilder, decoParams);
             }
         }
     }
-        
+    
     info.BuildFn(btBuilder, node, params);
-        
+    
     auto condClassIt = s_NodeToConditionClassId.find(nodeKey);
     if (condClassIt != s_NodeToConditionClassId.end())
     {
@@ -730,7 +769,7 @@ void NodeEditorApp::BuildAction(Node* node, BehaviorTreeBuilder& btBuilder)
             if (condParamsIt != s_NodeToConditionParams.end() && condParamsIt->second)
             {
                 ParamsForCondition& condParams = *condParamsIt->second;
-                condInfo.BuildFn(btBuilder, node, condParams);
+                condInfo.BuildFn(btBuilder, condParams);
             }
         }
     }

@@ -19,7 +19,8 @@ public:
     void StopTree();
     
     void SetRootNode(std::unique_ptr<HNode> root) { m_RootNode = std::move(root); }
-    const HNode* GetRootNode() const { return m_RootNode.get(); }
+    HNode* GetRootNode() const { return m_RootNode.get(); }
+    const HBlackboard* GetBlackboard() const { return m_Blackboard; }
 
 private:
     bool m_bOwnsBlackboard = false;

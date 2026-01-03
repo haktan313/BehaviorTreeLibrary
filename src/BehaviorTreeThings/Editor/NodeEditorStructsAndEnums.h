@@ -39,13 +39,13 @@ struct ActionClassInfo
 struct DecoratorClassInfo
 {
     std::string Name;
-    std::function<void(BehaviorTreeBuilder&, Node*, ParamsForDecorator&)> BuildFn;
+    std::function<void(BehaviorTreeBuilder&, ParamsForDecorator&)> BuildFn;
     std::function<std::unique_ptr<ParamsForDecorator>()> CreateParamsFn;
 };
 struct ConditionClassInfo
 {
     std::string Name;
-    std::function<void(BehaviorTreeBuilder&, Node*, ParamsForCondition&)> BuildFn;
+    std::function<void(BehaviorTreeBuilder&, ParamsForCondition&)> BuildFn;
     std::function<std::unique_ptr<ParamsForCondition>()> CreateParamsFn;
 };
 struct BlackboardClassInfo
