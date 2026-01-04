@@ -24,6 +24,11 @@ void BTSerializer::Serialize(const std::string& filepath)
     SerializeBlackboard(out, m_Tree->GetBlackboard());
     out << YAML::EndMap;
 
+    out << YAML::Key << "EditorData" << YAML::Value;
+    out << YAML::BeginMap;
+    SerializeEditorData(out);
+    out << YAML::EndMap;
+
     out << YAML::Key << "RootNode" << YAML::Value;
     SerializeNode(out, rootNode);
 
@@ -141,6 +146,24 @@ void BTSerializer::DeserializeBlackboard(const YAML::Node& blackboardNode, HBlac
     if (blackboardNode["Strings"])
         for (auto it = blackboardNode["Strings"].begin(); it != blackboardNode["Strings"].end(); ++it)
             blackboard->CreateStringValue(it->first.as<std::string>(), it->second.as<std::string>());
+}
+
+void BTSerializer::SerializeEditorData(YAML::Emitter& out)
+{
+    auto editorApp = Root::GetNodeEditorApp();
+    if (!editorApp)
+        return;
+    auto editorData = editorApp->GetNodeMappings();
+    auto helper = editorApp->GetNodeEditorHelper();
+    for (const auto& [runtimeNode, editorId] : editorData)
+    {
+        out << YAML::Key << runtimeNode->GetName() << YAML::Value;
+        out << YAML::BeginMap;
+        ImVec2 pos = nodeEditor::GetNodePosition(editorId);
+        out << YAML::Key << "PositionX" << YAML::Value << pos.x;
+        out << YAML::Key << "PositionY" << YAML::Value << pos.y;
+        out << YAML::EndMap;
+    }
 }
 
 

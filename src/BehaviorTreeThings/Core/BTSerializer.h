@@ -19,6 +19,8 @@ private:
     static void SerializeBlackboard(YAML::Emitter& out, const HBlackboard* blackboard);
     static void DeserializeBlackboard(const YAML::Node& blackboardNode, HBlackboard* blackboard);
 
+    static void SerializeEditorData(YAML::Emitter& out);
+
     static void SerializeChildren(YAML::Emitter& out, const HNode* node);
     static void SerializeNode(YAML::Emitter& out, const HNode* node);
     static void DeserializeNodeRecursive(const YAML::Node& nodeData, BehaviorTreeBuilder& builder);

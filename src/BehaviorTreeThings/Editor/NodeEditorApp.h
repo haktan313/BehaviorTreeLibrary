@@ -20,6 +20,8 @@ public:
 
     void RegisterNodeMapping(const HNode* runtimeNode, nodeEditor::NodeId editorId);
     Node* GetEditorNodeFor(const HNode* runtimeNode);
+    std::unordered_map<const HNode*, nodeEditor::NodeId>& GetNodeMappings() { return s_NodeToEditorIdMap; }
+    NodeEditorHelper& GetNodeEditorHelper() { return *m_NodeEditor; }
     
     void DecoratorNodeSelected(EditorDecorator& decorator);
     void ConditionNodeSelected(EditorCondition& condition);
