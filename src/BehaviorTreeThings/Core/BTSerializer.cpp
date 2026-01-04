@@ -5,7 +5,7 @@
 
 #include "NodeRegistry.h"
 
-BTSerializer::BTSerializer(const BehaviorTree& tree) : m_Tree(&tree)
+BTSerializer::BTSerializer(BehaviorTree*& tree) : m_Tree(tree)
 {
 }
 
@@ -56,8 +56,10 @@ bool BTSerializer::Deserialize(const std::string& filepath/*, EnemyAI& owner*/)
     builder.setBlackboard(blackboard);
 
     DeserializeNodeRecursive(btNode["RootNode"], builder);
+
+    m_Tree = builder.build();
     
-    return false;
+    return true;
 }
 
 const char* BTSerializer::NodeTypeToString(HNodeType type)
@@ -251,6 +253,7 @@ void BTSerializer::DeserializeNodeRecursive(const YAML::Node& nodeData, Behavior
                 actionInfo.BuildFromYAML(builder, name, paramsNode);
             }
         }
+        builder.end();
     }
 }
 

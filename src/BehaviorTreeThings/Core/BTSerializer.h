@@ -7,7 +7,7 @@
 class BTSerializer
 {
 public:
-    BTSerializer(const BehaviorTree& tree);
+    BTSerializer(BehaviorTree*& tree);
     ~BTSerializer() = default;
 
     void Serialize(const std::string& filepath);
@@ -24,5 +24,5 @@ private:
     static void DeserializeNodeRecursive(const YAML::Node& nodeData, BehaviorTreeBuilder& builder);
     static void SerializeConditions(YAML::Emitter& out, const HNode* node);
 
-    const BehaviorTree* m_Tree;
+    BehaviorTree*& m_Tree;
 };

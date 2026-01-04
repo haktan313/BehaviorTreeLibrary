@@ -56,12 +56,12 @@ void NodeEditorApp::Update()
         {
             std::string filePath = PlatformUtilsBT::SaveFile("Behavior Tree File (*.btree)\0*.btree\0");
             std::cout << "Selected File Path: " << filePath << std::endl;
-            BTSerializer serializer(*m_BehaviorTree);
+            BTSerializer serializer(m_BehaviorTree);
             serializer.Serialize(filePath);
             m_CurrentBTFilePath = filePath;
             return;
         }
-        BTSerializer serializer(*m_BehaviorTree);
+        BTSerializer serializer(m_BehaviorTree);
         serializer.Serialize(m_CurrentBTFilePath);
     }
     ImGui::SameLine();
@@ -70,7 +70,7 @@ void NodeEditorApp::Update()
         std::cout << "Load Button Clicked" << std::endl;
         std::string filePath = PlatformUtilsBT::OpenFile("Behavior Tree File (*.btree)\0*.btree\0");
         std::cout << "Selected File Path: " << filePath << std::endl;
-        BTSerializer serializer(*m_BehaviorTree);
+        BTSerializer serializer(m_BehaviorTree);
         serializer.Deserialize(filePath);
         m_CurrentBTFilePath = filePath;
     }
@@ -80,7 +80,7 @@ void NodeEditorApp::Update()
         std::cout << "Save As Button Clicked" << std::endl;
         std::string filePath = PlatformUtilsBT::SaveFile("Behavior Tree File (*.btree)\0*.btree\0");
         std::cout << "Selected File Path: " << filePath << std::endl;
-        BTSerializer serializer(*m_BehaviorTree);
+        BTSerializer serializer(m_BehaviorTree);
         serializer.Serialize(filePath);
         m_CurrentBTFilePath = filePath;
     }

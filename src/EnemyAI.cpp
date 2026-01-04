@@ -55,9 +55,10 @@ void EnemyAI::BeginPlay()
     m_BehaviorTree->StartTree();*/
     BehaviorTree* tree = nullptr;
     auto btPath = PlatformUtilsBT::OpenFile("Behavior Tree Files\0*.btree\0");
-    BTSerializer serializer(*tree);
+    BTSerializer serializer(tree);
     if (serializer.Deserialize(btPath))
     {
+        std::cout << "Behavior Tree Loaded Successfully" << std::endl;
         m_BehaviorTree = tree;
         m_BehaviorTree->StartTree();
     }
