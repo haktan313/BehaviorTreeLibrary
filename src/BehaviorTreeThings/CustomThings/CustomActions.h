@@ -24,6 +24,12 @@ struct MoveToParameters : ParamsForAction
         SerializeFloat("StopDistance", StopDistance, out);
         SerializeFloat("MoveSpeed", MoveSpeed, out);
     }
+    void Deserialize(const YAML::Node& node)
+    {
+        DeserializeBool(node, "bToPlayer", bToPlayer);
+        DeserializeFloat(node, "StopDistance", StopDistance);
+        DeserializeFloat(node, "MoveSpeed", MoveSpeed);
+    }
 };
 class MoveToAction : public HActionNode
 {

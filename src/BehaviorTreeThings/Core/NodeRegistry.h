@@ -24,7 +24,7 @@ public:
         actionInfo.BuildFromYAML = [](BehaviorTreeBuilder& builder, const std::string& instanceName, const YAML::Node& paramsNode)
         {
             ParamsStruct params;
-            //params.Deserialize(paramsNode);
+            params.Deserialize(paramsNode);
             builder.action<ActionClass>(instanceName, params);
         };
         s_ActionClassInfoMap.emplace(name, std::move(actionInfo));

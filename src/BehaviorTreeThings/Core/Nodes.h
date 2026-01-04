@@ -99,7 +99,7 @@ struct ParamsForAction : Params
 
     virtual void DrawImGui(HBlackboard* blackboard) override {}
     virtual void Serialize(YAML::Emitter& out) const override {}
-    virtual void Deserialize() override {}
+    virtual void Deserialize(const YAML::Node& node) {}
 };
 class HActionNode : public HNode
 {
