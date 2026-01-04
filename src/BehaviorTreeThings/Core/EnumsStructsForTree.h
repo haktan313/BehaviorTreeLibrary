@@ -150,10 +150,23 @@ struct Params
     {
         out << YAML::Key << name << YAML::Value << value;
     }
-    void SerializeBlackboardFloatKey(const std::string& name, const HBlackboardKeyValue& key, YAML::Emitter& out) const {}
-    void SerializeBlackboardIntKey(const std::string& name, const HBlackboardKeyValue& key, YAML::Emitter& out) const {}
-    void SerializeBlackboardBoolKey(const std::string& name, const HBlackboardKeyValue& key, YAML::Emitter& out) const {}
-    void SerializeBlackboardStringKey(const std::string& name, const HBlackboardKeyValue& key, YAML::Emitter& out) const {}
+    
+    void SerializeBlackboardFloatKey(const std::string& name, const HBlackboardKeyValue& key, YAML::Emitter& out) const 
+    {
+        out << YAML::Key << name << YAML::Value << key;
+    }
+    void SerializeBlackboardIntKey(const std::string& name, const HBlackboardKeyValue& key, YAML::Emitter& out) const 
+    {
+        out << YAML::Key << name << YAML::Value << key;
+    }
+    void SerializeBlackboardBoolKey(const std::string& name, const HBlackboardKeyValue& key, YAML::Emitter& out) const 
+    {
+        out << YAML::Key << name << YAML::Value << key;
+    }
+    void SerializeBlackboardStringKey(const std::string& name, const HBlackboardKeyValue& key, YAML::Emitter& out) const 
+    {
+        out << YAML::Key << name << YAML::Value << key;
+    }
     
     void DeserializeBool(const std::string& name, bool& value) {}
     void DeserializeInt(const std::string& name, int& value) {}
