@@ -65,6 +65,11 @@ struct MeleeEnemyAttackActionParameters : ParamsForAction
         SerializeBlackboardFloatKey("AttackPowerKey", AttackPowerKey, out);
         SerializeFloat("AttackDuration", AttackDuration, out);
     }
+    void Deserialize(const YAML::Node& node) override
+    {
+        DeserializeBlackboardKey(node, "AttackPowerKey", AttackPowerKey);
+        DeserializeFloat(node, "AttackDuration", AttackDuration);
+    }
 };
 class MeleeEnemyAttackAction : public HActionNode
 {
@@ -105,7 +110,13 @@ struct HeavyAttackActionParameters : ParamsForAction
         SerializeFloat("AttackDuration", AttackDuration, out);
         SerializeFloat("StaminaCost", StaminaCost, out);
     }
-
+    void Deserialize(const YAML::Node& node) override
+    {
+        DeserializeBlackboardKey(node, "AttackPowerKey", AttackPowerKey);
+        DeserializeBlackboardKey(node, "StaminaKey", StaminaKey);
+        DeserializeFloat(node, "AttackDuration", AttackDuration);
+        DeserializeFloat(node, "StaminaCost", StaminaCost);
+    }
 };
 class HeavyAttackAction : public HActionNode
 {

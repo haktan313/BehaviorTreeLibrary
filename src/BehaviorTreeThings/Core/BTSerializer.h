@@ -23,6 +23,7 @@ private:
     static void SerializeNode(YAML::Emitter& out, const HNode* node);
     static void DeserializeNodeRecursive(const YAML::Node& nodeData, BehaviorTreeBuilder& builder);
     static void SerializeConditions(YAML::Emitter& out, const HNode* node);
+    static void DeserializeCondition(const YAML::Node& condData, BehaviorTreeBuilder& builder);
 
     BehaviorTree*& m_Tree;
 };

@@ -216,7 +216,8 @@ void BTSerializer::SerializeNode(YAML::Emitter& out, const HNode* node)
 
 void BTSerializer::DeserializeNodeRecursive(const YAML::Node& nodeData, BehaviorTreeBuilder& builder)
 {
-    if (!nodeData || nodeData["NullNode"]) return;
+    if (!nodeData || nodeData["NullNode"])
+        return;
 
     std::string name = nodeData["Name"].as<std::string>();
     std::string type = nodeData["Type"].as<std::string>();
@@ -228,6 +229,20 @@ void BTSerializer::DeserializeNodeRecursive(const YAML::Node& nodeData, Behavior
         if (nodeData["Children"]) 
             for (auto child : nodeData["Children"])
                 DeserializeNodeRecursive(child, builder);
+    }
+    else if (type == "Decorator")
+    {
+        auto& decoMap = NodeRegistry::GetDecoratorClassInfoMap();
+        auto it = decoMap.find(name);
+        
+        if (it != decoMap.end())
+        {
+            const YAML::Node& paramsNode = nodeData["Params"];
+            it->second.BuildFromYAML(builder, name, paramsNode);
+        }
+        
+        if (nodeData["Child"])
+            DeserializeNodeRecursive(nodeData["Child"], builder);
     }
     else if (type == "Composite")
     {
@@ -253,8 +268,11 @@ void BTSerializer::DeserializeNodeRecursive(const YAML::Node& nodeData, Behavior
                 actionInfo.BuildFromYAML(builder, name, paramsNode);
             }
         }
-        builder.end();
     }
+
+    if (nodeData["Conditions"])
+        for (auto condData : nodeData["Conditions"])
+            DeserializeCondition(condData, builder);
 }
 
 void BTSerializer::SerializeConditions(YAML::Emitter& out, const HNode* node)
@@ -271,4 +289,29 @@ void BTSerializer::SerializeConditions(YAML::Emitter& out, const HNode* node)
         SerializeNode(out, cond);
 
     out << YAML::EndSeq;
+}
+
+void BTSerializer::DeserializeCondition(const YAML::Node& condData, BehaviorTreeBuilder& builder)
+{
+    std::string name = condData["Name"].as<std::string>();
+    auto& condMap = NodeRegistry::GetConditionClassInfoMap();
+    auto it = condMap.find(name);
+
+    if (it != condMap.end())
+    {
+        PriorityType priority = PriorityType::None;
+        if (condData["Priority"])
+        {
+            std::string pStr = condData["Priority"].as<std::string>();
+            if (pStr == "Self")
+                priority = PriorityType::Self;
+            else if (pStr == "LowerPriority")
+                priority = PriorityType::LowerPriority;
+            else if (pStr == "Both")
+                priority = PriorityType::Both;
+        }
+
+        const YAML::Node& paramsNode = condData["Params"];
+        it->second.BuildFromYAML(builder, name, paramsNode, priority);
+    }
 }

@@ -42,12 +42,14 @@ struct DecoratorClassInfo
     std::string Name;
     std::function<void(BehaviorTreeBuilder&, ParamsForDecorator&)> BuildFn;
     std::function<std::unique_ptr<ParamsForDecorator>()> CreateParamsFn;
+    std::function<void(BehaviorTreeBuilder&, const std::string&, const YAML::Node&)> BuildFromYAML;
 };
 struct ConditionClassInfo
 {
     std::string Name;
     std::function<void(BehaviorTreeBuilder&, ParamsForCondition&)> BuildFn;
     std::function<std::unique_ptr<ParamsForCondition>()> CreateParamsFn;
+    std::function<void(BehaviorTreeBuilder&, const std::string&, const YAML::Node&, PriorityType)> BuildFromYAML;
 };
 struct BlackboardClassInfo
 {

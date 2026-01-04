@@ -43,6 +43,12 @@ public:
             auto& params = static_cast<ParamsStruct&>(baseParams);
             builder.decorator<DecoratorClass>(name, params);
         };
+        decoratorInfo.BuildFromYAML = [](BehaviorTreeBuilder& builder, const std::string& instanceName, const YAML::Node& paramsNode)
+        {
+            ParamsStruct p;
+            p.Deserialize(paramsNode);
+            builder.decorator<DecoratorClass>(instanceName, p);
+        };
         s_DecoratorClassInfoMap.emplace(name, std::move(decoratorInfo));
     }
     template<typename ConditionClass, typename ParamsStruct>
@@ -58,6 +64,12 @@ public:
         {
             auto& params = static_cast<ParamsStruct&>(baseParams);
             builder.condition<ConditionClass>(baseParams.Priority, name, params);
+        };
+        conditionInfo.BuildFromYAML = [](BehaviorTreeBuilder& builder, const std::string& instanceName, const YAML::Node& paramsNode, PriorityType priority)
+        {
+            ParamsStruct p;
+            p.Deserialize(paramsNode);
+            builder.condition<ConditionClass>(priority, instanceName, p);
         };
         s_ConditionClassInfoMap.emplace(name, std::move(conditionInfo));
     }

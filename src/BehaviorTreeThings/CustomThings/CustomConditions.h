@@ -16,6 +16,11 @@ struct IsPlayerInRangeParameters : ParamsForCondition
         SerializeFloat("Range", Range, out);
         SerializeBlackboardFloatKey("DistanceToPlayerKey", DistanceToPlayerKey, out);
     }
+    void Deserialize(const YAML::Node& node) override
+    {
+        DeserializeFloat(node, "Range", Range);
+        DeserializeBlackboardKey(node, "DistanceToPlayerKey", DistanceToPlayerKey);
+    }
 };
 class IsPlayerInRangeCondition : public HCondition
 {
@@ -48,6 +53,11 @@ struct CanAttackParameters : ParamsForCondition
     {
         SerializeBlackboardFloatKey("StaminaKey", StaminaKey, out);
         SerializeFloat("RequiredStamina", RequiredStamina, out);
+    }
+    void Deserialize(const YAML::Node& node) override
+    {
+        DeserializeBlackboardKey(node, "StaminaKey", StaminaKey);
+        DeserializeFloat(node, "RequiredStamina", RequiredStamina);
     }
 };
 class CanAttackCondition : public HCondition

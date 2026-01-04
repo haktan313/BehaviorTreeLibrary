@@ -18,6 +18,12 @@ struct ChangeResultOfTheNodeParameters : ParamsForDecorator
     {
         SerializeInt("NewResult", static_cast<int>(NewResult), out);
     }
+    void Deserialize(const YAML::Node& node) override
+    {
+        int resultInt = 0;
+        DeserializeInt(node, "NewResult", resultInt);
+        NewResult = static_cast<NodeStatus>(resultInt);
+    }
 };
 class ChangeResultOfTheNodeDecorator : public HDecorator
 {
@@ -46,6 +52,10 @@ struct CooldownDecoratorParameters : ParamsForDecorator
     void Serialize(YAML::Emitter& out) const override
     {
         SerializeFloat("CooldownTime", CooldownTime, out);
+    }
+    void Deserialize(const YAML::Node& node) override
+    {
+        DeserializeFloat(node, "CooldownTime", CooldownTime);
     }
 };
 class CooldownDecorator : public HDecorator
