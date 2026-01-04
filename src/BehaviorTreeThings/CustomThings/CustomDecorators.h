@@ -14,12 +14,19 @@ struct ChangeResultOfTheNodeParameters : ParamsForDecorator
             NewResult = static_cast<NodeStatus>(currentItem);
         }
     }
+    void Serialize(YAML::Emitter& out) const override
+    {
+        SerializeInt("NewResult", static_cast<int>(NewResult), out);
+    }
 };
 class ChangeResultOfTheNodeDecorator : public HDecorator
 {
 public:
     ChangeResultOfTheNodeDecorator(const std::string& name, const ChangeResultOfTheNodeParameters& params = ChangeResultOfTheNodeParameters{})
-        : HDecorator(name, params), m_NewResult(params.NewResult) {}
+        : HDecorator(name, params), m_NewResult(params.NewResult)
+    {
+        SetParams<ChangeResultOfTheNodeParameters>(params);
+    }
     void OnStart() override;
     bool CanExecute() override;
     void OnFinishedResult(NodeStatus& status) override;
@@ -36,12 +43,19 @@ struct CooldownDecoratorParameters : ParamsForDecorator
     {
         DrawFloatValue("Cooldown Time", CooldownTime);
     }
+    void Serialize(YAML::Emitter& out) const override
+    {
+        SerializeFloat("CooldownTime", CooldownTime, out);
+    }
 };
 class CooldownDecorator : public HDecorator
 {
 public:
     CooldownDecorator(const std::string& name, const CooldownDecoratorParameters& params = CooldownDecoratorParameters{})
-        : HDecorator(name, params), m_CooldownTime(params.CooldownTime), m_LastExecutionTime(-params.CooldownTime) {}
+        : HDecorator(name, params), m_CooldownTime(params.CooldownTime), m_LastExecutionTime(-params.CooldownTime)
+    {
+        SetParams<CooldownDecoratorParameters>(params);
+    }
     void OnStart() override;
     bool CanExecute() override;
     void OnFinishedResult(NodeStatus& status) override;

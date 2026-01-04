@@ -26,7 +26,10 @@ class MoveToAction : public HActionNode
 {
 public:
     MoveToAction(const std::string& name, const MoveToParameters& params = MoveToParameters{})
-        : HActionNode(name, params), m_bToPlayer(params.bToPlayer), m_StopDistance(params.StopDistance), m_MoveSpeed(params.MoveSpeed / 10.f) {}
+        : HActionNode(name, params), m_bToPlayer(params.bToPlayer), m_StopDistance(params.StopDistance), m_MoveSpeed(params.MoveSpeed / 10.f)
+    {
+        SetParams<MoveToParameters>(params);
+    }
     void OnStart() override;
     NodeStatus Update() override;
     void OnFinished() override;
@@ -57,7 +60,10 @@ class MeleeEnemyAttackAction : public HActionNode
 {
 public:
     MeleeEnemyAttackAction(const std::string& name, const MeleeEnemyAttackActionParameters& params = MeleeEnemyAttackActionParameters{})
-        : HActionNode(name, params), m_AttackPowerKey(params.AttackPowerKey), m_AttackDuration(params.AttackDuration) {}
+        : HActionNode(name, params), m_AttackPowerKey(params.AttackPowerKey), m_AttackDuration(params.AttackDuration)
+    {
+        SetParams<MeleeEnemyAttackActionParameters>(params);
+    }
 
     void OnStart() override;
     NodeStatus Update() override;
@@ -82,6 +88,13 @@ struct HeavyAttackActionParameters : ParamsForAction
         DrawFloatValue("Attack Duration", AttackDuration);
         DrawFloatValue("Stamina Cost", StaminaCost);
     }
+    void Serialize(YAML::Emitter& out) const override
+    {
+        SerializeBlackboardFloatKey("AttackPowerKey", AttackPowerKey, out);
+        SerializeBlackboardFloatKey("StaminaKey", StaminaKey, out);
+        SerializeFloat("AttackDuration", AttackDuration, out);
+        SerializeFloat("StaminaCost", StaminaCost, out);
+    }
 
 };
 class HeavyAttackAction : public HActionNode
@@ -89,7 +102,10 @@ class HeavyAttackAction : public HActionNode
 public:
     HeavyAttackAction(const std::string& name, const HeavyAttackActionParameters& params = HeavyAttackActionParameters{})
         : HActionNode(name, params), m_AttackPowerKey(params.AttackPowerKey), m_StaminaKey(params.StaminaKey),
-            m_AttackDuration(params.AttackDuration), m_StaminaCost(params.StaminaCost) {}
+            m_AttackDuration(params.AttackDuration), m_StaminaCost(params.StaminaCost)
+    {
+        SetParams<HeavyAttackActionParameters>(params);
+    }
 
     void OnStart() override;
     NodeStatus Update() override;

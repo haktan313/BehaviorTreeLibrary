@@ -13,7 +13,10 @@ class HNode
 {
 public:
     HNode(const std::string& name)
-        : m_Name(name), m_Parent(nullptr), m_Status(NodeStatus::FAILURE), m_EditorApp(nullptr), m_Type(HNodeType::None) {}
+        : m_Name(name), m_Parent(nullptr), m_Status(NodeStatus::FAILURE), m_EditorApp(nullptr), m_Type(HNodeType::None)
+    {
+        m_Params = std::make_unique<Params>();
+    }
     virtual ~HNode() = default;
     
     NodeStatus Tick();
@@ -36,7 +39,7 @@ public:
     NodeStatus GetStatus() const { return m_Status; }
     HNodeType GetType() const { return m_Type; }
     //Params& GetParams() { return m_Params; }
-    const Params& GetParams() const { return m_Params; }
+    const Params& GetParams() const { return *m_Params; }
     
     const std::string& GetName() const { return m_Name; }
     const std::vector<std::unique_ptr<HNode>>& GetChildrensUnique() const { return m_Childrens; }
@@ -55,13 +58,18 @@ public:
             rawConditions.push_back(condition.get());
         return rawConditions;
     }
+    template<typename T>
+    void SetParams(const T& params) 
+    { 
+        m_Params = std::make_unique<T>(params); 
+    }
 
     bool m_bIsStarted = false;
 protected:
     const std::string m_Name;
     HNode* m_Parent;
     NodeEditorApp* m_EditorApp;
-    Params m_Params;
+    std::unique_ptr<Params> m_Params;
     NodeStatus m_Status;
     HNodeType m_Type;
     std::vector<std::unique_ptr<HNode>> m_Childrens;
@@ -97,11 +105,8 @@ class HActionNode : public HNode
 {
 public:
     HActionNode(const std::string& name, const ParamsForAction& params = ParamsForAction{})
-    : HNode(name), m_Owner(nullptr), m_Blackboard(nullptr)
-    {
-        m_Params = params;
-    }
-    
+    : HNode(name), m_Owner(nullptr), m_Blackboard(nullptr) {}
+
     virtual void OnStart() override;
     virtual NodeStatus Update() override;
     virtual void OnFinished() override;
@@ -137,10 +142,7 @@ class HCondition : public HNode
 {
 public:
     HCondition(const std::string& name, const ParamsForCondition& params = ParamsForCondition{})
-        : HNode(name), m_Owner(nullptr), m_Blackboard(nullptr), m_PriorityMode(PriorityType::None), m_LastStatus(NodeStatus::RUNNING)
-    {
-        m_Params = params;
-    }
+        : HNode(name), m_Owner(nullptr), m_Blackboard(nullptr), m_PriorityMode(PriorityType::None), m_LastStatus(NodeStatus::RUNNING) {}
 
     virtual void OnStart() override {}
     virtual bool CheckCondition() = 0;
@@ -179,10 +181,7 @@ class HDecorator : public HNode
 {
 public:
     HDecorator(const std::string& name, const ParamsForDecorator& params = ParamsForDecorator{})
-    : HNode(name), m_Blackboard(nullptr), m_Owner(nullptr)
-    {
-        m_Params = params;
-    }
+    : HNode(name), m_Blackboard(nullptr), m_Owner(nullptr) {}
 
     virtual void OnStart() override {}
     virtual bool CanExecute() = 0;
