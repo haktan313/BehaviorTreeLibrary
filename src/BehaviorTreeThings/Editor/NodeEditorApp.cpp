@@ -16,13 +16,13 @@
 NodeEditorApp::NodeEditorApp()
 {
     m_NodeEditor = std::make_unique<NodeEditorHelper>(this);
-    Root::RootStart();
+    //Root::RootStart();
 }
 
 NodeEditorApp::~NodeEditorApp()
 {
     ClearNodeMappings();
-    Root::RootStop();
+    //Root::RootStop();
 }
 
 void NodeEditorApp::OnStart()
@@ -32,7 +32,7 @@ void NodeEditorApp::OnStart()
 
 void NodeEditorApp::Update()
 {
-    Root::RootTick();
+    //Root::RootTick();
     if (ImGui::Button("Build", ImVec2(100, 30)))
         BuildBehaviorTree();
     ImGui::SameLine();
@@ -140,79 +140,6 @@ void NodeEditorApp::ConditionNodeUnSelected()
 {
     m_bConditionSelected = false;
     m_LastSelectedCondition = nullptr;
-}
-
-bool NodeEditorApp::CheckConditionsSelfMode(HNode* node, const std::vector<std::unique_ptr<HCondition>>& conditionNodes)
-{
-    if (!conditionNodes.empty())
-        for (auto& condition : conditionNodes)
-        {
-            if (condition->GetLastStatus() != NodeStatus::RUNNING && !m_Blackboard->IsValuesChanged())
-            {
-                if ((condition->GetPriorityMode() == PriorityType::Self || condition->GetPriorityMode() == PriorityType::Both)
-                    && condition->GetLastStatus() == NodeStatus::FAILURE)
-                {
-                    node->OnAbort();
-                    std::cout << "Node Condition Failed at Runtime: " << condition->GetName() << " in " << node->GetName() << std::endl;
-                    return false;
-                }
-                continue;
-            }
-            condition->SetLastStatus(NodeStatus::RUNNING);
-            if (condition->GetPriorityMode() == PriorityType::None)
-                continue;
-            NodeStatus conditionStatus = condition.get()->Tick();
-            condition->SetLastStatus(conditionStatus);
-            if ((condition->GetPriorityMode() == PriorityType::Self || condition->GetPriorityMode() == PriorityType::Both)
-                && conditionStatus == NodeStatus::FAILURE)
-            {
-                node->OnAbort();
-                std::cout << "Node Condition Failed at Runtime: " << condition->GetName() << " in " << node->GetName() << std::endl;
-                return false;
-            }
-        }
-    return true;
-}
-
-void NodeEditorApp::CheckConditionsLowerPriorityMode(int& currentChildIndex, HNode* node,
-    const std::vector<std::unique_ptr<HNode>>& childrens)
-{
-    if (!childrens.empty())
-        for (int i = 0; i < static_cast<int>(childrens.size()); ++i)
-        {
-            if (i >= currentChildIndex)
-                continue;
-            auto& child = childrens[i];
-            for (auto& condition : child->GetConditionNodesUnique())
-            {
-                if (condition->GetLastStatus() != NodeStatus::RUNNING && !m_Blackboard->IsValuesChanged())
-                {
-                    if ((condition->GetPriorityMode() == PriorityType::LowerPriority || condition->GetPriorityMode() == PriorityType::Both)
-                    && condition->GetLastStatus() == NodeStatus::SUCCESS)
-                    {
-                        childrens[currentChildIndex]->OnAbort();
-                        currentChildIndex = i;
-                        std::cout << "Node Condition Succeeded at Runtime: " << condition->GetName() << " in " << node->GetName() << std::endl;
-                        return;
-                    }
-                    continue;
-                }
-                condition->SetLastStatus(NodeStatus::RUNNING);
-                if (condition->GetPriorityMode() == PriorityType::None)
-                    continue;
-                NodeStatus conditionStatus = condition.get()->Tick();
-                condition->SetLastStatus(conditionStatus);
-                
-                if ((condition->GetPriorityMode() == PriorityType::LowerPriority || condition->GetPriorityMode() == PriorityType::Both)
-                    && conditionStatus == NodeStatus::SUCCESS)
-                {
-                    childrens[currentChildIndex]->OnAbort();
-                    currentChildIndex = i;
-                    std::cout << "Node Condition Succeeded at Runtime: " << condition->GetName() << " in " << node->GetName() << std::endl;
-                    return;
-                }
-            }
-        }
 }
 
 void NodeEditorApp::MouseInputHandling()

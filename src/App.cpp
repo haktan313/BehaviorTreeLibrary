@@ -31,16 +31,17 @@ App::App() : m_EnemyAI(nullptr), m_Window(nullptr)
     NodeRegistry::AddDecoratorNodeToBuilder<ChangeResultOfTheNodeDecorator, ChangeResultOfTheNodeParameters>("Change Result Of The Node Decorator");
     NodeRegistry::AddDecoratorNodeToBuilder<CooldownDecorator, CooldownDecoratorParameters>("Cooldown Decorator");
     
-    m_NodeEditorApp = std::make_unique<NodeEditorApp>();
+    Root::RootStart();
     m_EnemyAI = new EnemyAI();
-    m_NodeEditorApp->SetEnemyAI(m_EnemyAI);
+    //m_NodeEditorApp = std::make_unique<NodeEditorApp>();
+    //m_NodeEditorApp->SetEnemyAI(m_EnemyAI);
 }
 
 App::~App()
 {
     delete m_EnemyAI;
     m_EnemyAI = nullptr;
-    
+    Root::RootStop();
 }
 
 void App::Run()
@@ -77,7 +78,8 @@ void App::Run()
         ImGui::Begin("MainWindow_Fullscreen", nullptr, windowFlags);
         ImGui::PopStyleVar();
         
-        m_NodeEditorApp->Update();
+        //m_NodeEditorApp->Update();
+        Root::RootTick();
         
         ImGui::End(); 
         ImGui::Render();
@@ -136,7 +138,7 @@ bool App::Init()
     ImGui_ImplGlfw_InitForOpenGL(m_Window, true);
     ImGui_ImplOpenGL3_Init("#version 330");
     
-    m_NodeEditorApp->OnStart();
+    //m_NodeEditorApp->OnStart();
     return true;
 }
 

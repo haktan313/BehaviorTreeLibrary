@@ -66,10 +66,84 @@ void HNode::AddConditionNode(std::unique_ptr<HCondition> conditionNode)
     m_ConditionNodes.push_back(std::move(conditionNode));
 }
 
+bool HNode::CheckConditionsSelfMode(HNode* node, const std::vector<std::unique_ptr<HCondition>>& conditionNodes)
+{
+    if (!conditionNodes.empty())
+        for (auto& condition : conditionNodes)
+        {
+            if (condition->GetLastStatus() != NodeStatus::RUNNING && !m_Blackboard->IsValuesChanged())
+            {
+                if ((condition->GetPriorityMode() == PriorityType::Self || condition->GetPriorityMode() == PriorityType::Both)
+                    && condition->GetLastStatus() == NodeStatus::FAILURE)
+                {
+                    node->OnAbort();
+                    std::cout << "Node Condition Failed at Runtime: " << condition->GetName() << " in " << node->GetName() << std::endl;
+                    return false;
+                }
+                continue;
+            }
+            condition->SetLastStatus(NodeStatus::RUNNING);
+            if (condition->GetPriorityMode() == PriorityType::None)
+                continue;
+            NodeStatus conditionStatus = condition.get()->Tick();
+            condition->SetLastStatus(conditionStatus);
+            if ((condition->GetPriorityMode() == PriorityType::Self || condition->GetPriorityMode() == PriorityType::Both)
+                && conditionStatus == NodeStatus::FAILURE)
+            {
+                node->OnAbort();
+                std::cout << "Node Condition Failed at Runtime: " << condition->GetName() << " in " << node->GetName() << std::endl;
+                return false;
+            }
+        }
+    return true;
+}
+
+void HNode::CheckConditionsLowerPriorityMode(int& currentChildIndex, HNode* node,
+    const std::vector<std::unique_ptr<HNode>>& childrens)
+{
+    if (!childrens.empty())
+        for (int i = 0; i < static_cast<int>(childrens.size()); ++i)
+        {
+            if (i >= currentChildIndex)
+                continue;
+            auto& child = childrens[i];
+            for (auto& condition : child->GetConditionNodesUnique())
+            {
+                if (condition->GetLastStatus() != NodeStatus::RUNNING && !m_Blackboard->IsValuesChanged())
+                {
+                    if ((condition->GetPriorityMode() == PriorityType::LowerPriority || condition->GetPriorityMode() == PriorityType::Both)
+                    && condition->GetLastStatus() == NodeStatus::SUCCESS)
+                    {
+                        childrens[currentChildIndex]->OnAbort();
+                        currentChildIndex = i;
+                        std::cout << "Node Condition Succeeded at Runtime: " << condition->GetName() << " in " << node->GetName() << std::endl;
+                        return;
+                    }
+                    continue;
+                }
+                condition->SetLastStatus(NodeStatus::RUNNING);
+                if (condition->GetPriorityMode() == PriorityType::None)
+                    continue;
+                NodeStatus conditionStatus = condition.get()->Tick();
+                condition->SetLastStatus(conditionStatus);
+                
+                if ((condition->GetPriorityMode() == PriorityType::LowerPriority || condition->GetPriorityMode() == PriorityType::Both)
+                    && conditionStatus == NodeStatus::SUCCESS)
+                {
+                    childrens[currentChildIndex]->OnAbort();
+                    currentChildIndex = i;
+                    std::cout << "Node Condition Succeeded at Runtime: " << condition->GetName() << " in " << node->GetName() << std::endl;
+                    return;
+                }
+            }
+        }
+}
+
 void HRootNode::OnStart()
 {
     std::cout << "Root Node Started" << std::endl;
-    m_EditorApp->AddActiveNode(this);
+    if (m_EditorApp)
+        m_EditorApp->AddActiveNode(this);
 }
 
 NodeStatus HRootNode::Update()
@@ -97,7 +171,8 @@ void HRootNode::OnFinished()
 {
     m_bIsStarted = false;
     std::cout << "Root Node Finished with result: " << (m_Status == NodeStatus::SUCCESS ? "SUCCESS" : "FAILURE") << std::endl;
-    m_EditorApp->RemoveActiveNode(this);
+    if (m_EditorApp)
+        m_EditorApp->RemoveActiveNode(this);
 }
 
 void HRootNode::OnAbort()

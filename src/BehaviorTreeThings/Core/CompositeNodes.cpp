@@ -36,13 +36,14 @@ bool HCompositeNode::CanStart()
 // SequenceNode methods
 void SequenceNode::OnStart()
 {
-    m_EditorApp->AddActiveNode(this);
+    if (m_EditorApp)
+        m_EditorApp->AddActiveNode(this);
     std::cout << "Sequence Node Started: " << m_Name << " - Parent:" << (m_Parent != nullptr ? m_Parent->GetName() : std::string(" NoParent")) << std::endl;
 }
 
 NodeStatus SequenceNode::Update()
 {
-    if (!m_EditorApp->CheckConditionsSelfMode(this, m_ConditionNodes))
+    if (!CheckConditionsSelfMode(this, m_ConditionNodes))
         return NodeStatus::FAILURE;
     
     while (m_CurrentChildIndex < static_cast<int>(m_Childrens.size()))
@@ -66,7 +67,8 @@ void SequenceNode::OnFinished()
     std::cout << "Sequence Node Finished: " << m_Name << " result is: " << (m_Status == NodeStatus::SUCCESS ? "SUCCESS" : "FAILURE") << std::endl;
     m_CurrentChildIndex = 0;
     m_bIsStarted = false;
-    m_EditorApp->RemoveActiveNode(this);
+    if (m_EditorApp)
+        m_EditorApp->RemoveActiveNode(this);
 }
 
 void SequenceNode::OnAbort()
@@ -83,15 +85,16 @@ void SequenceNode::OnAbort()
 //SelectorNode methods
 void SelectorNode::OnStart()
 {
-    m_EditorApp->AddActiveNode(this);
+    if (m_EditorApp)
+        m_EditorApp->AddActiveNode(this);
     std::cout << "Selector Node Started: " << m_Name << " - Parent:" << (m_Parent != nullptr ? m_Parent->GetName() : std::string(" NoParent")) << std::endl;
 }
 
 NodeStatus SelectorNode::Update()
 {
-    if (!m_EditorApp->CheckConditionsSelfMode(this, m_ConditionNodes))
+    if (!CheckConditionsSelfMode(this, m_ConditionNodes))
         return NodeStatus::FAILURE;
-    m_EditorApp->CheckConditionsLowerPriorityMode(m_CurrentChildIndex, this, m_Childrens);
+    CheckConditionsLowerPriorityMode(m_CurrentChildIndex, this, m_Childrens);
     while (m_CurrentChildIndex < static_cast<int>(m_Childrens.size()))
     {
         NodeStatus status = m_Childrens[m_CurrentChildIndex]->Tick();
@@ -117,7 +120,8 @@ void SelectorNode::OnFinished()
     std::cout << "Selector Node Finished: " << m_Name << " result is: " << (m_Status == NodeStatus::SUCCESS ? "SUCCESS" : "FAILURE") << std::endl;
     m_CurrentChildIndex = 0;
     m_bIsStarted = false;
-    m_EditorApp->RemoveActiveNode(this);
+    if (m_EditorApp)
+        m_EditorApp->RemoveActiveNode(this);
 }
 
 void SelectorNode::OnAbort()
