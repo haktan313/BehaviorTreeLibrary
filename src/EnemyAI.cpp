@@ -2,6 +2,8 @@
 #include <iostream>
 
 #include "App.h"
+#include "BTSerializer.h"
+#include "PlatformUtilsBT.h"
 #include "Tree.h"
 #include "CustomThings/CustomActions.h"
 #include "CustomThings/CustomBlackboards.h"
@@ -51,6 +53,15 @@ void EnemyAI::BeginPlay()
             .end()
         .build();
     m_BehaviorTree->StartTree();*/
+    BehaviorTree* tree = nullptr;
+    auto btPath = PlatformUtilsBT::OpenFile("Behavior Tree Files\0*.btree\0");
+    BTSerializer serializer(*tree);
+    if (serializer.Deserialize(btPath))
+    {
+        m_BehaviorTree = tree;
+        m_BehaviorTree->StartTree();
+    }
+        
 }
 
 void EnemyAI::Tick(float DeltaTime)

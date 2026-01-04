@@ -39,4 +39,6 @@ private:
     std::unordered_map<std::string, std::string> m_StringValues;
 
     bool m_bValuesChanged = false;
+
+    friend class BTSerializer;
 };

@@ -34,7 +34,23 @@ void BTSerializer::Serialize(const std::string& filepath)
 
 bool BTSerializer::Deserialize(const std::string& filepath)
 {
-    return true;
+    YAML::Node data;
+    try {
+        data = YAML::LoadFile(filepath);
+    }
+    catch (const std::exception& e)
+    {
+        return false;
+    }
+
+    auto btNode = data["BehaviorTree"];
+    if (!btNode)
+        return false;
+
+    HBlackboard* blackboard = new HBlackboard();
+    DeserializeBlackboard(btNode["Blackboard"], blackboard);
+    
+    return false;
 }
 
 const char* BTSerializer::NodeTypeToString(HNodeType type)
@@ -94,6 +110,28 @@ void BTSerializer::SerializeBlackboard(YAML::Emitter& out, const HBlackboard* bl
     for (const auto& [key, val] : blackboard->GetStringValues())
         out << YAML::Key << key << YAML::Value << val;
     out << YAML::EndMap;
+}
+
+void BTSerializer::DeserializeBlackboard(const YAML::Node& blackboardNode, HBlackboard* blackboard)
+{
+    if (!blackboardNode || !blackboard)
+        return;
+    
+    if (blackboardNode["Floats"])
+        for (auto it = blackboardNode["Floats"].begin(); it != blackboardNode["Floats"].end(); ++it)
+            blackboard->CreateFloatValue(it->first.as<std::string>(), it->second.as<float>());
+    
+    if (blackboardNode["Ints"])
+        for (auto it = blackboardNode["Ints"].begin(); it != blackboardNode["Ints"].end(); ++it)
+            blackboard->CreateIntValue(it->first.as<std::string>(), it->second.as<int>());
+    
+    if (blackboardNode["Bools"])
+        for (auto it = blackboardNode["Bools"].begin(); it != blackboardNode["Bools"].end(); ++it)
+            blackboard->CreateBoolValue(it->first.as<std::string>(), it->second.as<bool>());
+    
+    if (blackboardNode["Strings"])
+        for (auto it = blackboardNode["Strings"].begin(); it != blackboardNode["Strings"].end(); ++it)
+            blackboard->CreateStringValue(it->first.as<std::string>(), it->second.as<std::string>());
 }
 
 
