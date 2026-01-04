@@ -19,6 +19,7 @@ void BTSerializer::Serialize(const std::string& filepath)
 
     out << YAML::Key << "Blackboard" << YAML::Value;
     out << YAML::BeginMap;
+    SerializeBlackboard(out, m_Tree->GetBlackboard());
     out << YAML::EndMap;
 
     out << YAML::Key << "RootNode" << YAML::Value;
@@ -70,6 +71,29 @@ const char* BTSerializer::PriorityToString(PriorityType p)
         default:
             return "None";
     }
+}
+
+void BTSerializer::SerializeBlackboard(YAML::Emitter& out, const HBlackboard* blackboard)
+{
+    out << YAML::Key << "Floats" << YAML::Value << YAML::BeginMap;
+    for (const auto& [key, val] : blackboard->GetFloatValues())
+        out << YAML::Key << key << YAML::Value << val;
+    out << YAML::EndMap;
+    
+    out << YAML::Key << "Ints" << YAML::Value << YAML::BeginMap;
+    for (const auto& [key, val] : blackboard->GetIntValues())
+        out << YAML::Key << key << YAML::Value << val;
+    out << YAML::EndMap;
+    
+    out << YAML::Key << "Bools" << YAML::Value << YAML::BeginMap;
+    for (const auto& [key, val] : blackboard->GetBoolValues())
+        out << YAML::Key << key << YAML::Value << val;
+    out << YAML::EndMap;
+    
+    out << YAML::Key << "Strings" << YAML::Value << YAML::BeginMap;
+    for (const auto& [key, val] : blackboard->GetStringValues())
+        out << YAML::Key << key << YAML::Value << val;
+    out << YAML::EndMap;
 }
 
 

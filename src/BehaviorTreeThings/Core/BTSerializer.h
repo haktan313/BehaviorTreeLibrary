@@ -13,6 +13,8 @@ public:
 private:
     static const char* NodeTypeToString(HNodeType type);
     static const char* PriorityToString(PriorityType p);
+
+    static void SerializeBlackboard(YAML::Emitter& out, const HBlackboard* blackboard);
     
     static void SerializeChildren(YAML::Emitter& out, const HNode* node);
     static void SerializeNode(YAML::Emitter& out, const HNode* node);
