@@ -153,17 +153,50 @@ void BTSerializer::SerializeEditorData(YAML::Emitter& out)
     auto editorApp = Root::GetNodeEditorApp();
     if (!editorApp)
         return;
-    auto editorData = editorApp->GetNodeMappings();
-    auto helper = editorApp->GetNodeEditorHelper();
-    for (const auto& [runtimeNode, editorId] : editorData)
+
+    auto& helper = editorApp->GetNodeEditorHelper();
+    
+    out << YAML::Key << "Nodes" << YAML::Value << YAML::BeginSeq;
+    for (const auto& node : helper.GetNodes())
     {
-        out << YAML::Key << runtimeNode->GetName() << YAML::Value;
         out << YAML::BeginMap;
-        ImVec2 pos = nodeEditor::GetNodePosition(editorId);
-        out << YAML::Key << "PositionX" << YAML::Value << pos.x;
-        out << YAML::Key << "PositionY" << YAML::Value << pos.y;
+        out << YAML::Key << "ID" << YAML::Value << node.ID.Get();
+        out << YAML::Key << "Name" << YAML::Value << node.Name;
+        out << YAML::Key << "Type" << YAML::Value << static_cast<int>(node.Type);
+        
+        ImVec2 pos = nodeEditor::GetNodePosition(node.ID);
+        out << YAML::Key << "PosX" << YAML::Value << pos.x;
+        out << YAML::Key << "PosY" << YAML::Value << pos.y;
+        
+        out << YAML::Key << "Decorators" << YAML::Value << YAML::BeginSeq;
+        for(const auto& deco : node.Decorators)
+            out << deco.Name;
+        out << YAML::EndSeq;
+
+        out << YAML::Key << "Conditions" << YAML::Value << YAML::BeginSeq;
+        for(const auto& cond : node.Conditions)
+            out << cond.Name;
+        out << YAML::EndSeq;
+        
+        int nodeKey = (int)node.ID.Get();
+        out << YAML::Key << "Params" << YAML::Value << YAML::BeginMap;
+        //editorApp->GetParamsForNode(nodeKey)->Serialize(out);
+        out << YAML::EndMap;
+
         out << YAML::EndMap;
     }
+    out << YAML::EndSeq;
+    
+    out << YAML::Key << "Links" << YAML::Value << YAML::BeginSeq;
+    for (const auto& link : helper.GetLinks())
+    {
+        out << YAML::BeginMap;
+        out << YAML::Key << "ID" << YAML::Value << link.ID.Get();
+        out << YAML::Key << "StartPinID" << YAML::Value << link.StartPinID.Get();
+        out << YAML::Key << "EndPinID" << YAML::Value << link.EndPinID.Get();
+        out << YAML::EndMap;
+    }
+    out << YAML::EndSeq;
 }
 
 
