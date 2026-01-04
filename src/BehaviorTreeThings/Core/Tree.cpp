@@ -10,7 +10,7 @@ BehaviorTree* BehaviorTreeBuilder::build() const
 
 BehaviorTree::~BehaviorTree()
 {
-    m_Owner = nullptr;
+    //m_Owner = nullptr;
     if (m_bOwnsBlackboard)
         delete m_Blackboard;
     m_Blackboard = nullptr;

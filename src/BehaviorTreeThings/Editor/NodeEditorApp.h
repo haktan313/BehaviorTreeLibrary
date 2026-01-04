@@ -69,27 +69,27 @@ private:
     
     std::unordered_map<const HNode*, nodeEditor::NodeId> s_NodeToEditorIdMap;
     
-    std::unordered_map<std::string, ActionClassInfo> s_ActionClassInfoMap;
+    //std::unordered_map<std::string, ActionClassInfo> s_ActionClassInfoMap;
     std::unordered_map<int, std::string> s_NodeToActionClassId;
     std::unordered_map<int, std::unique_ptr<ParamsForAction>> s_NodeToParams;
     std::string s_SelectedActionClassName;
 
-    std::unordered_map<std::string, DecoratorClassInfo> s_DecoratorClassInfoMap;
+    //std::unordered_map<std::string, DecoratorClassInfo> s_DecoratorClassInfoMap;
     std::unordered_map<int, std::string> s_NodeToDecoratorClassId;
     std::unordered_map<int, std::unique_ptr<ParamsForDecorator>> s_NodeToDecoratorParams;
     std::string s_SelectedDecoratorClassName;
 
-    std::unordered_map<std::string, ConditionClassInfo> s_ConditionClassInfoMap;
+    //std::unordered_map<std::string, ConditionClassInfo> s_ConditionClassInfoMap;
     std::unordered_map<int, std::string> s_NodeToConditionClassId;
     std::unordered_map<int, std::unique_ptr<ParamsForCondition>> s_NodeToConditionParams;
     std::string s_SelectedConditionClassName;
 
-    std::unordered_map<std::string, BlackboardClassInfo> s_BlackboardClassInfoMap;
+    //std::unordered_map<std::string, BlackboardClassInfo> s_BlackboardClassInfoMap;
     std::string s_SelectedBlackboardClassName;
 
     std::string m_CurrentBTFilePath;
 
-    template<typename ActionClass, typename ParamsStruct>
+    /*template<typename ActionClass, typename ParamsStruct>
     void AddActionNodeToBuilder(const std::string& name = "")
     {
         ActionClassInfo actionInfo;
@@ -148,5 +148,5 @@ private:
             return std::make_unique<BlackboardType>();
         };
         s_BlackboardClassInfoMap.emplace(name, std::move(blackboardInfo));
-    }   
+    }   */
 };

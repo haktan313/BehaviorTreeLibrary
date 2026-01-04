@@ -3,6 +3,8 @@
 #include <fstream>
 #include <yaml-cpp/yaml.h>
 
+#include "NodeRegistry.h"
+
 BTSerializer::BTSerializer(const BehaviorTree& tree) : m_Tree(&tree)
 {
 }
@@ -32,7 +34,7 @@ void BTSerializer::Serialize(const std::string& filepath)
     fout << out.c_str();
 }
 
-bool BTSerializer::Deserialize(const std::string& filepath)
+bool BTSerializer::Deserialize(const std::string& filepath/*, EnemyAI& owner*/)
 {
     YAML::Node data;
     try {
@@ -49,6 +51,11 @@ bool BTSerializer::Deserialize(const std::string& filepath)
 
     HBlackboard* blackboard = new HBlackboard();
     DeserializeBlackboard(btNode["Blackboard"], blackboard);
+    
+    BehaviorTreeBuilder builder/*(&owner)*/;
+    builder.setBlackboard(blackboard);
+
+    DeserializeNodeRecursive(btNode["RootNode"], builder);
     
     return false;
 }
@@ -203,6 +210,48 @@ void BTSerializer::SerializeNode(YAML::Emitter& out, const HNode* node)
     out << YAML::EndMap;
 
     out << YAML::EndMap;
+}
+
+void BTSerializer::DeserializeNodeRecursive(const YAML::Node& nodeData, BehaviorTreeBuilder& builder)
+{
+    if (!nodeData || nodeData["NullNode"]) return;
+
+    std::string name = nodeData["Name"].as<std::string>();
+    std::string type = nodeData["Type"].as<std::string>();
+    std::string className = nodeData["Class"].as<std::string>();
+
+    if (type == "Root")
+    {
+        builder.root(nullptr);
+        if (nodeData["Children"]) 
+            for (auto child : nodeData["Children"])
+                DeserializeNodeRecursive(child, builder);
+    }
+    else if (type == "Composite")
+    {
+        if (className.find("Selector") != std::string::npos)
+            builder.selector(name);
+        else
+            builder.sequence(name);
+        if (nodeData["Children"])
+            for (auto child : nodeData["Children"])
+                DeserializeNodeRecursive(child, builder);
+        builder.end();
+    }
+    else if (type == "Action")
+    {
+        auto& actionMap = NodeRegistry::GetActionClassInfoMap();
+        auto it = actionMap.find(name);
+        if (it != actionMap.end())
+        {
+            const ActionClassInfo& actionInfo = it->second;
+            if (actionInfo.BuildFromYAML)
+            {
+                const YAML::Node& paramsNode = nodeData["Params"];
+                actionInfo.BuildFromYAML(builder, name, paramsNode);
+            }
+        }
+    }
 }
 
 void BTSerializer::SerializeConditions(YAML::Emitter& out, const HNode* node)

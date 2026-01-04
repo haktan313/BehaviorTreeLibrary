@@ -3,6 +3,12 @@
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
+
+#include "CustomActions.h"
+#include "CustomBlackboards.h"
+#include "CustomConditions.h"
+#include "CustomDecorators.h"
+#include "NodeRegistry.h"
 #include "BehaviorTreeThings/Core/Tree.h"
 #include "Editor/NodeEditorApp.h"
 
@@ -11,6 +17,19 @@ App* App::s_Instance = nullptr;
 App::App() : m_EnemyAI(nullptr), m_Window(nullptr)
 {
     s_Instance = this;
+
+    NodeRegistry::AddBlackBoardToEditor<MeleeEnemyBlackboard>("Melee Enemy Blackboard");
+    NodeRegistry::AddBlackBoardToEditor<RangedEnemyBlackboard>("Ranged Enemy Blackboard");
+
+    NodeRegistry::AddActionNodeToBuilder<MoveToAction, MoveToParameters>("Move To Action");
+    NodeRegistry::AddActionNodeToBuilder<MeleeEnemyAttackAction, MeleeEnemyAttackActionParameters>("Melee Enemy Attack Action");
+    NodeRegistry::AddActionNodeToBuilder<HeavyAttackAction, HeavyAttackActionParameters>("Heavy Attack Action");
+
+    NodeRegistry::AddConditionNodeToBuilder<IsPlayerInRangeCondition, IsPlayerInRangeParameters>("Is Player In Range Condition");
+    NodeRegistry::AddConditionNodeToBuilder<CanAttackCondition, CanAttackParameters>("Can Attack Condition");
+
+    NodeRegistry::AddDecoratorNodeToBuilder<ChangeResultOfTheNodeDecorator, ChangeResultOfTheNodeParameters>("Change Result Of The Node Decorator");
+    NodeRegistry::AddDecoratorNodeToBuilder<CooldownDecorator, CooldownDecoratorParameters>("Cooldown Decorator");
     
     m_NodeEditorApp = std::make_unique<NodeEditorApp>();
     m_EnemyAI = new EnemyAI();

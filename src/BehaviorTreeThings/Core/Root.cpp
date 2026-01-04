@@ -26,9 +26,9 @@ void Root::RootStop()
     m_BehaviorTrees.clear();
 }
 
-BehaviorTree* Root::CreateBehaviorTree(EnemyAI* owner)
+BehaviorTree* Root::CreateBehaviorTree(/*EnemyAI* owner*/)
 {
-    BehaviorTree* tree = new BehaviorTree(owner);
+    BehaviorTree* tree = new BehaviorTree(/*owner*/);
     m_BehaviorTrees.push_back(tree);
     return tree;
 }

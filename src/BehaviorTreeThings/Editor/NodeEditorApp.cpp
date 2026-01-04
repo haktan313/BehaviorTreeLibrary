@@ -10,6 +10,7 @@
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "BTSerializer.h"
 #include "imgui.h"
+#include "NodeRegistry.h"
 #include "PlatformUtilsBT.h"
 
 NodeEditorApp::NodeEditorApp()
@@ -27,19 +28,6 @@ NodeEditorApp::~NodeEditorApp()
 void NodeEditorApp::OnStart()
 {
     m_NodeEditor->OnStart();
-
-    AddBlackBoardToEditor<MeleeEnemyBlackboard>("Melee Enemy Blackboard");
-    AddBlackBoardToEditor<RangedEnemyBlackboard>("Ranged Enemy Blackboard");
-
-    AddActionNodeToBuilder<MoveToAction, MoveToParameters>("Move To Action");
-    AddActionNodeToBuilder<MeleeEnemyAttackAction, MeleeEnemyAttackActionParameters>("Melee Enemy Attack Action");
-    AddActionNodeToBuilder<HeavyAttackAction, HeavyAttackActionParameters>("Heavy Attack Action");
-
-    AddConditionNodeToBuilder<IsPlayerInRangeCondition, IsPlayerInRangeParameters>("Is Player In Range Condition");
-    AddConditionNodeToBuilder<CanAttackCondition, CanAttackParameters>("Can Attack Condition");
-
-    AddDecoratorNodeToBuilder<ChangeResultOfTheNodeDecorator, ChangeResultOfTheNodeParameters>("Change Result Of The Node Decorator");
-    AddDecoratorNodeToBuilder<CooldownDecorator, CooldownDecoratorParameters>("Cooldown Decorator");
 }
 
 void NodeEditorApp::Update()
@@ -412,14 +400,14 @@ void NodeEditorApp::ShowActionNodeInBlackboard()
     std::string currentLabel = "Select Action";
     if (!currentIdString.empty())
     {
-        auto info = s_ActionClassInfoMap.find(currentIdString);
-        if (info != s_ActionClassInfoMap.end())
+        auto info = NodeRegistry::GetActionClassInfoMap().find(currentIdString);
+        if (info != NodeRegistry::GetActionClassInfoMap().end())
             currentLabel = info->second.Name;
     }
 
     if (ImGui::BeginCombo("##ActionList", currentLabel.c_str()))
     {
-        for (auto& [id, info] : s_ActionClassInfoMap)
+        for (auto& [id, info] : NodeRegistry::GetActionClassInfoMap())
         {
             bool isSelected = (id == currentIdString);
             if (ImGui::Selectable(info.Name.c_str(), isSelected))
@@ -459,13 +447,13 @@ void NodeEditorApp::ShowDecoratorNodeInBlackboard()
     std::string currentLabel = "Select Condition";
     if (!currentIdString.empty())
     {
-        auto info = s_DecoratorClassInfoMap.find(currentIdString);
-        if (info != s_DecoratorClassInfoMap.end())
+        auto info = NodeRegistry::GetDecoratorClassInfoMap().find(currentIdString);
+        if (info != NodeRegistry::GetDecoratorClassInfoMap().end())
             currentLabel = info->second.Name;
     }
     if (ImGui::BeginCombo("##ConditionList", currentLabel.c_str()))
     {
-        for (auto& [id, info] : s_DecoratorClassInfoMap)
+        for (auto& [id, info] : NodeRegistry::GetDecoratorClassInfoMap())
         {
             bool isSelected = (id == currentIdString);
             if (ImGui::Selectable(info.Name.c_str(), isSelected))
@@ -504,13 +492,13 @@ void NodeEditorApp::ShowConditionNodeInBlackboard()
         std::string currentLabel = "Select Condition";
         if (!currentIdString.empty())
         {
-            auto info = s_ConditionClassInfoMap.find(currentIdString);
-            if (info != s_ConditionClassInfoMap.end())
+            auto info = NodeRegistry::GetConditionClassInfoMap().find(currentIdString);
+            if (info != NodeRegistry::GetConditionClassInfoMap().end())
                 currentLabel = info->second.Name;
         }
         if (ImGui::BeginCombo("##ConditionList", currentLabel.c_str()))
         {
-            for (auto& [id, info] : s_ConditionClassInfoMap)
+            for (auto& [id, info] : NodeRegistry::GetConditionClassInfoMap())
             {
                 bool isSelected = (id == currentIdString);
                 if (ImGui::Selectable(info.Name.c_str(), isSelected))
@@ -549,13 +537,13 @@ void NodeEditorApp::ShowBlackboardDetails()
     std::string currentLabel = "Select Blackboard";
     if (!s_SelectedBlackboardClassName.empty())
     {
-        auto info = s_BlackboardClassInfoMap.find(s_SelectedBlackboardClassName);
-        if (info != s_BlackboardClassInfoMap.end())
+        auto info = NodeRegistry::GetBlackboardClassInfoMap().find(s_SelectedBlackboardClassName);
+        if (info != NodeRegistry::GetBlackboardClassInfoMap().end())
             currentLabel = info->second.Name;
     }
     if (ImGui::BeginCombo("##BlackboardOptions", currentLabel.c_str()))
     {
-        for (auto& [id, info] : s_BlackboardClassInfoMap)
+        for (auto& [id, info] : NodeRegistry::GetBlackboardClassInfoMap())
         {
             bool isSelected = (id == s_SelectedBlackboardClassName);
             if (ImGui::Selectable(info.Name.c_str(), isSelected))
@@ -578,7 +566,7 @@ void NodeEditorApp::BuildBehaviorTree()
     std::cout << "Building Behavior Tree from Node Editor..." << std::endl;
     ClearBuildData();
     
-    BehaviorTreeBuilder btBuilder(m_Enemy);
+    BehaviorTreeBuilder btBuilder;
     //btBuilder.setBlackboard<EnemyBlackboard>();
     btBuilder.setBlackboard(m_Blackboard.get());
     
@@ -637,8 +625,8 @@ void NodeEditorApp::BuildSequence(Node* node, BehaviorTreeBuilder& btBuilder)
     {
         const std::string& classId = classIt->second;
 
-        auto infoIt = s_DecoratorClassInfoMap.find(classId);
-        if (infoIt != s_DecoratorClassInfoMap.end())
+        auto infoIt = NodeRegistry::GetDecoratorClassInfoMap().find(classId);
+        if (infoIt != NodeRegistry::GetDecoratorClassInfoMap().end())
         {
             DecoratorClassInfo& info = infoIt->second;
 
@@ -657,8 +645,8 @@ void NodeEditorApp::BuildSequence(Node* node, BehaviorTreeBuilder& btBuilder)
     {
         const std::string& condClassId = condClassIt->second;
 
-        auto condInfoIt = s_ConditionClassInfoMap.find(condClassId);
-        if (condInfoIt != s_ConditionClassInfoMap.end())
+        auto condInfoIt = NodeRegistry::GetConditionClassInfoMap().find(condClassId);
+        if (condInfoIt != NodeRegistry::GetConditionClassInfoMap().end())
         {
             ConditionClassInfo& condInfo = condInfoIt->second;
 
@@ -681,8 +669,8 @@ void NodeEditorApp::BuildSelector(Node* node, BehaviorTreeBuilder& btBuilder)
     {
         const std::string& classId = classIt->second;
 
-        auto infoIt = s_DecoratorClassInfoMap.find(classId);
-        if (infoIt != s_DecoratorClassInfoMap.end())
+        auto infoIt = NodeRegistry::GetDecoratorClassInfoMap().find(classId);
+        if (infoIt != NodeRegistry::GetDecoratorClassInfoMap().end())
         {
             DecoratorClassInfo& info = infoIt->second;
 
@@ -700,8 +688,8 @@ void NodeEditorApp::BuildSelector(Node* node, BehaviorTreeBuilder& btBuilder)
     {
         const std::string& condClassId = condClassIt->second;
 
-        auto condInfoIt = s_ConditionClassInfoMap.find(condClassId);
-        if (condInfoIt != s_ConditionClassInfoMap.end())
+        auto condInfoIt = NodeRegistry::GetConditionClassInfoMap().find(condClassId);
+        if (condInfoIt != NodeRegistry::GetConditionClassInfoMap().end())
         {
             ConditionClassInfo& condInfo = condInfoIt->second;
 
@@ -723,8 +711,8 @@ void NodeEditorApp::BuildAction(Node* node, BehaviorTreeBuilder& btBuilder)
         return;
     
     const std::string& classId = classIt->second;
-    auto infoIt = s_ActionClassInfoMap.find(classId);
-    if (infoIt == s_ActionClassInfoMap.end())
+    auto infoIt = NodeRegistry::GetActionClassInfoMap().find(classId);
+    if (infoIt == NodeRegistry::GetActionClassInfoMap().end())
         return;
     
     ActionClassInfo& info = infoIt->second;
@@ -739,8 +727,8 @@ void NodeEditorApp::BuildAction(Node* node, BehaviorTreeBuilder& btBuilder)
     {
         const std::string& decoClassId = decoClassIt->second;
     
-        auto decoInfoIt = s_DecoratorClassInfoMap.find(decoClassId);
-        if (decoInfoIt != s_DecoratorClassInfoMap.end())
+        auto decoInfoIt = NodeRegistry::GetDecoratorClassInfoMap().find(decoClassId);
+        if (decoInfoIt != NodeRegistry::GetDecoratorClassInfoMap().end())
         {
             DecoratorClassInfo& decoInfo = decoInfoIt->second;
     
@@ -760,8 +748,8 @@ void NodeEditorApp::BuildAction(Node* node, BehaviorTreeBuilder& btBuilder)
     {
         const std::string& condClassId = condClassIt->second;
     
-        auto condInfoIt = s_ConditionClassInfoMap.find(condClassId);
-        if (condInfoIt != s_ConditionClassInfoMap.end())
+        auto condInfoIt = NodeRegistry::GetConditionClassInfoMap().find(condClassId);
+        if (condInfoIt != NodeRegistry::GetConditionClassInfoMap().end())
         {
             ConditionClassInfo& condInfo = condInfoIt->second;
     

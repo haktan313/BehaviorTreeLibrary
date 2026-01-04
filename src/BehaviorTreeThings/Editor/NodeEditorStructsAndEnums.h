@@ -35,6 +35,7 @@ struct ActionClassInfo
     std::string Name;
     std::function<void(BehaviorTreeBuilder&, Node*, ParamsForAction&)> BuildFn;
     std::function<std::unique_ptr<ParamsForAction>()> CreateParamsFn;
+    std::function<void(BehaviorTreeBuilder&, const std::string&, const YAML::Node&)> BuildFromYAML;
 };
 struct DecoratorClassInfo
 {
