@@ -33,8 +33,7 @@ App::App() : m_EnemyAI(nullptr), m_Window(nullptr)
     
     Root::RootStart();
     m_EnemyAI = new EnemyAI();
-    //m_NodeEditorApp = std::make_unique<NodeEditorApp>();
-    //m_NodeEditorApp->SetEnemyAI(m_EnemyAI);
+    Root::BuildEditor();
 }
 
 App::~App()
@@ -139,6 +138,7 @@ bool App::Init()
     ImGui_ImplOpenGL3_Init("#version 330");
     
     //m_NodeEditorApp->OnStart();
+    Root::RootStart();
     return true;
 }
 

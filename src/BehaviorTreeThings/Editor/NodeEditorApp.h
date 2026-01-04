@@ -1,7 +1,6 @@
 #pragma once
 #include <unordered_map>
 #include "NodeEditorHelper.h"
-#include "Tree.h"
 #include "NodeEditorStructsAndEnums.h"
 
 class NodeEditorApp
@@ -10,7 +9,7 @@ public:
     void AddActiveNode(HNode* node) { m_ActiveNodes.push_back(node); }
     void RemoveActiveNode(HNode* node) { m_ActiveNodes.erase(std::remove(m_ActiveNodes.begin(), m_ActiveNodes.end(), node), m_ActiveNodes.end());}
     void ClearActiveNodes() { m_ActiveNodes.clear(); }
-    void SetEnemyAI(EnemyAI* enemy) { m_Enemy = enemy; }
+    //void SetEnemyAI(EnemyAI* enemy) { m_Enemy = enemy; }
     void ClearNodeMappings() { s_NodeToEditorIdMap.clear(); }
     
     NodeEditorApp();
@@ -57,7 +56,7 @@ private:
     
     EditorDecorator* m_LastSelectedDecorator = nullptr;
     EditorCondition* m_LastSelectedCondition = nullptr;
-    EnemyAI* m_Enemy = nullptr;
+    //EnemyAI* m_Enemy = nullptr;
     Node* m_LastHoveredNode = nullptr;
     Node* m_LastSelectedNode = nullptr;
     BehaviorTree* m_BehaviorTree = nullptr;

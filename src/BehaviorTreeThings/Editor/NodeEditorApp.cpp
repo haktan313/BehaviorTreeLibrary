@@ -694,7 +694,7 @@ void NodeEditorApp::ClearBuildData()
 {
     ClearNodeMappings();
     ClearActiveNodes();
-    m_Enemy->m_BehaviorTree = nullptr;
+    //m_Enemy->m_BehaviorTree = nullptr;
     m_BehaviorTree = nullptr;
 }
 
