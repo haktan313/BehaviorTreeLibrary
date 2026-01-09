@@ -96,6 +96,48 @@ bool BTSerializer::Deserialize(const std::string& filepath/*, EnemyAI& owner*/)
         return true;
     }
     editorApp->ClearBuildData();
+    Root::GetNodeEditorApp()->GetNodeEditorHelper().ClearDatas();
+    
+    std::unordered_map<int, Node*> idMap;
+    int maxID = 0;
+
+    if (btNode["EditorData"]["Nodes"])
+    {
+        for (auto n : btNode["EditorData"]["Nodes"])
+        {
+            int oldID = n["ID"].as<int>();
+            maxID = std::max(maxID, oldID);
+            
+            std::string name = n["Name"].as<std::string>();
+            NodeType type = static_cast<NodeType>(n["Type"].as<int>());
+            ImVec2 pos(n["PosX"].as<float>(), n["PosY"].as<float>());
+
+            Node* newNode = nullptr;
+
+            switch (type)
+            {
+                case NodeType::Root:
+                    newNode = Root::GetNodeEditorApp()->GetNodeEditorHelper().SpawnRootNode();
+                break;
+                case NodeType::Sequence:
+                    newNode = Root::GetNodeEditorApp()->GetNodeEditorHelper().SpawnSequenceNode(pos);
+                break;
+                case NodeType::Selector:
+                    newNode = Root::GetNodeEditorApp()->GetNodeEditorHelper().SpawnSelectorNode(pos);
+                break;
+                case NodeType::Action:
+                    newNode = Root::GetNodeEditorApp()->GetNodeEditorHelper().SpawnActionNode(pos);
+                break;
+            }
+
+            if (newNode)
+            {
+                newNode->Name = name;
+                nodeEditor::SetNodePosition(newNode->ID, pos);
+                idMap[oldID] = newNode;
+            }
+        }
+    }
     
     return true;
 }
