@@ -98,7 +98,8 @@ bool BTSerializer::Deserialize(const std::string& filepath/*, EnemyAI& owner*/)
     editorApp->ClearBuildData();
     Root::GetNodeEditorApp()->GetNodeEditorHelper().ClearDatas();
     
-    std::unordered_map<int, Node*> idMap;
+    std::unordered_map<int, nodeEditor::NodeId> idMap;
+
     int maxID = 0;
 
     if (btNode["EditorData"]["Nodes"])
@@ -134,8 +135,37 @@ bool BTSerializer::Deserialize(const std::string& filepath/*, EnemyAI& owner*/)
             {
                 newNode->Name = name;
                 nodeEditor::SetNodePosition(newNode->ID, pos);
-                idMap[oldID] = newNode;
+                idMap[oldID] = newNode->ID; 
             }
+        }
+    }
+    Root::GetNodeEditorApp()->GetNodeEditorHelper().BuildNodes();
+    if (btNode["EditorData"]["Links"])
+    {
+        auto& helper = Root::GetNodeEditorApp()->GetNodeEditorHelper();
+        for (auto l : btNode["EditorData"]["Links"])
+        {
+            int startNodeOldID = l["StartNodeID"].as<int>();
+            int endNodeOldID = l["EndNodeID"].as<int>();
+            
+            auto itA = idMap.find(startNodeOldID);
+            auto itB = idMap.find(endNodeOldID);
+            if (itA == idMap.end() || itB == idMap.end())
+                continue;
+
+            Node* startNode = helper.FindNode(itA->second);
+            Node* endNode   = helper.FindNode(itB->second);
+
+            if (!startNode || !endNode)
+                continue;
+
+            if (!startNode->Outputs.empty() && !endNode->Inputs.empty())
+            {
+                nodeEditor::PinId startPin = startNode->Outputs[0].ID;
+                nodeEditor::PinId endPin   = endNode->Inputs[0].ID;
+                helper.GetLinks().emplace_back(Link(helper.GetNextLinkId(), startPin, endPin));
+            }
+
         }
     }
     
@@ -271,8 +301,15 @@ void BTSerializer::SerializeEditorData(YAML::Emitter& out)
     {
         out << YAML::BeginMap;
         out << YAML::Key << "ID" << YAML::Value << link.ID.Get();
-        out << YAML::Key << "StartPinID" << YAML::Value << link.StartPinID.Get();
-        out << YAML::Key << "EndPinID" << YAML::Value << link.EndPinID.Get();
+        
+        auto* startPin = helper.FindPin(link.StartPinID);
+        auto* endPin = helper.FindPin(link.EndPinID);
+        
+        if (startPin && endPin)
+        {
+            out << YAML::Key << "StartNodeID" << YAML::Value << startPin->Node->ID.Get();
+            out << YAML::Key << "EndNodeID" << YAML::Value << endPin->Node->ID.Get();
+        }
         out << YAML::EndMap;
     }
     out << YAML::EndSeq;
