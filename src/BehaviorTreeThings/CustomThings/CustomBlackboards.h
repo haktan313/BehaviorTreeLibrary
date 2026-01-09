@@ -4,7 +4,7 @@
 class MeleeEnemyBlackboard : public HBlackboard
 {
 public:
-    MeleeEnemyBlackboard()
+    MeleeEnemyBlackboard(const std::string& name = "MeleeEnemyBlackboard") : HBlackboard(name)
     {
         CreateBoolValue("IsPlayerInRange", false);
         CreateBoolValue("IsPlayerAttacking", false);
@@ -24,7 +24,7 @@ public:
 class RangedEnemyBlackboard : public HBlackboard
 {
 public:
-    RangedEnemyBlackboard()
+    RangedEnemyBlackboard(const std::string& name = "RangedEnemyBlackboard") : HBlackboard(name)
     {
         CreateBoolValue("IsPlayerInSight", false);
         CreateBoolValue("ShouldReload", false);

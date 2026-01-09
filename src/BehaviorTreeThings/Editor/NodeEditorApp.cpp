@@ -474,10 +474,7 @@ void NodeEditorApp::ShowBlackboardDetails()
         {
             bool isSelected = (id == s_SelectedBlackboardClassName);
             if (ImGui::Selectable(info.Name.c_str(), isSelected))
-            {
-                s_SelectedBlackboardClassName = id;
-                m_Blackboard = info.CreateBlackboardFn();
-            }
+                SetBlackboardForEditor(id, info);
         }
         ImGui::EndCombo();
     }
@@ -485,6 +482,12 @@ void NodeEditorApp::ShowBlackboardDetails()
     {
         m_Blackboard->DrawImGui();
     }
+}
+
+void NodeEditorApp::SetBlackboardForEditor(const std::string& id, const BlackboardClassInfo& info)
+{
+    s_SelectedBlackboardClassName = id;
+    m_Blackboard = info.CreateBlackboardFn();
 }
 
 void NodeEditorApp::BuildBehaviorTree()

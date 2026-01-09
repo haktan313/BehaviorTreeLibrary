@@ -22,6 +22,7 @@ public:
     Node* GetEditorNodeFor(const HNode* runtimeNode);
     std::unordered_map<const HNode*, nodeEditor::NodeId>& GetNodeMappings() { return s_NodeToEditorIdMap; }
     NodeEditorHelper& GetNodeEditorHelper() { return *m_NodeEditor; }
+    HBlackboard& GetBlackboard() { return *m_Blackboard; }
     
     void DecoratorNodeSelected(EditorDecorator& decorator);
     void ConditionNodeSelected(EditorCondition& condition);
@@ -39,6 +40,7 @@ private:
     void ShowDecoratorNodeInBlackboard();
     void ShowConditionNodeInBlackboard();
     void ShowBlackboardDetails();
+    void SetBlackboardForEditor(const std::string& id, const BlackboardClassInfo& info);
     
     void BuildBehaviorTree();
     void BuildSequence(Node* node, BehaviorTreeBuilder& btBuilder);
@@ -86,6 +88,8 @@ private:
     std::string s_SelectedBlackboardClassName;
 
     std::string m_CurrentBTFilePath;
+
+    friend class BTSerializer;
 
     /*template<typename ActionClass, typename ParamsStruct>
     void AddActionNodeToBuilder(const std::string& name = "")

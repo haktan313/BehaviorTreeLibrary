@@ -5,8 +5,10 @@
 class HBlackboard
 {
 public:
-    HBlackboard() = default;
+    HBlackboard(const std::string& name = "DefaultBlackboard") : m_BlackboardName(name) {}
     virtual ~HBlackboard() = default;
+
+    std::string GetName() const { return m_BlackboardName; }
     
     bool GetBoolValue(const std::string& key) const;
     int GetIntValue(const std::string& key) const;
@@ -39,6 +41,8 @@ private:
     std::unordered_map<std::string, std::string> m_StringValues;
 
     bool m_bValuesChanged = false;
+
+    std::string m_BlackboardName;
 
     friend class BTSerializer;
 };

@@ -53,16 +53,49 @@ bool BTSerializer::Deserialize(const std::string& filepath/*, EnemyAI& owner*/)
     auto btNode = data["BehaviorTree"];
     if (!btNode)
         return false;
+    auto editorApp = Root::GetNodeEditorApp();
 
-    HBlackboard* blackboard = new HBlackboard();
+    /*HBlackboard* blackboard = new HBlackboard();
+    DeserializeBlackboard(btNode["Blackboard"], blackboard);*/
+    HBlackboard* blackboard = nullptr;
+    std::string bbClassName = "";
+
+    if (btNode["Blackboard"]["ClassName"])
+    {
+        bbClassName = btNode["Blackboard"]["ClassName"].as<std::string>();
+        auto& bbRegistry = NodeRegistry::GetBlackboardClassInfoMap();
+        
+        auto it = bbRegistry.find(bbClassName);
+        if (it != bbRegistry.end())
+        {
+            if (editorApp)
+            {
+                Root::GetNodeEditorApp()->SetBlackboardForEditor(bbClassName, it->second);
+                std::cout << "Created blackboard of class by Editor: " << bbClassName << std::endl;
+            }
+            else
+            {
+                blackboard = it->second.CreateBlackboardFn().release();
+                std::cout << "Created blackboard of class: " << bbClassName << std::endl;
+            }
+        }
+    }
+    if (!blackboard)
+        blackboard = new HBlackboard();
+    
     DeserializeBlackboard(btNode["Blackboard"], blackboard);
     
-    BehaviorTreeBuilder builder/*(&owner)*/;
-    builder.setBlackboard(blackboard);
+    if (!editorApp)
+    {
+        BehaviorTreeBuilder builder/*(&owner)*/;
+        builder.setBlackboard(blackboard);
 
-    DeserializeNodeRecursive(btNode["RootNode"], builder);
+        DeserializeNodeRecursive(btNode["RootNode"], builder);
 
-    m_Tree = builder.build();
+        m_Tree = builder.build();
+        return true;
+    }
+    editorApp->ClearBuildData();
     
     return true;
 }
@@ -105,6 +138,10 @@ const char* BTSerializer::PriorityToString(PriorityType p)
 
 void BTSerializer::SerializeBlackboard(YAML::Emitter& out, const HBlackboard* blackboard)
 {
+    auto classInfo = NodeRegistry::GetBlackboardClassInfoMap().find(blackboard->GetName());
+    if (classInfo != NodeRegistry::GetBlackboardClassInfoMap().end())
+        out << YAML::Key << "ClassName" << YAML::Value << classInfo->second.Name;
+    
     out << YAML::Key << "Floats" << YAML::Value << YAML::BeginMap;
     for (const auto& [key, val] : blackboard->GetFloatValues())
         out << YAML::Key << key << YAML::Value << val;

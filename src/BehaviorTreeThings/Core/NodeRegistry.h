@@ -78,9 +78,9 @@ public:
     {
         BlackboardClassInfo blackboardInfo;
         blackboardInfo.Name = name;
-        blackboardInfo.CreateBlackboardFn = []()
+        blackboardInfo.CreateBlackboardFn = [name]()
         {
-            return std::make_unique<BlackboardType>();
+            return std::make_unique<BlackboardType>(name);
         };
         s_BlackboardClassInfoMap.emplace(name, std::move(blackboardInfo));
     }

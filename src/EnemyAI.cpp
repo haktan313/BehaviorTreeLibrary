@@ -53,7 +53,7 @@ void EnemyAI::BeginPlay()
             .end()
         .build();
     m_BehaviorTree->StartTree();*/
-    BehaviorTree* tree = nullptr;
+    /*BehaviorTree* tree = nullptr;
     auto btPath = PlatformUtilsBT::OpenFile("Behavior Tree Files\0*.btree\0");
     BTSerializer serializer(tree);
     if (serializer.Deserialize(btPath))
@@ -63,7 +63,7 @@ void EnemyAI::BeginPlay()
         //auto newPath = PlatformUtilsBT::SaveFile("Behavior Tree Files\0*.btree\0");
         //serializer.Serialize(newPath);
         m_BehaviorTree->StartTree();
-    }
+    }*/
         
 }
 
