@@ -48,6 +48,7 @@ void EnemyAI::BeginPlay()
         .build();
     m_BehaviorTree->SetOwner(this);
     m_BehaviorTree->StartTree();*/
+    
     /*BehaviorTree* tree = nullptr;
     auto btPath = PlatformUtilsBT::OpenFile("Behavior Tree Files\0*.btree\0");
     BTSerializer serializer(tree);

@@ -6,6 +6,8 @@ The node visuals are created using **imgui-node-editor**. You can find **example
 
 ## Features
 - Visual **Behavior Tree editor** built with **ImGui** + **imgui-node-editor**
+- **YAML Serialization Support:** Save and load behavior trees (visual nodes + runtime logic) to `.btree` files using **yaml-cpp**
+- **Parameter Persistence:** Preserves node parameters, blackboard values, and connections between sessions
 - Script based and visual **Behavior Tree** creation in editor window
 - Extensible system with **custom Actions**, **Decorators**, and **Conditions**
 - **Blackboard** driven AI architecture
@@ -19,7 +21,7 @@ The node visuals are created using **imgui-node-editor**. You can find **example
 ## Screenshots
 | Visual Behavior Tree Creation | Script Base Behavior Tree Creation |
 |--------|-------------|
-| <img width="1917" height="1106" alt="image" src="https://github.com/user-attachments/assets/98c4969a-c7ec-42c1-a17a-a4ff5035c304" /> | <img width="1520" height="902" alt="image" src="https://github.com/user-attachments/assets/bab44b5e-99bc-422b-848e-dfa7a22fa1d5" /> |
+| <img width="1912" height="1020" alt="image" src="https://github.com/user-attachments/assets/5615dd27-79a6-4559-ab26-d14b8c3dbd26" /> | <img width="1345" height="799" alt="Screenshot 2026-01-11 212614" src="https://github.com/user-attachments/assets/e309f3b7-4502-473c-8be9-9d99baaf3c05" /> |
 
 
 ## Usage Examples
@@ -27,13 +29,14 @@ The node visuals are created using **imgui-node-editor**. You can find **example
 ### Creating a Blackboard
 - Create a class derived from the **HBlackboard** base class.
 - In its constructor, create blackboard values using the **CreateXValue** functions by assigning a **KeyName** and a **value**.
-- After creating your **blackboard**, to register it to the **editor**, go to `NodeEditorApp.cpp` and call `AddBlackBoardToEditor<YourBlackboardClass>(Its name)` inside the **OnStart** function:
+- After creating your **blackboard**, to register it call `AddBlackBoardToEditor<YourBlackboardClass>(Its name)` function before Start the system for example at `App.cpp`:
   ```cpp
   AddBlackBoardToEditor<MeleeEnemyBlackboard>("Melee Enemy Blackboard");
   ```
   ### HBlackboard
   - **HBlackboard** has its own **DrawImGui** function, allowing it to be visualized directly in the editor.
   - Provides **Get** and **Set** functions for accessing **blackboard values**. Also includes helper **Get** functions to **retrieve all variables of the same type**.
+  - Provides **Has** functions for checking it has that value or not.
   - There is a **DrawImGui** function, with it you will see the varaibles visual at the editor.
   - When a value changes, an internal flag is set to true for **condition checking**. This allows the tree to skip condition checks unless values change, improving performance.
 
@@ -41,7 +44,7 @@ The node visuals are created using **imgui-node-editor**. You can find **example
     class MeleeEnemyBlackboard : public HBlackboard
     {
     public:
-        MeleeEnemyBlackboard()
+        MeleeEnemyBlackboard(const std::string& name = "MeleeEnemyBlackboard") : HBlackboard(name)
         {
             CreateBoolValue("IsPlayerInRange", false);
             CreateBoolValue("IsPlayerAttacking", false);
@@ -61,42 +64,56 @@ The node visuals are created using **imgui-node-editor**. You can find **example
 ### Creating Actions
 - Create a struct derived from the **ParamsForAction** base struct. This struct is used to define action parameters and is passed to the action class constructor.
 - Create a class derived from the **HActionNode** base class.
-- After creating your **action**, to register it to the **editor**, go to `NodeEditorApp.cpp` and call `AddActionNodeToBuilder<YourActionClass, YourActionParameterStruct>(Its name)` inside the **OnStart** function:
+- After creating your **action**, to register it call `AddActionNodeToBuilder<YourActionClass, YourActionParameterStruct>(Its name)` function:
     ```cpp
     AddActionNodeToBuilder<MeleeEnemyAttackAction, MeleeEnemyAttackActionParameters>("Melee Enemy Attack Action");
     ```
     ### HActionNode & ParamsForAction
   - **ParamsForAction** provides a **DrawImGui** function to expose action parameters directly in the editor. Just assign parameters with `DrawXValue` function inside `DrawImGui` function.
-  - If you want to assign Blackboard key value as a parameter create varaible name `HBlackboardKeyValue` in the `DrawImGui` function call `DrawBlackboardIntKeySelector` function for visualize it. (as shown in the example above).
+  - If you want to assign Blackboard key value as a parameter create varaible name `HBlackboardKeyValue` in the `DrawImGui` function call `DrawBlackboardIntKeySelector` function for visualize it. (as shown in the example bottom)
+  - To Serialize and Deserialize its parameters call `Serialize` and `Deserialize` functions. (as shown in the example bottom)
   - HActionNode provides helper functions:
-    - GetOwner() – access the owning AI / actor
-    - GetBlackboard() – access the assigned blackboard
+    - `GetOwner<CustomAIClass>()` - access the owning AI / actor
+    - `GetBlackboard()` – access the assigned blackboard
   ```cpp
-  struct MeleeEnemyAttackActionParameters : ParamsForAction
-  {
-      HBlackboardKeyValue AttackPowerKey;
-      float AttackDuration = 10.0f;
-      void DrawImGui(HBlackboard* blackboard) override
-      {
-          DrawBlackboardIntKeySelector("Attack Power", AttackPowerKey, blackboard);
-          DrawFloatValue("Attack Duration", AttackDuration);
-      }
-  };
-  class MeleeEnemyAttackAction : public HActionNode
-  {
-  public:
-      MeleeEnemyAttackAction(const std::string& name, const MeleeEnemyAttackActionParameters& params = MeleeEnemyAttackActionParameters{})
-          : HActionNode(name, params), m_AttackPowerKey(params.AttackPowerKey), m_AttackDuration(params.AttackDuration) {}
-  
-      void OnStart() override;
-      NodeStatus Update() override;
-      void OnFinished() override;
-      void OnAbort() override;
-  private:
-      HBlackboardKeyValue m_AttackPowerKey;
-      float m_AttackDuration;
-      float m_ElapsedTime = 0.0f;
-  };
+    struct MeleeEnemyAttackActionParameters : ParamsForAction
+    {
+        HBlackboardKeyValue AttackPowerKey;
+        float AttackDuration = 10.0f;
+        void DrawImGui(HBlackboard* blackboard) override
+        {
+            DrawBlackboardIntKeySelector("Attack Power", AttackPowerKey, blackboard);
+            DrawFloatValue("Attack Duration", AttackDuration);
+        }
+        void Serialize(YAML::Emitter& out) const override
+        {
+            SerializeBlackboardFloatKey("AttackPowerKey", AttackPowerKey, out);
+            SerializeFloat("AttackDuration", AttackDuration, out);
+        }
+        void Deserialize(const YAML::Node& node) override
+        {
+            DeserializeBlackboardKey(node, "AttackPowerKey", AttackPowerKey);
+            DeserializeFloat(node, "AttackDuration", AttackDuration);
+        }
+    };
+    class MeleeEnemyAttackAction : public HActionNode
+    {
+    public:
+        MeleeEnemyAttackAction(const std::string& name, const MeleeEnemyAttackActionParameters& params = MeleeEnemyAttackActionParameters{})
+            : HActionNode(name, params), m_AttackPowerKey(params.AttackPowerKey), m_AttackDuration(params.AttackDuration)
+        {
+            SetParams<MeleeEnemyAttackActionParameters>(params);
+        }
+
+        void OnStart() override;
+        NodeStatus Update() override;
+        void OnFinished() override;
+        void OnAbort() override;
+    private:
+        HBlackboardKeyValue m_AttackPowerKey;
+        float m_AttackDuration;
+        float m_ElapsedTime = 0.0f;
+    };
   ```
   
 
@@ -109,12 +126,13 @@ The node visuals are created using **imgui-node-editor**. You can find **example
     ```
     ### HCondition & ParamsForCondition
     - **ParamsForCondition** provides a **DrawImGui** function to expose action parameters directly in the editor. Just assign parameters with `DrawXValue` function inside `DrawImGui` function.
-    - If you want to assign Blackboard key value as a parameter create varaible name `HBlackboardKeyValue` in the `DrawImGui` function call `DrawBlackboardIntKeySelector` function for visualize it. (as shown in the example above).
+    - If you want to assign Blackboard key value as a parameter create varaible name `HBlackboardKeyValue` in the `DrawImGui` function call `DrawBlackboardIntKeySelector` function for visualize it. (as shown in the example bottom).
+    - To Serialize and Deserialize its parameters call `Serialize` and `Deserialize` functions. (as shown in the example bottom)
     - HCondition provides helper functions:
-        - GetOwner() – access the owning AI / actor
-        - GetBlackboard() – access the assigned blackboard
-        - GetPriorityMode() - returns the condition’s priority mode
-        - GetLastStatus() - returns the last evaluated status (Success / Failure)
+        - `GetOwner<CustomAIClass>()` – access the owning AI / actor
+        - `GetBlackboard()` – access the assigned blackboard
+        - `GetPriorityMode()` - returns the condition’s priority mode
+        - `GetLastStatus()` - returns the last evaluated status (Success / Failure)
     ```cpp
     struct IsPlayerInRangeParameters : ParamsForCondition
     {
@@ -125,12 +143,25 @@ The node visuals are created using **imgui-node-editor**. You can find **example
             DrawFloatValue("Range", Range);
             DrawBlackboardFloatKeySelector("Distance To Player", DistanceToPlayerKey, blackboard);
         }
+        void Serialize(YAML::Emitter& out) const override
+        {
+            SerializeFloat("Range", Range, out);
+            SerializeBlackboardFloatKey("DistanceToPlayerKey", DistanceToPlayerKey, out);
+        }
+        void Deserialize(const YAML::Node& node) override
+        {
+            DeserializeFloat(node, "Range", Range);
+            DeserializeBlackboardKey(node, "DistanceToPlayerKey", DistanceToPlayerKey);
+        }
     };
     class IsPlayerInRangeCondition : public HCondition
     {
     public:
         IsPlayerInRangeCondition(const std::string& name, const IsPlayerInRangeParameters& params = IsPlayerInRangeParameters{})
-            : HCondition(name, params), m_Range(params.Range), m_DistanceToPlayer(params.DistanceToPlayerKey) {}
+            : HCondition(name, params), m_Range(params.Range), m_DistanceToPlayer(params.DistanceToPlayerKey)
+        {
+            SetParams<IsPlayerInRangeParameters>(params);
+        }
 
         void OnStart() override;
         bool CheckCondition() override;
@@ -145,7 +176,7 @@ The node visuals are created using **imgui-node-editor**. You can find **example
 ### Creating Decorators
 - Create a struct derived from the **ParamsForDecorator** base struct. This struct is used to define action parameters and is passed to the action class constructor.
 - Create a class derived from the **HDecorator** base class.
-- After creating your **decorator**, to register it to the **editor**, go to `NodeEditorApp.cpp` and call `AddDecoratorNodeToBuilder<YourDecoratorClass, YourDecoratorParameterStruct>(Its name)` inside the **OnStart** function:
+- After creating your **decorator**, to register it call `AddDecoratorNodeToBuilder<YourDecoratorClass, YourDecoratorParameterStruct>(Its name)` function:
     ```cpp
     AddDecoratorNodeToBuilder<ChangeResultOfTheNodeDecorator, ChangeResultOfTheNodeParameters>("Change Result Of The Node Decorator");
     ```
@@ -162,12 +193,25 @@ The node visuals are created using **imgui-node-editor**. You can find **example
                 NewResult = static_cast<NodeStatus>(currentItem);
             }
         }
+        void Serialize(YAML::Emitter& out) const override
+        {
+            SerializeInt("NewResult", static_cast<int>(NewResult), out);
+        }
+        void Deserialize(const YAML::Node& node) override
+        {
+            int resultInt = 0;
+            DeserializeInt(node, "NewResult", resultInt);
+            NewResult = static_cast<NodeStatus>(resultInt);
+        }
     };
     class ChangeResultOfTheNodeDecorator : public HDecorator
     {
     public:
         ChangeResultOfTheNodeDecorator(const std::string& name, const ChangeResultOfTheNodeParameters& params = ChangeResultOfTheNodeParameters{})
-            : HDecorator(name, params), m_NewResult(params.NewResult) {}
+            : HDecorator(name, params), m_NewResult(params.NewResult)
+        {
+            SetParams<ChangeResultOfTheNodeParameters>(params);
+        }
         void OnStart() override;
         bool CanExecute() override;
         void OnFinishedResult(NodeStatus& status) override;
@@ -180,10 +224,40 @@ The node visuals are created using **imgui-node-editor**. You can find **example
     ### HDecorator & ParamsForDecorator
     - **ParamsForDecorator** provides a **DrawImGui** function to expose action parameters directly in the editor. Just assign parameters with `DrawXValue` function inside `DrawImGui` function.
     - If you want to assign Blackboard key value as a parameter create varaible name `HBlackboardKeyValue` in the `DrawImGui` function call `DrawBlackboardIntKeySelector` function for visualize it. (as shown in the example above).
+    - To Serialize and Deserialize its parameters call `Serialize` and `Deserialize` functions. (as shown in the example above)
     - HDecorator provides helper functions:
-        - GetOwner() – access the owning AI / actor
-        - GetBlackboard() – access the assigned blackboard
+        - `GetOwner<CustomAIClass>()` – access the owning AI / actor
+        - `GetBlackboard()` – access the assigned blackboard
 
+## Setup
+- You can check the `App.cpp` file for setup. You can find the instructions here.
+```cpp
+    //-------------------------------------------- Changable Part ------------------------------------------------//
+    Root::BuildEditor();//Initialize the Node Editor App inside the Root, if you want you can work without editor app for that don't call this function
+    // Root::RootStart() call this after app started but if you initialize the Node Editor App call this start after initializing the Node Editor App.
+    // Root::RootStop() call this before app shutdown.
+
+    //Register Custom Blackboard, Actions, Conditions and Decorators to the Node Registry
+    NodeRegistry::AddBlackBoardToEditor<MeleeEnemyBlackboard>("Melee Enemy Blackboard");
+    NodeRegistry::AddBlackBoardToEditor<RangedEnemyBlackboard>("Ranged Enemy Blackboard");
+    
+    NodeRegistry::AddActionNodeToBuilder<MoveToAction, MoveToParameters>("Move To Action");
+    NodeRegistry::AddActionNodeToBuilder<MeleeEnemyAttackAction, MeleeEnemyAttackActionParameters>("Melee Enemy Attack Action");
+    NodeRegistry::AddActionNodeToBuilder<HeavyAttackAction, HeavyAttackActionParameters>("Heavy Attack Action");
+    
+    NodeRegistry::AddConditionNodeToBuilder<IsPlayerInRangeCondition, IsPlayerInRangeParameters>("Is Player In Range Condition");
+    NodeRegistry::AddConditionNodeToBuilder<CanAttackCondition, CanAttackParameters>("Can Attack Condition");
+    
+    NodeRegistry::AddDecoratorNodeToBuilder<ChangeResultOfTheNodeDecorator, ChangeResultOfTheNodeParameters>("Change Result Of The Node Decorator");
+    NodeRegistry::AddDecoratorNodeToBuilder<CooldownDecorator, CooldownDecoratorParameters>("Cooldown Decorator");
+
+    //Create the Enemy AI instance and set it as the owner of the Node Editor App, so we can access it inside the action, condition and decorator nodes.
+    //If you dont initialize the Node Editor App inside the Root, you need to set the owner to insiode of the behavior tree manually after building it,
+    //you can find the example in the EnemyAI.cpp. "m_BehaviorTree->SetOwner(this);"
+    m_EnemyAI = new EnemyAI();
+    Root::GetNodeEditorApp()->SetOwner<EnemyAI>(m_EnemyAI);
+    //-------------------------------------------- Changable Part ------------------------------------------------//
+```
 Script Example(Behavior Tree and Builder)
 
 ```cpp
@@ -191,16 +265,14 @@ Script Example(Behavior Tree and Builder)
 #include <iostream>
 #include <string>
 #include <vector>
-#include "Nodes.h"
 #include "BlackboardBase.h"
+#include "Nodes.h"
 #include "Root.h"
-
-class EnemyAI;
 
 class BehaviorTree
 {
 public:
-    BehaviorTree(EnemyAI* owner) : m_Owner(owner), m_Blackboard(nullptr) {}
+    BehaviorTree() : m_Owner(nullptr), m_Blackboard(nullptr), m_EditorApp(nullptr) {}
     ~BehaviorTree();
 
     void StartTree();
@@ -208,22 +280,43 @@ public:
     void StopTree();
     
     void SetRootNode(std::unique_ptr<HNode> root) { m_RootNode = std::move(root); }
-    const HNode* GetRootNode() const { return m_RootNode.get(); }
+    void SetNodeEditorApp(NodeEditorApp* editorApp) { m_EditorApp = editorApp; }
+    HNode* GetRootNode() const { return m_RootNode.get(); }
+    HBlackboard* GetBlackboard() const { return m_Blackboard; }
+    NodeEditorApp* GetEditorApp() const { return m_EditorApp; }
 
+    template<typename OwnerType>
+    void SetOwner(OwnerType* owner)
+    {
+        m_Owner = static_cast<void*>(owner);
+    }
+    template<typename OwnerType>
+    OwnerType* GetOwner() const
+    {
+        return static_cast<OwnerType*>(m_Owner);
+    }
 private:
     bool m_bOwnsBlackboard = false;
     bool m_bIsRunning = false;
-    EnemyAI* m_Owner;
+    
+    void* m_Owner;
+    
     std::unique_ptr<HNode> m_RootNode;
     HBlackboard* m_Blackboard;
+    NodeEditorApp* m_EditorApp;
 
     friend class BehaviorTreeBuilder;
 };
+template<typename OwnerType>
+OwnerType* HNode::GetOwner() const
+{
+    return m_Tree ? m_Tree->GetOwner<OwnerType>() : nullptr;
+}
 
 class BehaviorTreeBuilder
 {
 public:
-    BehaviorTreeBuilder(EnemyAI* owner) : m_Tree(Root::CreateBehaviorTree(owner)) {}
+    BehaviorTreeBuilder() : m_Tree(Root::CreateBehaviorTree()) {}
 
     template<typename BlackboardType>
     BehaviorTreeBuilder& setBlackboard()
@@ -256,28 +349,18 @@ public:
             auto decoratorNodePtr = decoratorNode.get();
             if (!m_NodeStack.empty())
             {
-                action->SetOwner(m_Tree->m_Owner);
+                action->SetTree(m_Tree);
                 action->SetType(HNodeType::Action);
-                action->SetBlackboard(m_Tree->m_Blackboard);
                 decoratorNode->AddChild(std::move(action));
                 m_NodeStack.back()->AddChild(std::move(decoratorNode));
-                auto editorApp = decoratorNodePtr->GetParent()->GetEditorApp();
-                if (editorApp == nullptr)
-                    std::cout << "editor app null" << std::endl;
-                m_LastCreatedNode->SetEditorApp(editorApp);
             }
         }
         else
             if (!m_NodeStack.empty())
             {
-                action->SetOwner(m_Tree->m_Owner);
+                action->SetTree(m_Tree);
                 action->SetType(HNodeType::Action);
-                action->SetBlackboard(m_Tree->m_Blackboard);
                 m_NodeStack.back()->AddChild(std::move(action));
-                auto editorApp = m_LastCreatedNode->GetParent()->GetEditorApp();
-                if (editorApp == nullptr)
-                    std::cout << "editor app null" << std::endl;
-                m_LastCreatedNode->SetEditorApp(editorApp);
             }
         return *this;
     }
@@ -289,8 +372,7 @@ public:
         std::cout << "Adding Condition Node: " << condition->GetName() << std::endl;
         if (m_LastCreatedNode)
         {
-            condition->SetOwner(m_Tree->m_Owner);
-            condition->SetBlackboard(m_Tree->m_Blackboard);
+            condition->SetTree(m_Tree);
             condition->SetPriorityMode(priority);
             condition->SetType(HNodeType::Condition);
             m_LastCreatedNode->AddConditionNode(std::move(condition));
@@ -303,8 +385,7 @@ public:
         static_assert(std::is_base_of_v<HDecorator, DecoratorNodeType>, "DecoratorNodeType must derive from HDecorator");
         m_CurrentDecorator = std::make_unique<DecoratorNodeType>(std::forward<Args>(args)...);
         std::cout << "Adding Decorator Node: " << m_CurrentDecorator->GetName() << std::endl;
-        m_CurrentDecorator->SetOwner(m_Tree->m_Owner);
-        m_CurrentDecorator->SetBlackboard(m_Tree->m_Blackboard);
+        m_CurrentDecorator->SetTree(m_Tree);
         m_CurrentDecorator->SetType(HNodeType::Decorator);
         return *this;
     }
@@ -331,7 +412,6 @@ BehaviorTree* BehaviorTreeBuilder::build() const
 
 BehaviorTree::~BehaviorTree()
 {
-    m_Owner = nullptr;
     if (m_bOwnsBlackboard)
         delete m_Blackboard;
     m_Blackboard = nullptr;
@@ -368,7 +448,7 @@ BehaviorTreeBuilder& BehaviorTreeBuilder::root(NodeEditorApp* editorApp)
 {
     std::cout << "Adding Root Node" << std::endl;
     auto rootNode = std::make_unique<HRootNode>();
-    rootNode->SetEditorApp(editorApp);
+    rootNode->SetTree(m_Tree);
     HRootNode* rootNodePtr = rootNode.get();
     rootNodePtr->SetType(HNodeType::Root);
     m_LastCreatedNode = rootNodePtr;
@@ -383,27 +463,19 @@ BehaviorTreeBuilder& BehaviorTreeBuilder::sequence(const std::string& name)
     auto sequenceNode = std::make_unique<SequenceNode>(name);
     SequenceNode* sequenceNodePtr = sequenceNode.get();
     sequenceNodePtr->SetType(HNodeType::Composite);
+    sequenceNodePtr->SetTree(m_Tree);
     m_LastCreatedNode = sequenceNodePtr;
     if (m_CurrentDecorator)
     {
         auto decoratorNode = std::move(m_CurrentDecorator);
-        auto decoratorNodePtr = decoratorNode.get();
         decoratorNode->AddChild(std::move(sequenceNode));
         m_NodeStack.back()->AddChild(std::move(decoratorNode));
-        auto editorApp = decoratorNodePtr->GetParent()->GetEditorApp();
-        if (editorApp == nullptr)
-            std::cout << "editor app null" << std::endl;
-        sequenceNodePtr->SetEditorApp(editorApp);
         m_NodeStack.push_back(sequenceNodePtr);
     }
     else
     {
         m_NodeStack.back()->AddChild(std::move(sequenceNode));
         m_NodeStack.push_back(sequenceNodePtr);
-        auto editorApp = sequenceNodePtr->GetParent()->GetEditorApp();
-        if (editorApp == nullptr)
-            std::cout << "editor app null" << std::endl;
-        sequenceNodePtr->SetEditorApp(editorApp);
     }
     return *this;
 }
@@ -414,27 +486,19 @@ BehaviorTreeBuilder& BehaviorTreeBuilder::selector(const std::string& name)
     auto selectorNode = std::make_unique<SelectorNode>(name);
     auto selectorNodePtr = selectorNode.get();
     selectorNodePtr->SetType(HNodeType::Composite);
+    selectorNodePtr->SetTree(m_Tree);
     m_LastCreatedNode = selectorNodePtr;
     if (m_CurrentDecorator)
     {
         auto decoratorNode = std::move(m_CurrentDecorator);
-        auto decoratorNodePtr = decoratorNode.get();
         decoratorNode->AddChild(std::move(selectorNode));
         m_NodeStack.back()->AddChild(std::move(decoratorNode));
-        auto editorApp = decoratorNodePtr->GetParent()->GetEditorApp();
-        if (editorApp == nullptr)
-            std::cout << "editor app null" << std::endl;
-        selectorNodePtr->SetEditorApp(editorApp);
         m_NodeStack.push_back(selectorNodePtr);
     }
     else
     {
         m_NodeStack.back()->AddChild(std::move(selectorNode));
         m_NodeStack.push_back(selectorNodePtr);
-        auto editorApp = selectorNodePtr->GetParent()->GetEditorApp();
-        if (editorApp == nullptr)
-            std::cout << "editor app null" << std::endl;
-        selectorNodePtr->SetEditorApp(editorApp);
     }
     return *this;
 }
@@ -447,11 +511,10 @@ BehaviorTreeBuilder& BehaviorTreeBuilder::end()
     return *this;
 }
 
+
 ```
 
 ## Future Goals
 - Adding a simple Parallel Node
 - Service node
 - Subtree
-- Supporting multiple behavior trees in a single editor
-- Save / Load system for behavior trees
