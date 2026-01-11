@@ -17,7 +17,7 @@ EnemyAI::~EnemyAI()
 void EnemyAI::BeginPlay()
 {
     std::cout << "Enemy AI Started" << std::endl;
-    MoveToParameters moveToParams;
+    /*MoveToParameters moveToParams;
     moveToParams.bToPlayer = true;
     moveToParams.MoveSpeed = 5.0f;
     moveToParams.StopDistance = 15.0f;
@@ -47,7 +47,7 @@ void EnemyAI::BeginPlay()
             .end()
         .build();
     m_BehaviorTree->SetOwner(this);
-    m_BehaviorTree->StartTree();
+    m_BehaviorTree->StartTree();*/
     /*BehaviorTree* tree = nullptr;
     auto btPath = PlatformUtilsBT::OpenFile("Behavior Tree Files\0*.btree\0");
     BTSerializer serializer(tree);

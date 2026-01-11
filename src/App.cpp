@@ -31,8 +31,11 @@ App::App() : m_EnemyAI(nullptr), m_Window(nullptr)
     NodeRegistry::AddDecoratorNodeToBuilder<CooldownDecorator, CooldownDecoratorParameters>("Cooldown Decorator");
     
     Root::RootStart();
+
+    Root::BuildEditor();
+    
     m_EnemyAI = new EnemyAI();
-    //Root::BuildEditor();
+    Root::GetNodeEditorApp()->SetOwner<EnemyAI>(m_EnemyAI);
 }
 
 App::~App()

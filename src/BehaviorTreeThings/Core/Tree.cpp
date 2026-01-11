@@ -10,7 +10,6 @@ BehaviorTree* BehaviorTreeBuilder::build() const
 
 BehaviorTree::~BehaviorTree()
 {
-    //m_Owner = nullptr;
     if (m_bOwnsBlackboard)
         delete m_Blackboard;
     m_Blackboard = nullptr;
@@ -47,7 +46,6 @@ BehaviorTreeBuilder& BehaviorTreeBuilder::root(NodeEditorApp* editorApp)
 {
     std::cout << "Adding Root Node" << std::endl;
     auto rootNode = std::make_unique<HRootNode>();
-    //rootNode->SetEditorApp(editorApp);
     rootNode->SetTree(m_Tree);
     HRootNode* rootNodePtr = rootNode.get();
     rootNodePtr->SetType(HNodeType::Root);
@@ -68,23 +66,14 @@ BehaviorTreeBuilder& BehaviorTreeBuilder::sequence(const std::string& name)
     if (m_CurrentDecorator)
     {
         auto decoratorNode = std::move(m_CurrentDecorator);
-        auto decoratorNodePtr = decoratorNode.get();
         decoratorNode->AddChild(std::move(sequenceNode));
         m_NodeStack.back()->AddChild(std::move(decoratorNode));
-        /*auto editorApp = decoratorNodePtr->GetParent()->GetEditorApp();
-        if (editorApp == nullptr)
-            std::cout << "editor app null" << std::endl;
-        sequenceNodePtr->SetEditorApp(editorApp);*/
         m_NodeStack.push_back(sequenceNodePtr);
     }
     else
     {
         m_NodeStack.back()->AddChild(std::move(sequenceNode));
         m_NodeStack.push_back(sequenceNodePtr);
-        /*auto editorApp = sequenceNodePtr->GetParent()->GetEditorApp();
-        if (editorApp == nullptr)
-            std::cout << "editor app null" << std::endl;
-        sequenceNodePtr->SetEditorApp(editorApp);*/
     }
     return *this;
 }
@@ -100,23 +89,14 @@ BehaviorTreeBuilder& BehaviorTreeBuilder::selector(const std::string& name)
     if (m_CurrentDecorator)
     {
         auto decoratorNode = std::move(m_CurrentDecorator);
-        auto decoratorNodePtr = decoratorNode.get();
         decoratorNode->AddChild(std::move(selectorNode));
         m_NodeStack.back()->AddChild(std::move(decoratorNode));
-        /*auto editorApp = decoratorNodePtr->GetParent()->GetEditorApp();
-        if (editorApp == nullptr)
-            std::cout << "editor app null" << std::endl;
-        selectorNodePtr->SetEditorApp(editorApp);*/
         m_NodeStack.push_back(selectorNodePtr);
     }
     else
     {
         m_NodeStack.back()->AddChild(std::move(selectorNode));
         m_NodeStack.push_back(selectorNodePtr);
-        /*auto editorApp = selectorNodePtr->GetParent()->GetEditorApp();
-        if (editorApp == nullptr)
-            std::cout << "editor app null" << std::endl;
-        selectorNodePtr->SetEditorApp(editorApp);*/
     }
     return *this;
 }

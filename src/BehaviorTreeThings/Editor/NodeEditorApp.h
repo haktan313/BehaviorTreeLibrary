@@ -9,6 +9,11 @@ public:
     void RemoveActiveNode(HNode* node) { m_ActiveNodes.erase(std::remove(m_ActiveNodes.begin(), m_ActiveNodes.end(), node), m_ActiveNodes.end());}
     void ClearActiveNodes() { m_ActiveNodes.clear(); }
     //void SetEnemyAI(EnemyAI* enemy) { m_Enemy = enemy; }
+    template<typename OwnerType>
+    void SetOwner(OwnerType* owner)
+    {
+        m_Owner = static_cast<void*>(owner);
+    }
     void ClearNodeMappings() { m_NodeToEditorIdMap.clear(); }
     
     NodeEditorApp();
@@ -23,12 +28,19 @@ public:
     std::unordered_map<const HNode*, nodeEditor::NodeId>& GetNodeMappings() { return m_NodeToEditorIdMap; }
     NodeEditorHelper& GetNodeEditorHelper() { return *m_NodeEditor; }
     HBlackboard& GetBlackboard() { return *m_Blackboard; }
+    void* GetOwnerRaw() const { return m_Owner; }
+    template<typename OwnerType>
+    OwnerType* GetOwner() const
+    {
+        return static_cast<OwnerType*>(m_Owner);
+    }
     
     void DecoratorNodeSelected(EditorDecorator& decorator);
     void ConditionNodeSelected(EditorCondition& condition);
     void DecoratorNodeUnSelected();
     void ConditionNodeUnSelected();
 private:
+    void* m_Owner = nullptr;
     
     void MouseInputHandling();
     void NodeSettingsPanel();

@@ -570,6 +570,8 @@ void NodeEditorApp::BuildBehaviorTree()
                 break;
         }
     m_BehaviorTree = btBuilder.build();
+    m_BehaviorTree->SetOwner(GetOwnerRaw());
+    m_BehaviorTree->SetNodeEditorApp(this);
 }
 
 void NodeEditorApp::BuildSequence(Node* node, BehaviorTreeBuilder& btBuilder)

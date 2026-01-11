@@ -17,6 +17,7 @@ public:
     void StopTree();
     
     void SetRootNode(std::unique_ptr<HNode> root) { m_RootNode = std::move(root); }
+    void SetNodeEditorApp(NodeEditorApp* editorApp) { m_EditorApp = editorApp; }
     HNode* GetRootNode() const { return m_RootNode.get(); }
     HBlackboard* GetBlackboard() const { return m_Blackboard; }
     NodeEditorApp* GetEditorApp() const { return m_EditorApp; }
@@ -52,7 +53,7 @@ OwnerType* HNode::GetOwner() const
 class BehaviorTreeBuilder
 {
 public:
-    BehaviorTreeBuilder(/*EnemyAI* owner*/) : m_Tree(Root::CreateBehaviorTree(/*owner*/)) {}
+    BehaviorTreeBuilder() : m_Tree(Root::CreateBehaviorTree()) {}
 
     template<typename BlackboardType>
     BehaviorTreeBuilder& setBlackboard()
@@ -87,13 +88,8 @@ public:
             {
                 action->SetTree(m_Tree);
                 action->SetType(HNodeType::Action);
-                //action->SetBlackboard(m_Tree->m_Blackboard);
                 decoratorNode->AddChild(std::move(action));
                 m_NodeStack.back()->AddChild(std::move(decoratorNode));
-                /*auto editorApp = decoratorNodePtr->GetParent()->GetEditorApp();
-                if (editorApp == nullptr)
-                    std::cout << "editor app null" << std::endl;
-                m_LastCreatedNode->SetEditorApp(editorApp);*/
             }
         }
         else
@@ -101,12 +97,7 @@ public:
             {
                 action->SetTree(m_Tree);
                 action->SetType(HNodeType::Action);
-                //action->SetBlackboard(m_Tree->m_Blackboard);
                 m_NodeStack.back()->AddChild(std::move(action));
-                /*auto editorApp = m_LastCreatedNode->GetParent()->GetEditorApp();
-                if (editorApp == nullptr)
-                    std::cout << "editor app null" << std::endl;
-                m_LastCreatedNode->SetEditorApp(editorApp);*/
             }
         return *this;
     }
@@ -119,7 +110,6 @@ public:
         if (m_LastCreatedNode)
         {
             condition->SetTree(m_Tree);
-            //condition->SetBlackboard(m_Tree->m_Blackboard);
             condition->SetPriorityMode(priority);
             condition->SetType(HNodeType::Condition);
             m_LastCreatedNode->AddConditionNode(std::move(condition));
@@ -133,7 +123,6 @@ public:
         m_CurrentDecorator = std::make_unique<DecoratorNodeType>(std::forward<Args>(args)...);
         std::cout << "Adding Decorator Node: " << m_CurrentDecorator->GetName() << std::endl;
         m_CurrentDecorator->SetTree(m_Tree);
-        /*m_CurrentDecorator->SetBlackboard(m_Tree->m_Blackboard);*/
         m_CurrentDecorator->SetType(HNodeType::Decorator);
         return *this;
     }
