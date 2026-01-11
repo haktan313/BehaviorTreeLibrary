@@ -1,17 +1,13 @@
 #include "NodeEditorApp.h"
 #include <iostream>
-#include "EnemyAI.h"
 #include "NodeEditorHelper.h"
 #include "Tree.h"
 #include "CustomThings/CustomActions.h"
-#include "CustomThings/CustomBlackboards.h"
-#include "CustomThings/CustomConditions.h"
-#include "CustomThings/CustomDecorators.h"
-#define IMGUI_DEFINE_MATH_OPERATORS
 #include "BTSerializer.h"
-#include "imgui.h"
 #include "NodeRegistry.h"
 #include "PlatformUtilsBT.h"
+#define IMGUI_DEFINE_MATH_OPERATORS
+#include "imgui.h"
 
 NodeEditorApp::NodeEditorApp()
 {

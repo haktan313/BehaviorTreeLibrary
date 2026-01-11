@@ -2,11 +2,19 @@
 #include "CustomActions.h"
 #include "BlackboardBase.h"
 
+#include "EnemyAI.h"
+
 void MoveToAction::OnStart()
 {
     HActionNode::OnStart();
     m_DistanceToTarget = GetBlackboard().GetFloatValue("DistanceToPlayer");
     std::cout << "MoveToAction started." << std::endl;
+    auto owner = GetOwner<EnemyAI>();
+    owner->SetTestValue(3.14f);
+    owner->PrintStatus();
+    owner->SetTestValue(6.28f);
+    float testValue = owner->GetTestValue();
+    std::cout << "Test Value after setting: " << testValue << std::endl;
     std::cout << "Initial Distance to Target: " << m_DistanceToTarget << std::endl;
 }
 

@@ -1,7 +1,6 @@
 #pragma once
 #include <unordered_map>
 #include "NodeEditorHelper.h"
-#include "NodeEditorStructsAndEnums.h"
 
 class NodeEditorApp
 {
@@ -70,87 +69,22 @@ private:
     
     std::unordered_map<const HNode*, nodeEditor::NodeId> m_NodeToEditorIdMap;
     std::unordered_map<uintptr_t, const HNode*> m_EditorIdToNodeMap;
-    
-    //std::unordered_map<std::string, ActionClassInfo> s_ActionClassInfoMap;
+
     std::unordered_map<int, std::string> s_NodeToActionClassId;
     std::unordered_map<int, std::unique_ptr<ParamsForAction>> s_NodeToParams;
     std::string s_SelectedActionClassName;
 
-    //std::unordered_map<std::string, DecoratorClassInfo> s_DecoratorClassInfoMap;
     std::unordered_map<int, std::string> s_NodeToDecoratorClassId;
     std::unordered_map<int, std::unique_ptr<ParamsForDecorator>> s_NodeToDecoratorParams;
     std::string s_SelectedDecoratorClassName;
 
-    //std::unordered_map<std::string, ConditionClassInfo> s_ConditionClassInfoMap;
     std::unordered_map<int, std::string> s_NodeToConditionClassId;
     std::unordered_map<int, std::unique_ptr<ParamsForCondition>> s_NodeToConditionParams;
     std::string s_SelectedConditionClassName;
 
-    //std::unordered_map<std::string, BlackboardClassInfo> s_BlackboardClassInfoMap;
     std::string s_SelectedBlackboardClassName;
 
     std::string m_CurrentBTFilePath;
 
     friend class BTSerializer;
-
-    /*template<typename ActionClass, typename ParamsStruct>
-    void AddActionNodeToBuilder(const std::string& name = "")
-    {
-        ActionClassInfo actionInfo;
-        actionInfo.Name = name;
-        actionInfo.CreateParamsFn = []()
-        {
-            return std::make_unique<ParamsStruct>();
-        };
-
-        actionInfo.BuildFn = [](BehaviorTreeBuilder& builder, Node* node, ParamsForAction& baseParams)
-        {
-            auto& params = static_cast<ParamsStruct&>(baseParams);
-            builder.action<ActionClass>(node->Name, params);
-        };
-        s_ActionClassInfoMap.emplace(name, std::move(actionInfo));
-    }
-    template<typename DecoratorClass, typename ParamsStruct>
-    void AddDecoratorNodeToBuilder(const std::string& name = "")
-    {
-        DecoratorClassInfo decoratorInfo;
-        decoratorInfo.Name = name;
-        decoratorInfo.CreateParamsFn = []()
-        {
-            return std::make_unique<ParamsStruct>();
-        };
-        decoratorInfo.BuildFn = [name](BehaviorTreeBuilder& builder, ParamsForDecorator& baseParams)
-        {
-            auto& params = static_cast<ParamsStruct&>(baseParams);
-            builder.decorator<DecoratorClass>(name, params);
-        };
-        s_DecoratorClassInfoMap.emplace(name, std::move(decoratorInfo));
-    }
-    template<typename ConditionClass, typename ParamsStruct>
-    void AddConditionNodeToBuilder(const std::string& name = "")
-    {
-        ConditionClassInfo conditionInfo;
-        conditionInfo.Name = name;
-        conditionInfo.CreateParamsFn = []()
-        {
-            return std::make_unique<ParamsStruct>();
-        };
-        conditionInfo.BuildFn = [name](BehaviorTreeBuilder& builder, ParamsForCondition& baseParams)
-        {
-            auto& params = static_cast<ParamsStruct&>(baseParams);
-            builder.condition<ConditionClass>(baseParams.Priority, name, params);
-        };
-        s_ConditionClassInfoMap.emplace(name, std::move(conditionInfo));
-    }
-    template<typename BlackboardType>
-    void AddBlackBoardToEditor(const std::string& name = "")
-    {
-        BlackboardClassInfo blackboardInfo;
-        blackboardInfo.Name = name;
-        blackboardInfo.CreateBlackboardFn = []()
-        {
-            return std::make_unique<BlackboardType>();
-        };
-        s_BlackboardClassInfoMap.emplace(name, std::move(blackboardInfo));
-    }   */
 };

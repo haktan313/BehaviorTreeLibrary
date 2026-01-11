@@ -18,13 +18,10 @@ public:
 
     static App* Get() { return s_Instance; }
     GLFWwindow* GetWindow() const { return m_Window; }
-    //static NodeEditorApp* GetNodeEditorApp() { return s_Instance->m_NodeEditorApp.get(); }
 private:
     EnemyAI* m_EnemyAI;
     GLFWwindow* m_Window;
     ImGuiContext* m_ImGuiContext;
-    
-
     
     static App* s_Instance;
 };

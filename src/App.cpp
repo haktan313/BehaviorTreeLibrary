@@ -10,7 +10,6 @@
 #include "CustomDecorators.h"
 #include "NodeRegistry.h"
 #include "BehaviorTreeThings/Core/Tree.h"
-#include "Editor/NodeEditorApp.h"
 
 App* App::s_Instance = nullptr;
 
@@ -33,7 +32,7 @@ App::App() : m_EnemyAI(nullptr), m_Window(nullptr)
     
     Root::RootStart();
     m_EnemyAI = new EnemyAI();
-    Root::BuildEditor();
+    //Root::BuildEditor();
 }
 
 App::~App()

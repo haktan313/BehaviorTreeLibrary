@@ -1,11 +1,10 @@
 #pragma once
 
 #include "BlackboardBase.h"
+#include <string>
+#include <yaml-cpp/yaml.h>
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "imgui.h"
-#include <string>
-#include <iostream>
-#include <yaml-cpp/yaml.h>
 
 enum class NodeStatus
 {

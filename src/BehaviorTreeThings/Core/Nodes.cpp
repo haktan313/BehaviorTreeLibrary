@@ -1,6 +1,7 @@
 #include <iostream>
-#include "Nodes.h"
+#include "Tree.h"
 #include "Editor/NodeEditorApp.h"
+#include "Nodes.h"
 
 // HNode methods
 NodeStatus HNode::Tick()
@@ -26,14 +27,18 @@ NodeStatus HNode::Tick()
 
 void HNode::OnStart()
 {
-    if (m_EditorApp)
-        m_EditorApp->AddActiveNode(this);
+    /*if (m_EditorApp)
+        m_EditorApp->AddActiveNode(this);*/
+    if (GetTree() && GetTree()->GetEditorApp())
+        GetTree()->GetEditorApp()->AddActiveNode(this);
 }
 
 void HNode::OnFinished()
 {
-    if (m_EditorApp)
-        m_EditorApp->RemoveActiveNode(this);
+    /*if (m_EditorApp)
+        m_EditorApp->RemoveActiveNode(this);*/
+    if (GetTree() && GetTree()->GetEditorApp())
+        GetTree()->GetEditorApp()->RemoveActiveNode(this);
     for (auto& child : m_Childrens)
     {
         if (child->GetStatus() == NodeStatus::RUNNING)
@@ -45,8 +50,10 @@ void HNode::OnFinished()
 void HNode::OnAbort()
 {
     std::cout << "Node Aborted: " << m_Name << std::endl;
-    if (m_EditorApp)
-        m_EditorApp->RemoveActiveNode(this);
+    /*if (m_EditorApp)
+        m_EditorApp->RemoveActiveNode(this);*/
+    if (GetTree() && GetTree()->GetEditorApp())
+        GetTree()->GetEditorApp()->RemoveActiveNode(this);
     for (auto& child : m_Childrens)
         if (child->GetStatus() == NodeStatus::RUNNING)
             child->OnAbort();
@@ -66,12 +73,17 @@ void HNode::AddConditionNode(std::unique_ptr<HCondition> conditionNode)
     m_ConditionNodes.push_back(std::move(conditionNode));
 }
 
+HBlackboard& HNode::GetBlackboard() const
+{
+    return *m_Tree->GetBlackboard();
+}
+
 bool HNode::CheckConditionsSelfMode(HNode* node, const std::vector<std::unique_ptr<HCondition>>& conditionNodes)
 {
     if (!conditionNodes.empty())
         for (auto& condition : conditionNodes)
         {
-            if (condition->GetLastStatus() != NodeStatus::RUNNING && !m_Blackboard->IsValuesChanged())
+            if (condition->GetLastStatus() != NodeStatus::RUNNING && !GetBlackboard().IsValuesChanged())
             {
                 if ((condition->GetPriorityMode() == PriorityType::Self || condition->GetPriorityMode() == PriorityType::Both)
                     && condition->GetLastStatus() == NodeStatus::FAILURE)
@@ -109,7 +121,7 @@ void HNode::CheckConditionsLowerPriorityMode(int& currentChildIndex, HNode* node
             auto& child = childrens[i];
             for (auto& condition : child->GetConditionNodesUnique())
             {
-                if (condition->GetLastStatus() != NodeStatus::RUNNING && !m_Blackboard->IsValuesChanged())
+                if (condition->GetLastStatus() != NodeStatus::RUNNING && !GetBlackboard().IsValuesChanged())
                 {
                     if ((condition->GetPriorityMode() == PriorityType::LowerPriority || condition->GetPriorityMode() == PriorityType::Both)
                     && condition->GetLastStatus() == NodeStatus::SUCCESS)
@@ -142,8 +154,10 @@ void HNode::CheckConditionsLowerPriorityMode(int& currentChildIndex, HNode* node
 void HRootNode::OnStart()
 {
     std::cout << "Root Node Started" << std::endl;
-    if (m_EditorApp)
-        m_EditorApp->AddActiveNode(this);
+    /*if (m_EditorApp)
+        m_EditorApp->AddActiveNode(this);*/
+    if (GetTree() && GetTree()->GetEditorApp())
+        GetTree()->GetEditorApp()->AddActiveNode(this);
 }
 
 NodeStatus HRootNode::Update()
@@ -171,8 +185,10 @@ void HRootNode::OnFinished()
 {
     m_bIsStarted = false;
     std::cout << "Root Node Finished with result: " << (m_Status == NodeStatus::SUCCESS ? "SUCCESS" : "FAILURE") << std::endl;
-    if (m_EditorApp)
-        m_EditorApp->RemoveActiveNode(this);
+    /*if (m_EditorApp)
+        m_EditorApp->RemoveActiveNode(this);*/
+    if (GetTree() && GetTree()->GetEditorApp())
+        GetTree()->GetEditorApp()->RemoveActiveNode(this);
 }
 
 void HRootNode::OnAbort()

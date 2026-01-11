@@ -1,9 +1,8 @@
 #pragma once
 #include <memory>
 #include <vector>
-#include "Editor/NodeEditorApp.h"
 
-class EnemyAI;
+class NodeEditorApp;
 class BehaviorTree;
 
 class Root

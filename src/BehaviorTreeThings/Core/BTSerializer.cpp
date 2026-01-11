@@ -1,9 +1,8 @@
 #include "BTSerializer.h"
-
 #include <fstream>
 #include <yaml-cpp/yaml.h>
-
 #include "NodeRegistry.h"
+#include "Editor/NodeEditorApp.h"
 
 BTSerializer::BTSerializer(BehaviorTree*& tree) : m_Tree(tree)
 {

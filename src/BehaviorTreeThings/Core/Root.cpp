@@ -1,5 +1,6 @@
 #include "Root.h"
 #include "Tree.h"
+#include "Editor/NodeEditorApp.h"
 
 std::vector<BehaviorTree*> Root::m_BehaviorTrees;
 std::unique_ptr<NodeEditorApp> Root::m_NodeEditorApp;

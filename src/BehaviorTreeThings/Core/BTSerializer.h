@@ -1,6 +1,4 @@
 #pragma once
-#include <functional>
-
 #include "Tree.h"
 #include "yaml-cpp/emitter.h"
 

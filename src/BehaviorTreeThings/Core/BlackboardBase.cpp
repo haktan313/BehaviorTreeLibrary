@@ -1,5 +1,4 @@
 #include "BlackboardBase.h"
-
 #include "imgui.h"
 
 bool HBlackboard::GetBoolValue(const std::string& key) const

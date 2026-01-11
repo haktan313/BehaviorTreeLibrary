@@ -1,6 +1,4 @@
 #include "PlatformUtilsBT.h"
-#define GLFW_EXPOSE_NATIVE_WIN32
-#include <GLFW/glfw3native.h>
 #include "App.h"
 
 std::string PlatformUtilsBT::OpenFile(const char* filter)

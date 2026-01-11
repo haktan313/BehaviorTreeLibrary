@@ -1,7 +1,6 @@
 #include "CompositeNodes.h"
-
 #include <iostream>
-
+#include "Tree.h"
 #include "Editor/NodeEditorApp.h"
 
 // HCompositeNode methods
@@ -36,8 +35,10 @@ bool HCompositeNode::CanStart()
 // SequenceNode methods
 void SequenceNode::OnStart()
 {
-    if (m_EditorApp)
-        m_EditorApp->AddActiveNode(this);
+    /*if (m_EditorApp)
+        m_EditorApp->AddActiveNode(this);*/
+    if (GetTree() && GetTree()->GetEditorApp())
+        GetTree()->GetEditorApp()->AddActiveNode(this);
     std::cout << "Sequence Node Started: " << m_Name << " - Parent:" << (m_Parent != nullptr ? m_Parent->GetName() : std::string(" NoParent")) << std::endl;
 }
 
@@ -67,8 +68,10 @@ void SequenceNode::OnFinished()
     std::cout << "Sequence Node Finished: " << m_Name << " result is: " << (m_Status == NodeStatus::SUCCESS ? "SUCCESS" : "FAILURE") << std::endl;
     m_CurrentChildIndex = 0;
     m_bIsStarted = false;
-    if (m_EditorApp)
-        m_EditorApp->RemoveActiveNode(this);
+    /*if (m_EditorApp)
+        m_EditorApp->RemoveActiveNode(this);*/
+    if (GetTree() && GetTree()->GetEditorApp())
+        GetTree()->GetEditorApp()->RemoveActiveNode(this);
 }
 
 void SequenceNode::OnAbort()
@@ -85,8 +88,10 @@ void SequenceNode::OnAbort()
 //SelectorNode methods
 void SelectorNode::OnStart()
 {
-    if (m_EditorApp)
-        m_EditorApp->AddActiveNode(this);
+    /*if (m_EditorApp)
+        m_EditorApp->AddActiveNode(this);*/
+    if (GetTree() && GetTree()->GetEditorApp())
+        GetTree()->GetEditorApp()->AddActiveNode(this);
     std::cout << "Selector Node Started: " << m_Name << " - Parent:" << (m_Parent != nullptr ? m_Parent->GetName() : std::string(" NoParent")) << std::endl;
 }
 
@@ -120,8 +125,10 @@ void SelectorNode::OnFinished()
     std::cout << "Selector Node Finished: " << m_Name << " result is: " << (m_Status == NodeStatus::SUCCESS ? "SUCCESS" : "FAILURE") << std::endl;
     m_CurrentChildIndex = 0;
     m_bIsStarted = false;
-    if (m_EditorApp)
-        m_EditorApp->RemoveActiveNode(this);
+    /*if (m_EditorApp)
+        m_EditorApp->RemoveActiveNode(this);*/
+    if (GetTree() && GetTree()->GetEditorApp())
+        GetTree()->GetEditorApp()->RemoveActiveNode(this);
 }
 
 void SelectorNode::OnAbort()
