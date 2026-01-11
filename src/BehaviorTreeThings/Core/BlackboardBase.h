@@ -5,8 +5,10 @@
 class HBlackboard
 {
 public:
-    HBlackboard() = default;
+    HBlackboard(const std::string& name = "DefaultBlackboard") : m_BlackboardName(name) {}
     virtual ~HBlackboard() = default;
+
+    std::string GetName() const { return m_BlackboardName; }
     
     bool GetBoolValue(const std::string& key) const;
     int GetIntValue(const std::string& key) const;
@@ -25,6 +27,12 @@ public:
     void SetIntValue(const std::string& key, int value);
     void SetFloatValue(const std::string& key, float value);
     void SetStringValue(const std::string& key, const std::string& value);
+
+    bool HasBoolValue(const std::string& key) const { return m_BoolValues.find(key) != m_BoolValues.end(); }
+    bool HasIntValue(const std::string& key) const { return m_IntValues.find(key) != m_IntValues.end(); }
+    bool HasFloatValue(const std::string& key) const { return m_FloatValues.find(key) != m_FloatValues.end(); }
+    bool HasStringValue(const std::string& key) const { return m_StringValues.find(key) != m_StringValues.end(); }
+    
     void DrawImGui();
 protected:
     void CreateBoolValue(const std::string& key, bool value);
@@ -39,4 +47,8 @@ private:
     std::unordered_map<std::string, std::string> m_StringValues;
 
     bool m_bValuesChanged = false;
+
+    std::string m_BlackboardName;
+
+    friend class BTSerializer;
 };

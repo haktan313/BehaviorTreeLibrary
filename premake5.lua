@@ -4,6 +4,42 @@ workspace "BehaviorTreeProject"
     configurations { "Debug", "Release" }
     startproject "BehaviorTreeProject"
 
+    project "yaml-cpp"
+    kind "StaticLib"
+    language "C++"
+    cppdialect "C++17"
+    staticruntime "off"
+
+    targetdir ("bin/%{cfg.buildcfg}/%{prj.name}")
+    objdir    ("bin-int/%{cfg.buildcfg}/%{prj.name}")
+
+    files
+    {
+        "libs/yaml-cpp/src/**.cpp",
+        "libs/yaml-cpp/src/**.h",
+        "libs/yaml-cpp/include/**.h",
+        "libs/yaml-cpp/include/**.hpp"
+    }
+
+    includedirs
+    {
+        "libs/yaml-cpp/include"
+    }
+
+    defines
+    {
+        "YAML_CPP_STATIC_DEFINE"
+    }
+
+    filter "configurations:Debug"
+        runtime "Debug"
+        symbols "on"
+
+    filter "configurations:Release"
+        runtime "Release"
+        optimize "on"
+
+
 project "BehaviorTreeProject"
     kind "ConsoleApp"
     language "C++"
@@ -32,7 +68,9 @@ project "BehaviorTreeProject"
         "libs/imgui-node-editor/crude_json.cpp",
         "libs/imgui-node-editor/imgui_canvas.cpp",
         "libs/imgui-node-editor/imgui_node_editor.cpp",
-        "libs/imgui-node-editor/imgui_node_editor_api.cpp"
+        "libs/imgui-node-editor/imgui_node_editor_api.cpp",
+
+        "libs/yaml-cpp/include/**.h"        
     }
  
     includedirs {
@@ -44,7 +82,8 @@ project "BehaviorTreeProject"
         "libs/glfw-3.4.bin.WIN64/include",
         "libs/imgui",
         "libs/imgui/backends",
-        "libs/imgui-node-editor"
+        "libs/imgui-node-editor",
+        "libs/yaml-cpp/include"
     }
 
     libdirs {
@@ -53,8 +92,11 @@ project "BehaviorTreeProject"
 
     links {
         "glfw3",
-        "opengl32"
+        "opengl32",
+        "yaml-cpp"
     }
+
+    defines { "YAML_CPP_STATIC_DEFINE" }
 
     filter "system:windows"
         systemversion "latest"

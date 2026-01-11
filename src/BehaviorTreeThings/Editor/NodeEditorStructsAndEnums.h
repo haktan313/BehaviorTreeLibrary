@@ -35,18 +35,21 @@ struct ActionClassInfo
     std::string Name;
     std::function<void(BehaviorTreeBuilder&, Node*, ParamsForAction&)> BuildFn;
     std::function<std::unique_ptr<ParamsForAction>()> CreateParamsFn;
+    std::function<void(BehaviorTreeBuilder&, const std::string&, const YAML::Node&)> BuildFromYAML;
 };
 struct DecoratorClassInfo
 {
     std::string Name;
-    std::function<void(BehaviorTreeBuilder&, Node*, ParamsForDecorator&)> BuildFn;
+    std::function<void(BehaviorTreeBuilder&, ParamsForDecorator&)> BuildFn;
     std::function<std::unique_ptr<ParamsForDecorator>()> CreateParamsFn;
+    std::function<void(BehaviorTreeBuilder&, const std::string&, const YAML::Node&)> BuildFromYAML;
 };
 struct ConditionClassInfo
 {
     std::string Name;
-    std::function<void(BehaviorTreeBuilder&, Node*, ParamsForCondition&)> BuildFn;
+    std::function<void(BehaviorTreeBuilder&, ParamsForCondition&)> BuildFn;
     std::function<std::unique_ptr<ParamsForCondition>()> CreateParamsFn;
+    std::function<void(BehaviorTreeBuilder&, const std::string&, const YAML::Node&, PriorityType)> BuildFromYAML;
 };
 struct BlackboardClassInfo
 {
@@ -56,12 +59,16 @@ struct BlackboardClassInfo
 struct EditorDecorator
 {
     std::string Name;
-    EditorDecorator(const std::string& name) : Name(name) {}
+    std::string ClassName;
+    ParamsForDecorator* Params;
+    EditorDecorator(const std::string& name) : Name(name), Params(nullptr) {}
 };
 struct EditorCondition
 {
     std::string Name;
-    EditorCondition(const std::string& name) : Name(name) {}
+    std::string ClassName;
+    ParamsForCondition* Params;
+    EditorCondition(const std::string& name) : Name(name), Params(nullptr) {}
 };
 
 

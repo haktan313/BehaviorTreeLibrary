@@ -6,6 +6,15 @@
 
 namespace nodeEditor = ax::NodeEditor;
 
+void NodeEditorHelper::ClearDatas()
+{
+    m_Nodes.clear();
+    m_Links.clear();
+    m_NextId = 1;
+    newLinkPin = nullptr;
+    m_ActiveNode = nullptr;
+}
+
 NodeEditorHelper::NodeEditorHelper(NodeEditorApp* app) : m_App(app)
 {
 }

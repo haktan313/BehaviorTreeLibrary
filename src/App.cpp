@@ -3,6 +3,12 @@
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
+
+#include "CustomActions.h"
+#include "CustomBlackboards.h"
+#include "CustomConditions.h"
+#include "CustomDecorators.h"
+#include "NodeRegistry.h"
 #include "BehaviorTreeThings/Core/Tree.h"
 #include "Editor/NodeEditorApp.h"
 
@@ -11,17 +17,30 @@ App* App::s_Instance = nullptr;
 App::App() : m_EnemyAI(nullptr), m_Window(nullptr)
 {
     s_Instance = this;
+
+    NodeRegistry::AddBlackBoardToEditor<MeleeEnemyBlackboard>("Melee Enemy Blackboard");
+    NodeRegistry::AddBlackBoardToEditor<RangedEnemyBlackboard>("Ranged Enemy Blackboard");
+
+    NodeRegistry::AddActionNodeToBuilder<MoveToAction, MoveToParameters>("Move To Action");
+    NodeRegistry::AddActionNodeToBuilder<MeleeEnemyAttackAction, MeleeEnemyAttackActionParameters>("Melee Enemy Attack Action");
+    NodeRegistry::AddActionNodeToBuilder<HeavyAttackAction, HeavyAttackActionParameters>("Heavy Attack Action");
+
+    NodeRegistry::AddConditionNodeToBuilder<IsPlayerInRangeCondition, IsPlayerInRangeParameters>("Is Player In Range Condition");
+    NodeRegistry::AddConditionNodeToBuilder<CanAttackCondition, CanAttackParameters>("Can Attack Condition");
+
+    NodeRegistry::AddDecoratorNodeToBuilder<ChangeResultOfTheNodeDecorator, ChangeResultOfTheNodeParameters>("Change Result Of The Node Decorator");
+    NodeRegistry::AddDecoratorNodeToBuilder<CooldownDecorator, CooldownDecoratorParameters>("Cooldown Decorator");
     
-    m_NodeEditorApp = std::make_unique<NodeEditorApp>();
+    Root::RootStart();
     m_EnemyAI = new EnemyAI();
-    m_NodeEditorApp->SetEnemyAI(m_EnemyAI);
+    Root::BuildEditor();
 }
 
 App::~App()
 {
     delete m_EnemyAI;
     m_EnemyAI = nullptr;
-    
+    Root::RootStop();
 }
 
 void App::Run()
@@ -58,7 +77,8 @@ void App::Run()
         ImGui::Begin("MainWindow_Fullscreen", nullptr, windowFlags);
         ImGui::PopStyleVar();
         
-        m_NodeEditorApp->Update();
+        //m_NodeEditorApp->Update();
+        Root::RootTick();
         
         ImGui::End(); 
         ImGui::Render();
@@ -117,7 +137,8 @@ bool App::Init()
     ImGui_ImplGlfw_InitForOpenGL(m_Window, true);
     ImGui_ImplOpenGL3_Init("#version 330");
     
-    m_NodeEditorApp->OnStart();
+    //m_NodeEditorApp->OnStart();
+    Root::RootStart();
     return true;
 }
 

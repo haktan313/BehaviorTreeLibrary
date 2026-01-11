@@ -8,41 +8,31 @@
 #include "CustomThings/CustomConditions.h"
 #include "CustomThings/CustomDecorators.h"
 #define IMGUI_DEFINE_MATH_OPERATORS
+#include "BTSerializer.h"
 #include "imgui.h"
+#include "NodeRegistry.h"
+#include "PlatformUtilsBT.h"
 
 NodeEditorApp::NodeEditorApp()
 {
     m_NodeEditor = std::make_unique<NodeEditorHelper>(this);
-    Root::RootStart();
+    //Root::RootStart();
 }
 
 NodeEditorApp::~NodeEditorApp()
 {
     ClearNodeMappings();
-    Root::RootStop();
+    //Root::RootStop();
 }
 
 void NodeEditorApp::OnStart()
 {
     m_NodeEditor->OnStart();
-
-    AddBlackBoardToEditor<MeleeEnemyBlackboard>("Melee Enemy Blackboard");
-    AddBlackBoardToEditor<RangedEnemyBlackboard>("Ranged Enemy Blackboard");
-
-    AddActionNodeToBuilder<MoveToAction, MoveToParameters>("Move To Action");
-    AddActionNodeToBuilder<MeleeEnemyAttackAction, MeleeEnemyAttackActionParameters>("Melee Enemy Attack Action");
-    AddActionNodeToBuilder<HeavyAttackAction, HeavyAttackActionParameters>("Heavy Attack Action");
-
-    AddConditionNodeToBuilder<IsPlayerInRangeCondition, IsPlayerInRangeParameters>("Is Player In Range Condition");
-    AddConditionNodeToBuilder<CanAttackCondition, CanAttackParameters>("Can Attack Condition");
-
-    AddDecoratorNodeToBuilder<ChangeResultOfTheNodeDecorator, ChangeResultOfTheNodeParameters>("Change Result Of The Node Decorator");
-    AddDecoratorNodeToBuilder<CooldownDecorator, CooldownDecoratorParameters>("Cooldown Decorator");
 }
 
 void NodeEditorApp::Update()
 {
-    Root::RootTick();
+    //Root::RootTick();
     if (ImGui::Button("Build", ImVec2(100, 30)))
         BuildBehaviorTree();
     ImGui::SameLine();
@@ -58,6 +48,53 @@ void NodeEditorApp::Update()
             m_BehaviorTree->StopTree();
         m_NodeEditor->SetActiveNode(nullptr);
     }
+    ImGui::Separator();
+    if (ImGui::Button("Save", ImVec2(150, 30)))
+    {
+        std::cout << "Save Button Clicked" << std::endl;
+        if (!m_BehaviorTree)
+        {
+            std::cout << "No Behavior Tree to Save!-First Press Build Button" << std::endl;
+            return;
+        }
+        if (m_CurrentBTFilePath.empty())
+        {
+            std::string filePath = PlatformUtilsBT::SaveFile("Behavior Tree File (*.btree)\0*.btree\0");
+            std::cout << "Selected File Path: " << filePath << std::endl;
+            BTSerializer serializer(m_BehaviorTree);
+            serializer.Serialize(filePath);
+            m_CurrentBTFilePath = filePath;
+            return;
+        }
+        BTSerializer serializer(m_BehaviorTree);
+        serializer.Serialize(m_CurrentBTFilePath);
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Load", ImVec2(150, 30)))
+    {
+        std::cout << "Load Button Clicked" << std::endl;
+        std::string filePath = PlatformUtilsBT::OpenFile("Behavior Tree File (*.btree)\0*.btree\0");
+        std::cout << "Selected File Path: " << filePath << std::endl;
+        BTSerializer serializer(m_BehaviorTree);
+        serializer.Deserialize(filePath);
+        m_CurrentBTFilePath = filePath;
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Save As", ImVec2(150, 30)))
+    {
+        std::cout << "Save As Button Clicked" << std::endl;
+        if (!m_BehaviorTree)
+        {
+            std::cout << "No Behavior Tree to Save!-First Press Build Button" << std::endl;
+            return;
+        }
+        std::string filePath = PlatformUtilsBT::SaveFile("Behavior Tree File (*.btree)\0*.btree\0");
+        std::cout << "Selected File Path: " << filePath << std::endl;
+        BTSerializer serializer(m_BehaviorTree);
+        serializer.Serialize(filePath);
+        m_CurrentBTFilePath = filePath;
+    }
+    
     
     MouseInputHandling();
     NodeSettingsPanel();
@@ -74,7 +111,8 @@ void NodeEditorApp::RegisterNodeMapping(const HNode* runtimeNode, nodeEditor::No
 {
     if (!runtimeNode)
         return;
-    s_NodeToEditorIdMap[runtimeNode] = editorId;
+    m_NodeToEditorIdMap[runtimeNode] = editorId;
+    m_EditorIdToNodeMap[(uintptr_t)editorId.Get()] = runtimeNode;
 }
 
 Node* NodeEditorApp::GetEditorNodeFor(const HNode* runtimeNode)
@@ -82,11 +120,21 @@ Node* NodeEditorApp::GetEditorNodeFor(const HNode* runtimeNode)
     if (!runtimeNode)
         return nullptr;
 
-    auto it = s_NodeToEditorIdMap.find(runtimeNode);
-    if (it == s_NodeToEditorIdMap.end())
+    auto it = m_NodeToEditorIdMap.find(runtimeNode);
+    if (it == m_NodeToEditorIdMap.end())
         return nullptr;
 
     return m_NodeEditor->FindNode(it->second);
+}
+
+const HNode* NodeEditorApp::GetRuntimeNodeFor(nodeEditor::NodeId editorId)
+{
+    if (editorId == nodeEditor::NodeId::Invalid)
+        return nullptr;
+    auto it = m_EditorIdToNodeMap.find((uintptr_t)editorId.Get());
+    if (it == m_EditorIdToNodeMap.end())
+        return nullptr;
+    return it->second;
 }
 
 void NodeEditorApp::DecoratorNodeSelected(EditorDecorator& decorator)
@@ -113,79 +161,6 @@ void NodeEditorApp::ConditionNodeUnSelected()
 {
     m_bConditionSelected = false;
     m_LastSelectedCondition = nullptr;
-}
-
-bool NodeEditorApp::CheckConditionsSelfMode(HNode* node, const std::vector<std::unique_ptr<HCondition>>& conditionNodes)
-{
-    if (!conditionNodes.empty())
-        for (auto& condition : conditionNodes)
-        {
-            if (condition->GetLastStatus() != NodeStatus::RUNNING && !m_Blackboard->IsValuesChanged())
-            {
-                if ((condition->GetPriorityMode() == PriorityType::Self || condition->GetPriorityMode() == PriorityType::Both)
-                    && condition->GetLastStatus() == NodeStatus::FAILURE)
-                {
-                    node->OnAbort();
-                    std::cout << "Node Condition Failed at Runtime: " << condition->GetName() << " in " << node->GetName() << std::endl;
-                    return false;
-                }
-                continue;
-            }
-            condition->SetLastStatus(NodeStatus::RUNNING);
-            if (condition->GetPriorityMode() == PriorityType::None)
-                continue;
-            NodeStatus conditionStatus = condition.get()->Tick();
-            condition->SetLastStatus(conditionStatus);
-            if ((condition->GetPriorityMode() == PriorityType::Self || condition->GetPriorityMode() == PriorityType::Both)
-                && conditionStatus == NodeStatus::FAILURE)
-            {
-                node->OnAbort();
-                std::cout << "Node Condition Failed at Runtime: " << condition->GetName() << " in " << node->GetName() << std::endl;
-                return false;
-            }
-        }
-    return true;
-}
-
-void NodeEditorApp::CheckConditionsLowerPriorityMode(int& currentChildIndex, HNode* node,
-    const std::vector<std::unique_ptr<HNode>>& childrens)
-{
-    if (!childrens.empty())
-        for (int i = 0; i < static_cast<int>(childrens.size()); ++i)
-        {
-            if (i >= currentChildIndex)
-                continue;
-            auto& child = childrens[i];
-            for (auto& condition : child->GetConditionNodes())
-            {
-                if (condition->GetLastStatus() != NodeStatus::RUNNING && !m_Blackboard->IsValuesChanged())
-                {
-                    if ((condition->GetPriorityMode() == PriorityType::LowerPriority || condition->GetPriorityMode() == PriorityType::Both)
-                    && condition->GetLastStatus() == NodeStatus::SUCCESS)
-                    {
-                        childrens[currentChildIndex]->OnAbort();
-                        currentChildIndex = i;
-                        std::cout << "Node Condition Succeeded at Runtime: " << condition->GetName() << " in " << node->GetName() << std::endl;
-                        return;
-                    }
-                    continue;
-                }
-                condition->SetLastStatus(NodeStatus::RUNNING);
-                if (condition->GetPriorityMode() == PriorityType::None)
-                    continue;
-                NodeStatus conditionStatus = condition.get()->Tick();
-                condition->SetLastStatus(conditionStatus);
-                
-                if ((condition->GetPriorityMode() == PriorityType::LowerPriority || condition->GetPriorityMode() == PriorityType::Both)
-                    && conditionStatus == NodeStatus::SUCCESS)
-                {
-                    childrens[currentChildIndex]->OnAbort();
-                    currentChildIndex = i;
-                    std::cout << "Node Condition Succeeded at Runtime: " << condition->GetName() << " in " << node->GetName() << std::endl;
-                    return;
-                }
-            }
-        }
 }
 
 void NodeEditorApp::MouseInputHandling()
@@ -373,14 +348,14 @@ void NodeEditorApp::ShowActionNodeInBlackboard()
     std::string currentLabel = "Select Action";
     if (!currentIdString.empty())
     {
-        auto info = s_ActionClassInfoMap.find(currentIdString);
-        if (info != s_ActionClassInfoMap.end())
+        auto info = NodeRegistry::GetActionClassInfoMap().find(currentIdString);
+        if (info != NodeRegistry::GetActionClassInfoMap().end())
             currentLabel = info->second.Name;
     }
 
     if (ImGui::BeginCombo("##ActionList", currentLabel.c_str()))
     {
-        for (auto& [id, info] : s_ActionClassInfoMap)
+        for (auto& [id, info] : NodeRegistry::GetActionClassInfoMap())
         {
             bool isSelected = (id == currentIdString);
             if (ImGui::Selectable(info.Name.c_str(), isSelected))
@@ -417,16 +392,16 @@ void NodeEditorApp::ShowDecoratorNodeInBlackboard()
     if (it != s_NodeToDecoratorClassId.end())
         currentIdString = it->second;
 
-    std::string currentLabel = "Select Condition";
+    std::string currentLabel = "Select Decorator";
     if (!currentIdString.empty())
     {
-        auto info = s_DecoratorClassInfoMap.find(currentIdString);
-        if (info != s_DecoratorClassInfoMap.end())
+        auto info = NodeRegistry::GetDecoratorClassInfoMap().find(currentIdString);
+        if (info != NodeRegistry::GetDecoratorClassInfoMap().end())
             currentLabel = info->second.Name;
     }
-    if (ImGui::BeginCombo("##ConditionList", currentLabel.c_str()))
+    if (ImGui::BeginCombo("##DecoratorList", currentLabel.c_str()))
     {
-        for (auto& [id, info] : s_DecoratorClassInfoMap)
+        for (auto& [id, info] : NodeRegistry::GetDecoratorClassInfoMap())
         {
             bool isSelected = (id == currentIdString);
             if (ImGui::Selectable(info.Name.c_str(), isSelected))
@@ -434,7 +409,11 @@ void NodeEditorApp::ShowDecoratorNodeInBlackboard()
                 s_NodeToDecoratorClassId[nodeKey] = id;
                 s_NodeToDecoratorParams[nodeKey] = info.CreateParamsFn();
                 if (m_LastSelectedDecorator)
+                {
                     m_LastSelectedDecorator->Name = info.Name;
+                    m_LastSelectedDecorator->ClassName = id;
+                    m_LastSelectedDecorator->Params = s_NodeToDecoratorParams[nodeKey].get();
+                }
             }
         }
         ImGui::EndCombo();
@@ -465,13 +444,13 @@ void NodeEditorApp::ShowConditionNodeInBlackboard()
         std::string currentLabel = "Select Condition";
         if (!currentIdString.empty())
         {
-            auto info = s_ConditionClassInfoMap.find(currentIdString);
-            if (info != s_ConditionClassInfoMap.end())
+            auto info = NodeRegistry::GetConditionClassInfoMap().find(currentIdString);
+            if (info != NodeRegistry::GetConditionClassInfoMap().end())
                 currentLabel = info->second.Name;
         }
         if (ImGui::BeginCombo("##ConditionList", currentLabel.c_str()))
         {
-            for (auto& [id, info] : s_ConditionClassInfoMap)
+            for (auto& [id, info] : NodeRegistry::GetConditionClassInfoMap())
             {
                 bool isSelected = (id == currentIdString);
                 if (ImGui::Selectable(info.Name.c_str(), isSelected))
@@ -479,7 +458,11 @@ void NodeEditorApp::ShowConditionNodeInBlackboard()
                     s_NodeToConditionClassId[nodeKey] = id;
                     s_NodeToConditionParams[nodeKey] = info.CreateParamsFn();
                     if (m_LastSelectedCondition)
+                    {
                         m_LastSelectedCondition->Name = info.Name;
+                        m_LastSelectedCondition->ClassName = id;
+                        m_LastSelectedCondition->Params = s_NodeToConditionParams[nodeKey].get();
+                    }
                 }
             }
             ImGui::EndCombo();
@@ -510,20 +493,17 @@ void NodeEditorApp::ShowBlackboardDetails()
     std::string currentLabel = "Select Blackboard";
     if (!s_SelectedBlackboardClassName.empty())
     {
-        auto info = s_BlackboardClassInfoMap.find(s_SelectedBlackboardClassName);
-        if (info != s_BlackboardClassInfoMap.end())
+        auto info = NodeRegistry::GetBlackboardClassInfoMap().find(s_SelectedBlackboardClassName);
+        if (info != NodeRegistry::GetBlackboardClassInfoMap().end())
             currentLabel = info->second.Name;
     }
     if (ImGui::BeginCombo("##BlackboardOptions", currentLabel.c_str()))
     {
-        for (auto& [id, info] : s_BlackboardClassInfoMap)
+        for (auto& [id, info] : NodeRegistry::GetBlackboardClassInfoMap())
         {
             bool isSelected = (id == s_SelectedBlackboardClassName);
             if (ImGui::Selectable(info.Name.c_str(), isSelected))
-            {
-                s_SelectedBlackboardClassName = id;
-                m_Blackboard = info.CreateBlackboardFn();
-            }
+                SetBlackboardForEditor(id, info);
         }
         ImGui::EndCombo();
     }
@@ -533,13 +513,20 @@ void NodeEditorApp::ShowBlackboardDetails()
     }
 }
 
+HBlackboard& NodeEditorApp::SetBlackboardForEditor(const std::string& id, const BlackboardClassInfo& info)
+{
+    s_SelectedBlackboardClassName = id;
+    m_Blackboard = info.CreateBlackboardFn();
+    return *m_Blackboard;
+}
+
 void NodeEditorApp::BuildBehaviorTree()
 {
     m_NodeEditor->BuildNodes();
     std::cout << "Building Behavior Tree from Node Editor..." << std::endl;
     ClearBuildData();
     
-    BehaviorTreeBuilder btBuilder(m_Enemy);
+    BehaviorTreeBuilder btBuilder;
     //btBuilder.setBlackboard<EnemyBlackboard>();
     btBuilder.setBlackboard(m_Blackboard.get());
     
@@ -572,7 +559,7 @@ void NodeEditorApp::BuildBehaviorTree()
             }
             case BuildOpType::Action:
             {    
-                Node* node =  op.EditorNode;  
+                Node* node = op.EditorNode;  
                 BuildAction(node, btBuilder);    
                 if (auto* runtimeNode = btBuilder.GetLastCreatedNode())
                     RegisterNodeMapping(runtimeNode, node->ID);
@@ -598,8 +585,8 @@ void NodeEditorApp::BuildSequence(Node* node, BehaviorTreeBuilder& btBuilder)
     {
         const std::string& classId = classIt->second;
 
-        auto infoIt = s_DecoratorClassInfoMap.find(classId);
-        if (infoIt != s_DecoratorClassInfoMap.end())
+        auto infoIt = NodeRegistry::GetDecoratorClassInfoMap().find(classId);
+        if (infoIt != NodeRegistry::GetDecoratorClassInfoMap().end())
         {
             DecoratorClassInfo& info = infoIt->second;
 
@@ -607,7 +594,7 @@ void NodeEditorApp::BuildSequence(Node* node, BehaviorTreeBuilder& btBuilder)
             if (paramsIt != s_NodeToDecoratorParams.end() && paramsIt->second)
             {
                 ParamsForDecorator& decoParams = *paramsIt->second;
-                info.BuildFn(btBuilder, node, decoParams);
+                info.BuildFn(btBuilder, decoParams);
             }
         }
     }
@@ -618,8 +605,8 @@ void NodeEditorApp::BuildSequence(Node* node, BehaviorTreeBuilder& btBuilder)
     {
         const std::string& condClassId = condClassIt->second;
 
-        auto condInfoIt = s_ConditionClassInfoMap.find(condClassId);
-        if (condInfoIt != s_ConditionClassInfoMap.end())
+        auto condInfoIt = NodeRegistry::GetConditionClassInfoMap().find(condClassId);
+        if (condInfoIt != NodeRegistry::GetConditionClassInfoMap().end())
         {
             ConditionClassInfo& condInfo = condInfoIt->second;
 
@@ -627,7 +614,7 @@ void NodeEditorApp::BuildSequence(Node* node, BehaviorTreeBuilder& btBuilder)
             if (condParamsIt != s_NodeToConditionParams.end() && condParamsIt->second)
             {
                 ParamsForCondition& condParams = *condParamsIt->second;
-                condInfo.BuildFn(btBuilder, node, condParams);
+                condInfo.BuildFn(btBuilder, condParams);
             }
         }
     }
@@ -642,8 +629,8 @@ void NodeEditorApp::BuildSelector(Node* node, BehaviorTreeBuilder& btBuilder)
     {
         const std::string& classId = classIt->second;
 
-        auto infoIt = s_DecoratorClassInfoMap.find(classId);
-        if (infoIt != s_DecoratorClassInfoMap.end())
+        auto infoIt = NodeRegistry::GetDecoratorClassInfoMap().find(classId);
+        if (infoIt != NodeRegistry::GetDecoratorClassInfoMap().end())
         {
             DecoratorClassInfo& info = infoIt->second;
 
@@ -651,7 +638,7 @@ void NodeEditorApp::BuildSelector(Node* node, BehaviorTreeBuilder& btBuilder)
             if (paramsIt != s_NodeToDecoratorParams.end() && paramsIt->second)
             {
                 ParamsForDecorator& decoParams = *paramsIt->second;
-                info.BuildFn(btBuilder, node, decoParams);
+                info.BuildFn(btBuilder, decoParams);
             }
         }
     }
@@ -661,8 +648,8 @@ void NodeEditorApp::BuildSelector(Node* node, BehaviorTreeBuilder& btBuilder)
     {
         const std::string& condClassId = condClassIt->second;
 
-        auto condInfoIt = s_ConditionClassInfoMap.find(condClassId);
-        if (condInfoIt != s_ConditionClassInfoMap.end())
+        auto condInfoIt = NodeRegistry::GetConditionClassInfoMap().find(condClassId);
+        if (condInfoIt != NodeRegistry::GetConditionClassInfoMap().end())
         {
             ConditionClassInfo& condInfo = condInfoIt->second;
 
@@ -670,7 +657,7 @@ void NodeEditorApp::BuildSelector(Node* node, BehaviorTreeBuilder& btBuilder)
             if (condParamsIt != s_NodeToConditionParams.end() && condParamsIt->second)
             {
                 ParamsForCondition& condParams = *condParamsIt->second;
-                condInfo.BuildFn(btBuilder, node, condParams);
+                condInfo.BuildFn(btBuilder, condParams);
             }
         }
     }
@@ -684,8 +671,8 @@ void NodeEditorApp::BuildAction(Node* node, BehaviorTreeBuilder& btBuilder)
         return;
     
     const std::string& classId = classIt->second;
-    auto infoIt = s_ActionClassInfoMap.find(classId);
-    if (infoIt == s_ActionClassInfoMap.end())
+    auto infoIt = NodeRegistry::GetActionClassInfoMap().find(classId);
+    if (infoIt == NodeRegistry::GetActionClassInfoMap().end())
         return;
     
     ActionClassInfo& info = infoIt->second;
@@ -700,8 +687,8 @@ void NodeEditorApp::BuildAction(Node* node, BehaviorTreeBuilder& btBuilder)
     {
         const std::string& decoClassId = decoClassIt->second;
     
-        auto decoInfoIt = s_DecoratorClassInfoMap.find(decoClassId);
-        if (decoInfoIt != s_DecoratorClassInfoMap.end())
+        auto decoInfoIt = NodeRegistry::GetDecoratorClassInfoMap().find(decoClassId);
+        if (decoInfoIt != NodeRegistry::GetDecoratorClassInfoMap().end())
         {
             DecoratorClassInfo& decoInfo = decoInfoIt->second;
     
@@ -709,20 +696,20 @@ void NodeEditorApp::BuildAction(Node* node, BehaviorTreeBuilder& btBuilder)
             if (decoParamsIt != s_NodeToDecoratorParams.end() && decoParamsIt->second)
             {
                 ParamsForDecorator& decoParams = *decoParamsIt->second;
-                decoInfo.BuildFn(btBuilder, node, decoParams);
+                decoInfo.BuildFn(btBuilder, decoParams);
             }
         }
     }
-        
+    
     info.BuildFn(btBuilder, node, params);
-        
+    
     auto condClassIt = s_NodeToConditionClassId.find(nodeKey);
     if (condClassIt != s_NodeToConditionClassId.end())
     {
         const std::string& condClassId = condClassIt->second;
     
-        auto condInfoIt = s_ConditionClassInfoMap.find(condClassId);
-        if (condInfoIt != s_ConditionClassInfoMap.end())
+        auto condInfoIt = NodeRegistry::GetConditionClassInfoMap().find(condClassId);
+        if (condInfoIt != NodeRegistry::GetConditionClassInfoMap().end())
         {
             ConditionClassInfo& condInfo = condInfoIt->second;
     
@@ -730,7 +717,7 @@ void NodeEditorApp::BuildAction(Node* node, BehaviorTreeBuilder& btBuilder)
             if (condParamsIt != s_NodeToConditionParams.end() && condParamsIt->second)
             {
                 ParamsForCondition& condParams = *condParamsIt->second;
-                condInfo.BuildFn(btBuilder, node, condParams);
+                condInfo.BuildFn(btBuilder, condParams);
             }
         }
     }
@@ -740,7 +727,7 @@ void NodeEditorApp::ClearBuildData()
 {
     ClearNodeMappings();
     ClearActiveNodes();
-    m_Enemy->m_BehaviorTree = nullptr;
+    //m_Enemy->m_BehaviorTree = nullptr;
     m_BehaviorTree = nullptr;
 }
 

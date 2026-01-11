@@ -13,7 +13,10 @@ class HNode
 {
 public:
     HNode(const std::string& name)
-        : m_Name(name), m_Parent(nullptr), m_Status(NodeStatus::FAILURE), m_EditorApp(nullptr), m_Type(HNodeType::None) {}
+        : m_Name(name), m_Parent(nullptr), m_Status(NodeStatus::FAILURE), m_EditorApp(nullptr), m_Type(HNodeType::None)
+    {
+        m_Params = std::make_unique<Params>();
+    }
     virtual ~HNode() = default;
     
     NodeStatus Tick();
@@ -32,23 +35,51 @@ public:
     void SetType(HNodeType type) { m_Type = type; }
     
     NodeEditorApp* GetEditorApp() const { return m_EditorApp; }
+    HBlackboard& GetBlackboard() const { return *m_Blackboard; }
     HNode* GetParent() const { return m_Parent; }
     NodeStatus GetStatus() const { return m_Status; }
     HNodeType GetType() const { return m_Type; }
+    //Params& GetParams() { return m_Params; }
+    const Params& GetParams() const { return *m_Params; }
     
     const std::string& GetName() const { return m_Name; }
-    const std::vector<std::unique_ptr<HNode>>& GetChildrens() const { return m_Childrens; }
-    const std::vector<std::unique_ptr<HCondition>>& GetConditionNodes() const { return m_ConditionNodes; }
+    const std::vector<std::unique_ptr<HNode>>& GetChildrensUnique() const { return m_Childrens; }
+    const std::vector<HNode*> GetChildrensRaw() const
+    {
+        std::vector<HNode*> rawChildrens;
+        for (const auto& child : m_Childrens)
+            rawChildrens.push_back(child.get());
+        return rawChildrens;
+    }
+    const std::vector<std::unique_ptr<HCondition>>& GetConditionNodesUnique() const { return m_ConditionNodes; }
+    const std::vector<HCondition*> GetConditionNodesRaw() const
+    {
+        std::vector<HCondition*> rawConditions;
+        for (const auto& condition : m_ConditionNodes)
+            rawConditions.push_back(condition.get());
+        return rawConditions;
+    }
+    template<typename T>
+    void SetParams(const T& params) 
+    { 
+        m_Params = std::make_unique<T>(params); 
+    }
+
+    bool CheckConditionsSelfMode(HNode* node, const std::vector<std::unique_ptr<HCondition>>& conditionNodes);
+    void CheckConditionsLowerPriorityMode(int& currentChildIndex, HNode* node, const std::vector<std::unique_ptr<HNode>>& childrens);
 
     bool m_bIsStarted = false;
 protected:
     const std::string m_Name;
     HNode* m_Parent;
+    HBlackboard* m_Blackboard;
     NodeEditorApp* m_EditorApp;
+    std::unique_ptr<Params> m_Params;
     NodeStatus m_Status;
     HNodeType m_Type;
     std::vector<std::unique_ptr<HNode>> m_Childrens;
     std::vector<std::unique_ptr<HCondition>> m_ConditionNodes;
+    friend class BTSerializer;
 };
 
 class HRootNode : public HNode
@@ -72,12 +103,15 @@ struct ParamsForAction : Params
     ~ParamsForAction() = default;
 
     virtual void DrawImGui(HBlackboard* blackboard) override {}
+    virtual void Serialize(YAML::Emitter& out) const override {}
+    virtual void Deserialize(const YAML::Node& node) {}
 };
 class HActionNode : public HNode
 {
 public:
-    HActionNode(const std::string& name, const ParamsForAction& params = ParamsForAction{}) : HNode(name), m_Owner(nullptr), m_Blackboard(nullptr) {}
-    
+    HActionNode(const std::string& name, const ParamsForAction& params = ParamsForAction{})
+    : HNode(name), m_Owner(nullptr) {}
+
     virtual void OnStart() override;
     virtual NodeStatus Update() override;
     virtual void OnFinished() override;
@@ -89,10 +123,9 @@ public:
     bool CheckConditionsSelfMode();
 protected:
     EnemyAI& GetOwner() const { return *m_Owner; }
-    HBlackboard& GetBlackboard() const { return *m_Blackboard; }
+
 private:
     EnemyAI* m_Owner;
-    HBlackboard* m_Blackboard;
     
     void SetOwner(EnemyAI* owner) { m_Owner = owner; }
     void SetBlackboard(HBlackboard* blackboard) { m_Blackboard = blackboard; }
@@ -113,7 +146,7 @@ class HCondition : public HNode
 {
 public:
     HCondition(const std::string& name, const ParamsForCondition& params = ParamsForCondition{})
-        : HNode(name), m_Owner(nullptr), m_Blackboard(nullptr), m_PriorityMode(PriorityType::None), m_LastStatus(NodeStatus::RUNNING) {}
+        : HNode(name), m_Owner(nullptr), m_PriorityMode(PriorityType::None), m_LastStatus(NodeStatus::RUNNING) {}
 
     virtual void OnStart() override {}
     virtual bool CheckCondition() = 0;
@@ -126,10 +159,8 @@ public:
     NodeStatus GetLastStatus() const { return m_LastStatus; }
 protected:
     EnemyAI& GetOwner() const { return *m_Owner; }
-    HBlackboard& GetBlackboard() const { return *m_Blackboard; }
 private:
     EnemyAI* m_Owner;
-    HBlackboard* m_Blackboard;
     PriorityType m_PriorityMode;
     NodeStatus m_LastStatus;
 
@@ -151,7 +182,8 @@ struct ParamsForDecorator : public Params
 class HDecorator : public HNode
 {
 public:
-    HDecorator(const std::string& name, const ParamsForDecorator& params = ParamsForDecorator{}) : HNode(name), m_Blackboard(nullptr), m_Owner(nullptr) {}
+    HDecorator(const std::string& name, const ParamsForDecorator& params = ParamsForDecorator{})
+    : HNode(name), m_Owner(nullptr) {}
 
     virtual void OnStart() override {}
     virtual bool CanExecute() = 0;
@@ -160,10 +192,8 @@ public:
     virtual void OnAbort() override { HNode::OnAbort(); }
 protected:
     EnemyAI& GetOwner() const { return *m_Owner; }
-    HBlackboard& GetBlackboard() const { return *m_Blackboard; }
 private:
     EnemyAI* m_Owner;
-    HBlackboard* m_Blackboard;
 
     virtual NodeStatus Update() override final;
     void SetOwner(EnemyAI* owner) { m_Owner = owner; }

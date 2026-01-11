@@ -12,6 +12,8 @@ public:
     std::vector<Node>& GetNodes() { return m_Nodes; }
     std::vector<Link>& GetLinks() { return m_Links; }
 
+    void ClearDatas();
+
     NodeEditorHelper(NodeEditorApp* app = nullptr);
     
     void OnStart();

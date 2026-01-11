@@ -2,15 +2,19 @@
 #include "Tree.h"
 
 std::vector<BehaviorTree*> Root::m_BehaviorTrees;
+std::unique_ptr<NodeEditorApp> Root::m_NodeEditorApp;
 
 void Root::RootStart()
 {
     std::cout << "Root Started" << std::endl;
-    m_BehaviorTrees.clear();
+    if (m_NodeEditorApp)
+        m_NodeEditorApp->OnStart();
 }
 
 void Root::RootTick()
 {
+    if (m_NodeEditorApp)
+        m_NodeEditorApp->Update();
     for (BehaviorTree* tree : m_BehaviorTrees)
         tree->TickTree();
 }
@@ -26,9 +30,15 @@ void Root::RootStop()
     m_BehaviorTrees.clear();
 }
 
-BehaviorTree* Root::CreateBehaviorTree(EnemyAI* owner)
+void Root::BuildEditor()
 {
-    BehaviorTree* tree = new BehaviorTree(owner);
+    m_NodeEditorApp = std::make_unique<NodeEditorApp>();
+    //m_NodeEditorApp->SetEnemyAI(m_EnemyAI);
+}
+
+BehaviorTree* Root::CreateBehaviorTree(/*EnemyAI* owner*/)
+{
+    BehaviorTree* tree = new BehaviorTree(/*owner*/);
     m_BehaviorTrees.push_back(tree);
     return tree;
 }

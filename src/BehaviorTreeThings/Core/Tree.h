@@ -11,7 +11,7 @@ class EnemyAI;
 class BehaviorTree
 {
 public:
-    BehaviorTree(EnemyAI* owner) : m_Owner(owner), m_Blackboard(nullptr) {}
+    BehaviorTree(/*EnemyAI* owner*/) : /*m_Owner(owner),*/ m_Blackboard(nullptr) {}
     ~BehaviorTree();
 
     void StartTree();
@@ -19,12 +19,13 @@ public:
     void StopTree();
     
     void SetRootNode(std::unique_ptr<HNode> root) { m_RootNode = std::move(root); }
-    const HNode* GetRootNode() const { return m_RootNode.get(); }
+    HNode* GetRootNode() const { return m_RootNode.get(); }
+    HBlackboard* GetBlackboard() const { return m_Blackboard; }
 
 private:
     bool m_bOwnsBlackboard = false;
     bool m_bIsRunning = false;
-    EnemyAI* m_Owner;
+    //EnemyAI* m_Owner;
     std::unique_ptr<HNode> m_RootNode;
     HBlackboard* m_Blackboard;
 
@@ -34,7 +35,7 @@ private:
 class BehaviorTreeBuilder
 {
 public:
-    BehaviorTreeBuilder(EnemyAI* owner) : m_Tree(Root::CreateBehaviorTree(owner)) {}
+    BehaviorTreeBuilder(/*EnemyAI* owner*/) : m_Tree(Root::CreateBehaviorTree(/*owner*/)) {}
 
     template<typename BlackboardType>
     BehaviorTreeBuilder& setBlackboard()
@@ -67,7 +68,7 @@ public:
             auto decoratorNodePtr = decoratorNode.get();
             if (!m_NodeStack.empty())
             {
-                action->SetOwner(m_Tree->m_Owner);
+                //action->SetOwner(m_Tree->m_Owner);
                 action->SetType(HNodeType::Action);
                 action->SetBlackboard(m_Tree->m_Blackboard);
                 decoratorNode->AddChild(std::move(action));
@@ -81,7 +82,7 @@ public:
         else
             if (!m_NodeStack.empty())
             {
-                action->SetOwner(m_Tree->m_Owner);
+                //action->SetOwner(m_Tree->m_Owner);
                 action->SetType(HNodeType::Action);
                 action->SetBlackboard(m_Tree->m_Blackboard);
                 m_NodeStack.back()->AddChild(std::move(action));
@@ -100,7 +101,7 @@ public:
         std::cout << "Adding Condition Node: " << condition->GetName() << std::endl;
         if (m_LastCreatedNode)
         {
-            condition->SetOwner(m_Tree->m_Owner);
+            //condition->SetOwner(m_Tree->m_Owner);
             condition->SetBlackboard(m_Tree->m_Blackboard);
             condition->SetPriorityMode(priority);
             condition->SetType(HNodeType::Condition);
@@ -114,7 +115,7 @@ public:
         static_assert(std::is_base_of_v<HDecorator, DecoratorNodeType>, "DecoratorNodeType must derive from HDecorator");
         m_CurrentDecorator = std::make_unique<DecoratorNodeType>(std::forward<Args>(args)...);
         std::cout << "Adding Decorator Node: " << m_CurrentDecorator->GetName() << std::endl;
-        m_CurrentDecorator->SetOwner(m_Tree->m_Owner);
+        //m_CurrentDecorator->SetOwner(m_Tree->m_Owner);
         m_CurrentDecorator->SetBlackboard(m_Tree->m_Blackboard);
         m_CurrentDecorator->SetType(HNodeType::Decorator);
         return *this;

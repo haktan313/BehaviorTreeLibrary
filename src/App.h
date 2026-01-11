@@ -17,13 +17,14 @@ public:
     static void SizeCallback(GLFWwindow* window, int width, int height);
 
     static App* Get() { return s_Instance; }
-    static NodeEditorApp* GetNodeEditorApp() { return s_Instance->m_NodeEditorApp.get(); }
+    GLFWwindow* GetWindow() const { return m_Window; }
+    //static NodeEditorApp* GetNodeEditorApp() { return s_Instance->m_NodeEditorApp.get(); }
 private:
     EnemyAI* m_EnemyAI;
     GLFWwindow* m_Window;
     ImGuiContext* m_ImGuiContext;
     
-    std::unique_ptr<NodeEditorApp> m_NodeEditorApp;
+
     
     static App* s_Instance;
 };
