@@ -4,6 +4,7 @@ bin-int/
 
 *.sln
 *.sln.dotsettings
+*.sln.DotSettings.user
 *.vcxproj
 *.vcxproj.filters
 *.vcxproj.user
