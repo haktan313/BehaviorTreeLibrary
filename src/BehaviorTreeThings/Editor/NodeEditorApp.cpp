@@ -101,7 +101,8 @@ void NodeEditorApp::RegisterNodeMapping(const HNode* runtimeNode, nodeEditor::No
 {
     if (!runtimeNode)
         return;
-    s_NodeToEditorIdMap[runtimeNode] = editorId;
+    m_NodeToEditorIdMap[runtimeNode] = editorId;
+    m_EditorIdToNodeMap[(uintptr_t)editorId.Get()] = runtimeNode;
 }
 
 Node* NodeEditorApp::GetEditorNodeFor(const HNode* runtimeNode)
@@ -109,11 +110,21 @@ Node* NodeEditorApp::GetEditorNodeFor(const HNode* runtimeNode)
     if (!runtimeNode)
         return nullptr;
 
-    auto it = s_NodeToEditorIdMap.find(runtimeNode);
-    if (it == s_NodeToEditorIdMap.end())
+    auto it = m_NodeToEditorIdMap.find(runtimeNode);
+    if (it == m_NodeToEditorIdMap.end())
         return nullptr;
 
     return m_NodeEditor->FindNode(it->second);
+}
+
+const HNode* NodeEditorApp::GetRuntimeNodeFor(nodeEditor::NodeId editorId)
+{
+    if (editorId == nodeEditor::NodeId::Invalid)
+        return nullptr;
+    auto it = m_EditorIdToNodeMap.find((uintptr_t)editorId.Get());
+    if (it == m_EditorIdToNodeMap.end())
+        return nullptr;
+    return it->second;
 }
 
 void NodeEditorApp::DecoratorNodeSelected(EditorDecorator& decorator)
@@ -371,14 +382,14 @@ void NodeEditorApp::ShowDecoratorNodeInBlackboard()
     if (it != s_NodeToDecoratorClassId.end())
         currentIdString = it->second;
 
-    std::string currentLabel = "Select Condition";
+    std::string currentLabel = "Select Decorator";
     if (!currentIdString.empty())
     {
         auto info = NodeRegistry::GetDecoratorClassInfoMap().find(currentIdString);
         if (info != NodeRegistry::GetDecoratorClassInfoMap().end())
             currentLabel = info->second.Name;
     }
-    if (ImGui::BeginCombo("##ConditionList", currentLabel.c_str()))
+    if (ImGui::BeginCombo("##DecoratorList", currentLabel.c_str()))
     {
         for (auto& [id, info] : NodeRegistry::GetDecoratorClassInfoMap())
         {
@@ -388,7 +399,11 @@ void NodeEditorApp::ShowDecoratorNodeInBlackboard()
                 s_NodeToDecoratorClassId[nodeKey] = id;
                 s_NodeToDecoratorParams[nodeKey] = info.CreateParamsFn();
                 if (m_LastSelectedDecorator)
+                {
                     m_LastSelectedDecorator->Name = info.Name;
+                    m_LastSelectedDecorator->ClassName = id;
+                    m_LastSelectedDecorator->Params = s_NodeToDecoratorParams[nodeKey].get();
+                }
             }
         }
         ImGui::EndCombo();
@@ -433,7 +448,11 @@ void NodeEditorApp::ShowConditionNodeInBlackboard()
                     s_NodeToConditionClassId[nodeKey] = id;
                     s_NodeToConditionParams[nodeKey] = info.CreateParamsFn();
                     if (m_LastSelectedCondition)
+                    {
                         m_LastSelectedCondition->Name = info.Name;
+                        m_LastSelectedCondition->ClassName = id;
+                        m_LastSelectedCondition->Params = s_NodeToConditionParams[nodeKey].get();
+                    }
                 }
             }
             ImGui::EndCombo();
@@ -530,7 +549,7 @@ void NodeEditorApp::BuildBehaviorTree()
             }
             case BuildOpType::Action:
             {    
-                Node* node =  op.EditorNode;  
+                Node* node = op.EditorNode;  
                 BuildAction(node, btBuilder);    
                 if (auto* runtimeNode = btBuilder.GetLastCreatedNode())
                     RegisterNodeMapping(runtimeNode, node->ID);

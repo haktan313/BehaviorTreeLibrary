@@ -10,7 +10,7 @@ public:
     void RemoveActiveNode(HNode* node) { m_ActiveNodes.erase(std::remove(m_ActiveNodes.begin(), m_ActiveNodes.end(), node), m_ActiveNodes.end());}
     void ClearActiveNodes() { m_ActiveNodes.clear(); }
     //void SetEnemyAI(EnemyAI* enemy) { m_Enemy = enemy; }
-    void ClearNodeMappings() { s_NodeToEditorIdMap.clear(); }
+    void ClearNodeMappings() { m_NodeToEditorIdMap.clear(); }
     
     NodeEditorApp();
     ~NodeEditorApp();
@@ -20,7 +20,8 @@ public:
 
     void RegisterNodeMapping(const HNode* runtimeNode, nodeEditor::NodeId editorId);
     Node* GetEditorNodeFor(const HNode* runtimeNode);
-    std::unordered_map<const HNode*, nodeEditor::NodeId>& GetNodeMappings() { return s_NodeToEditorIdMap; }
+    const HNode* GetRuntimeNodeFor(nodeEditor::NodeId editorId);
+    std::unordered_map<const HNode*, nodeEditor::NodeId>& GetNodeMappings() { return m_NodeToEditorIdMap; }
     NodeEditorHelper& GetNodeEditorHelper() { return *m_NodeEditor; }
     HBlackboard& GetBlackboard() { return *m_Blackboard; }
     
@@ -67,7 +68,8 @@ private:
     std::unique_ptr<NodeEditorHelper> m_NodeEditor;
     std::unique_ptr<HBlackboard> m_Blackboard;
     
-    std::unordered_map<const HNode*, nodeEditor::NodeId> s_NodeToEditorIdMap;
+    std::unordered_map<const HNode*, nodeEditor::NodeId> m_NodeToEditorIdMap;
+    std::unordered_map<uintptr_t, const HNode*> m_EditorIdToNodeMap;
     
     //std::unordered_map<std::string, ActionClassInfo> s_ActionClassInfoMap;
     std::unordered_map<int, std::string> s_NodeToActionClassId;

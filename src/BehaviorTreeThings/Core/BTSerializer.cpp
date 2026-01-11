@@ -304,6 +304,8 @@ void BTSerializer::SerializeEditorData(YAML::Emitter& out)
         out << YAML::Key << "ID" << YAML::Value << node.ID.Get();
         out << YAML::Key << "Name" << YAML::Value << node.Name;
         out << YAML::Key << "Type" << YAML::Value << static_cast<int>(node.Type);
+        auto runtimeNode = editorApp->GetRuntimeNodeFor(node.ID);
+        out << YAML::Key << "Class" << YAML::Value << typeid(*runtimeNode).name();
         
         ImVec2 pos = nodeEditor::GetNodePosition(node.ID);
         out << YAML::Key << "PosX" << YAML::Value << pos.x;
@@ -311,17 +313,36 @@ void BTSerializer::SerializeEditorData(YAML::Emitter& out)
         
         out << YAML::Key << "Decorators" << YAML::Value << YAML::BeginSeq;
         for(const auto& deco : node.Decorators)
-            out << deco.Name;
+        {
+            out << YAML::BeginMap;
+            out << YAML::Key << "Name" << YAML::Value << deco.Name;
+            out << YAML::Key << "ClassName" << YAML::Value << deco.ClassName;
+            out << YAML::Key << "Params" << YAML::Value << YAML::BeginMap;
+            if (deco.Params)
+                deco.Params->Serialize(out);
+            out << YAML::EndMap;
+            out << YAML::EndMap;
+        }
         out << YAML::EndSeq;
 
         out << YAML::Key << "Conditions" << YAML::Value << YAML::BeginSeq;
         for(const auto& cond : node.Conditions)
-            out << cond.Name;
+        {
+            out << YAML::BeginMap;
+            out << YAML::Key << "Name" << YAML::Value << cond.Name;
+            out << YAML::Key << "ClassName" << YAML::Value << cond.ClassName;
+            out << YAML::Key << "Params" << YAML::Value << YAML::BeginMap;
+            if (cond.Params)
+                cond.Params->Serialize(out);
+            out << YAML::EndMap;
+            out << YAML::EndMap;
+        }
         out << YAML::EndSeq;
         
         int nodeKey = (int)node.ID.Get();
-        out << YAML::Key << "Params" << YAML::Value << YAML::BeginMap;
-        //editorApp->GetParamsForNode(nodeKey)->Serialize(out);
+        out << YAML::Key << "Params" << YAML::Value;
+        out << YAML::BeginMap;
+        runtimeNode->GetParams().Serialize(out);
         out << YAML::EndMap;
 
         out << YAML::EndMap;

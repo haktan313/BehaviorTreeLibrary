@@ -59,12 +59,16 @@ struct BlackboardClassInfo
 struct EditorDecorator
 {
     std::string Name;
-    EditorDecorator(const std::string& name) : Name(name) {}
+    std::string ClassName;
+    ParamsForDecorator* Params;
+    EditorDecorator(const std::string& name) : Name(name), Params(nullptr) {}
 };
 struct EditorCondition
 {
     std::string Name;
-    EditorCondition(const std::string& name) : Name(name) {}
+    std::string ClassName;
+    ParamsForCondition* Params;
+    EditorCondition(const std::string& name) : Name(name), Params(nullptr) {}
 };
 
 
