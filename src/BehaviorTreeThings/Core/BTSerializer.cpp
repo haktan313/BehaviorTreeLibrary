@@ -29,7 +29,7 @@ void BTSerializer::Serialize(const std::string& filepath)
     SerializeEditorData(out);
     out << YAML::EndMap;
 
-    out << YAML::Key << "RootNode" << YAML::Value;
+    out << YAML::Key << "RuntimeData" << YAML::Value;
     SerializeNode(out, rootNode);
 
     out << YAML::EndMap;// BehaviorTree
@@ -90,7 +90,7 @@ bool BTSerializer::Deserialize(const std::string& filepath/*, EnemyAI& owner*/)
         BehaviorTreeBuilder builder/*(&owner)*/;
         builder.setBlackboard(blackboard);
 
-        DeserializeNodeRecursive(btNode["RootNode"], builder);
+        DeserializeNodeRecursive(btNode["RuntimeData"], builder);
 
         m_Tree = builder.build();
         return true;
@@ -135,7 +135,69 @@ bool BTSerializer::Deserialize(const std::string& filepath/*, EnemyAI& owner*/)
             {
                 newNode->Name = name;
                 nodeEditor::SetNodePosition(newNode->ID, pos);
-                idMap[oldID] = newNode->ID; 
+                idMap[oldID] = newNode->ID;
+                int nodeKey = (int)newNode->ID.Get();
+                
+                if (n["Decorators"])
+                    for (auto d : n["Decorators"])
+                    {
+                        std::string className = d["ClassName"].as<std::string>();
+                        auto& decoMap = NodeRegistry::GetDecoratorClassInfoMap();
+                        if (decoMap.count(className))
+                        {
+                            editorApp->s_NodeToDecoratorClassId[nodeKey] = className;
+                            editorApp->s_NodeToDecoratorParams[nodeKey] = decoMap[className].CreateParamsFn();
+                            editorApp->s_NodeToDecoratorParams[nodeKey]->Deserialize(d["Params"]);
+                            
+                            EditorDecorator edeco(d["Name"].as<std::string>());
+                            edeco.ClassName = className;
+                            edeco.Params = editorApp->s_NodeToDecoratorParams[nodeKey].get();
+                            newNode->Decorators.push_back(edeco);
+                        }
+                    }
+                if (n["Conditions"])
+                    for (auto c : n["Conditions"])
+                    {
+                        std::string className = c["ClassName"].as<std::string>();
+                        auto& condMap = NodeRegistry::GetConditionClassInfoMap();
+                        if (condMap.count(className))
+                        {
+                            editorApp->s_NodeToConditionClassId[nodeKey] = className;
+                            editorApp->s_NodeToConditionParams[nodeKey] = condMap[className].CreateParamsFn();
+                            editorApp->s_NodeToConditionParams[nodeKey]->Deserialize(c["Params"]);
+                            
+                            if (c["Params"]["Priority"])
+                            {
+                                std::string pStr = c["Params"]["Priority"].as<std::string>();
+                                PriorityType p = PriorityType::None;
+                                if (pStr == "Self")
+                                    p = PriorityType::Self;
+                                else if (pStr == "LowerPriority")
+                                    p = PriorityType::LowerPriority;
+                                else if (pStr == "Both")
+                                    p = PriorityType::Both;
+                
+                                editorApp->s_NodeToConditionParams[nodeKey]->Priority = p;
+                            }
+    
+                            EditorCondition econd(c["Name"].as<std::string>());
+                            econd.ClassName = className;
+                            econd.Params = editorApp->s_NodeToConditionParams[nodeKey].get();
+                            newNode->Conditions.push_back(econd);
+                        }
+                    }
+                
+                if (type == NodeType::Action && n["Params"])
+                {
+                    std::string actionClassName = n["Name"].as<std::string>();
+                    auto& actionMap = NodeRegistry::GetActionClassInfoMap();
+                    if (actionMap.count(actionClassName))
+                    {
+                        editorApp->s_NodeToActionClassId[nodeKey] = actionClassName;
+                        editorApp->s_NodeToParams[nodeKey] = actionMap[actionClassName].CreateParamsFn();
+                        editorApp->s_NodeToParams[nodeKey]->Deserialize(n["Params"]);
+                    }
+                }
             }
         }
     }
@@ -332,6 +394,7 @@ void BTSerializer::SerializeEditorData(YAML::Emitter& out)
             out << YAML::Key << "Name" << YAML::Value << cond.Name;
             out << YAML::Key << "ClassName" << YAML::Value << cond.ClassName;
             out << YAML::Key << "Params" << YAML::Value << YAML::BeginMap;
+            out << YAML::Key << "Priority" << YAML::Value << PriorityToString(cond.Params->Priority);
             if (cond.Params)
                 cond.Params->Serialize(out);
             out << YAML::EndMap;

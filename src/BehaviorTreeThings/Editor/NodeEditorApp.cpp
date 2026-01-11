@@ -52,6 +52,11 @@ void NodeEditorApp::Update()
     if (ImGui::Button("Save", ImVec2(150, 30)))
     {
         std::cout << "Save Button Clicked" << std::endl;
+        if (!m_BehaviorTree)
+        {
+            std::cout << "No Behavior Tree to Save!-First Press Build Button" << std::endl;
+            return;
+        }
         if (m_CurrentBTFilePath.empty())
         {
             std::string filePath = PlatformUtilsBT::SaveFile("Behavior Tree File (*.btree)\0*.btree\0");
@@ -78,6 +83,11 @@ void NodeEditorApp::Update()
     if (ImGui::Button("Save As", ImVec2(150, 30)))
     {
         std::cout << "Save As Button Clicked" << std::endl;
+        if (!m_BehaviorTree)
+        {
+            std::cout << "No Behavior Tree to Save!-First Press Build Button" << std::endl;
+            return;
+        }
         std::string filePath = PlatformUtilsBT::SaveFile("Behavior Tree File (*.btree)\0*.btree\0");
         std::cout << "Selected File Path: " << filePath << std::endl;
         BTSerializer serializer(m_BehaviorTree);
