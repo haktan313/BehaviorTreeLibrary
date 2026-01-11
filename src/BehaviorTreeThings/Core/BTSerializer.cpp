@@ -70,7 +70,7 @@ bool BTSerializer::Deserialize(const std::string& filepath/*, EnemyAI& owner*/)
         {
             if (editorApp)
             {
-                Root::GetNodeEditorApp()->SetBlackboardForEditor(bbClassName, it->second);
+                blackboard = &Root::GetNodeEditorApp()->SetBlackboardForEditor(bbClassName, it->second);
                 std::cout << "Created blackboard of class by Editor: " << bbClassName << std::endl;
             }
             else
@@ -82,8 +82,8 @@ bool BTSerializer::Deserialize(const std::string& filepath/*, EnemyAI& owner*/)
     }
     if (!blackboard)
         blackboard = new HBlackboard();
-    
     DeserializeBlackboard(btNode["Blackboard"], blackboard);
+    
     
     if (!editorApp)
     {
@@ -242,19 +242,51 @@ void BTSerializer::DeserializeBlackboard(const YAML::Node& blackboardNode, HBlac
     
     if (blackboardNode["Floats"])
         for (auto it = blackboardNode["Floats"].begin(); it != blackboardNode["Floats"].end(); ++it)
-            blackboard->CreateFloatValue(it->first.as<std::string>(), it->second.as<float>());
-    
+        {
+            const std::string key = it->first.as<std::string>();
+            const float value = it->second.as<float>();
+
+            if (blackboard->HasFloatValue(key))
+                blackboard->SetFloatValue(key, value);
+            else
+                blackboard->CreateFloatValue(key, value);
+        }
+
     if (blackboardNode["Ints"])
         for (auto it = blackboardNode["Ints"].begin(); it != blackboardNode["Ints"].end(); ++it)
-            blackboard->CreateIntValue(it->first.as<std::string>(), it->second.as<int>());
-    
+        {
+            const std::string key = it->first.as<std::string>();
+            const int value = it->second.as<int>();
+
+            if (blackboard->HasIntValue(key))
+                blackboard->SetIntValue(key, value);
+            else
+                blackboard->CreateIntValue(key, value);
+        }
+
     if (blackboardNode["Bools"])
         for (auto it = blackboardNode["Bools"].begin(); it != blackboardNode["Bools"].end(); ++it)
-            blackboard->CreateBoolValue(it->first.as<std::string>(), it->second.as<bool>());
-    
+        {
+            const std::string key = it->first.as<std::string>();
+            const bool value = it->second.as<bool>();
+
+            if (blackboard->HasBoolValue(key))
+                blackboard->SetBoolValue(key, value);
+            else
+                blackboard->CreateBoolValue(key, value);
+        }
+
     if (blackboardNode["Strings"])
         for (auto it = blackboardNode["Strings"].begin(); it != blackboardNode["Strings"].end(); ++it)
-            blackboard->CreateStringValue(it->first.as<std::string>(), it->second.as<std::string>());
+        {
+            const std::string key = it->first.as<std::string>();
+            const std::string value = it->second.as<std::string>();
+
+            if (blackboard->HasStringValue(key))
+                blackboard->SetStringValue(key, value);
+            else
+                blackboard->CreateStringValue(key, value);
+        }
 }
 
 void BTSerializer::SerializeEditorData(YAML::Emitter& out)

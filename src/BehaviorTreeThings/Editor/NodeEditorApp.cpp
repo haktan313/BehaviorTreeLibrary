@@ -484,10 +484,11 @@ void NodeEditorApp::ShowBlackboardDetails()
     }
 }
 
-void NodeEditorApp::SetBlackboardForEditor(const std::string& id, const BlackboardClassInfo& info)
+HBlackboard& NodeEditorApp::SetBlackboardForEditor(const std::string& id, const BlackboardClassInfo& info)
 {
     s_SelectedBlackboardClassName = id;
     m_Blackboard = info.CreateBlackboardFn();
+    return *m_Blackboard;
 }
 
 void NodeEditorApp::BuildBehaviorTree()

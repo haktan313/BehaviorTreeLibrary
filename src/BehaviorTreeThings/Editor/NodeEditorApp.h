@@ -40,7 +40,7 @@ private:
     void ShowDecoratorNodeInBlackboard();
     void ShowConditionNodeInBlackboard();
     void ShowBlackboardDetails();
-    void SetBlackboardForEditor(const std::string& id, const BlackboardClassInfo& info);
+    HBlackboard& SetBlackboardForEditor(const std::string& id, const BlackboardClassInfo& info);
     
     void BuildBehaviorTree();
     void BuildSequence(Node* node, BehaviorTreeBuilder& btBuilder);
