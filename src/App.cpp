@@ -10,6 +10,7 @@
 #include "CustomDecorators.h"
 #include "NodeRegistry.h"
 #include "BehaviorTreeThings/Core/Tree.h"
+#include "Editor/EditorRoot.h"
 
 App* App::s_Instance = nullptr;
 
@@ -18,9 +19,12 @@ App::App() : m_EnemyAI(nullptr), m_Window(nullptr)
     s_Instance = this;
     
     //-------------------------------------------- Changable Part ------------------------------------------------//
-    Root::BuildEditor();//Initialize the Node Editor App inside the Root, if you want you can work without editor app for that don't call this function
-    // Root::RootStart() call this after app started but if you initialize the Node Editor App call this start after initializing the Node Editor App.
-    // Root::RootStop() call this before app shutdown.
+    // Root::RootTick() call this inside the main loop.
+    // Root::RootClear() call this before app shutdown.
+    EditorRoot::EditorRootStart();//Initialize the Node Editor App, if you want you can work without editor app for that don't call this function
+    // EditorRoot::EditorRootStop() call this before app shutdown.
+    // EditorRoot::GetNodeEditorApp() to get the instance of the Node Editor App.
+    // EditorRoot::EditorRootTick() call this inside the main loop after Root::RootTick().
 
     //Register Custom Blackboard, Actions, Conditions and Decorators to the Node Registry
     NodeRegistry::AddBlackBoardToEditor<MeleeEnemyBlackboard>("Melee Enemy Blackboard");
@@ -40,7 +44,7 @@ App::App() : m_EnemyAI(nullptr), m_Window(nullptr)
     //If you dont initialize the Node Editor App inside the Root, you need to set the owner to insiode of the behavior tree manually after building it,
     //you can find the example in the EnemyAI.cpp. "m_BehaviorTree->SetOwner(this);"
     m_EnemyAI = new EnemyAI();
-    Root::GetNodeEditorApp()->SetOwner<EnemyAI>(m_EnemyAI);
+    EditorRoot::GetNodeEditorApp()->SetOwner<EnemyAI>(m_EnemyAI);
     //-------------------------------------------- Changable Part ------------------------------------------------//
 }
 
@@ -48,7 +52,8 @@ App::~App()
 {
     delete m_EnemyAI;
     m_EnemyAI = nullptr;
-    Root::RootStop();
+    Root::RootClear();
+    EditorRoot::EditorRootStop();
 }
 
 void App::Run()
@@ -86,6 +91,7 @@ void App::Run()
         ImGui::PopStyleVar();
         
         Root::RootTick();
+        EditorRoot::EditorRootTick();
         
         ImGui::End(); 
         ImGui::Render();
@@ -143,8 +149,6 @@ bool App::Init()
     ImGui::StyleColorsDark();
     ImGui_ImplGlfw_InitForOpenGL(m_Window, true);
     ImGui_ImplOpenGL3_Init("#version 330");
-    
-    Root::RootStart();
     
     return true;
 }

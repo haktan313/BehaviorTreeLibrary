@@ -35,8 +35,6 @@ bool HCompositeNode::CanStart()
 // SequenceNode methods
 void SequenceNode::OnStart()
 {
-    /*if (m_EditorApp)
-        m_EditorApp->AddActiveNode(this);*/
     if (GetTree() && GetTree()->GetEditorApp())
         GetTree()->GetEditorApp()->AddActiveNode(this);
     std::cout << "Sequence Node Started: " << m_Name << " - Parent:" << (m_Parent != nullptr ? m_Parent->GetName() : std::string(" NoParent")) << std::endl;

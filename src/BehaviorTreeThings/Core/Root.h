@@ -1,23 +1,16 @@
 #pragma once
-#include <memory>
 #include <vector>
 
-class NodeEditorApp;
 class BehaviorTree;
 
 class Root
 {
 public:
-    static void RootStart();
     static void RootTick();
-    static void RootStop();
-    static void BuildEditor();
+    static void RootClear();
 
-    static BehaviorTree* CreateBehaviorTree(/*EnemyAI* owner*/);
+    static BehaviorTree* CreateBehaviorTree();
     static void DestroyBehaviorTree(BehaviorTree* tree);
-
-    static NodeEditorApp* GetNodeEditorApp() { return m_NodeEditorApp.get(); }
 private:
     static std::vector<BehaviorTree*> m_BehaviorTrees;
-    static std::unique_ptr<NodeEditorApp> m_NodeEditorApp;
 };

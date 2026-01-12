@@ -1,28 +1,16 @@
 #include "Root.h"
 #include "Tree.h"
-#include "Editor/NodeEditorApp.h"
 
 std::vector<BehaviorTree*> Root::m_BehaviorTrees;
-std::unique_ptr<NodeEditorApp> Root::m_NodeEditorApp;
-
-void Root::RootStart()
-{
-    std::cout << "Root Started" << std::endl;
-    if (m_NodeEditorApp)
-        m_NodeEditorApp->OnStart();
-}
 
 void Root::RootTick()
 {
-    if (m_NodeEditorApp)
-        m_NodeEditorApp->Update();
     for (BehaviorTree* tree : m_BehaviorTrees)
         tree->TickTree();
 }
 
-void Root::RootStop()
+void Root::RootClear()
 {
-    std::cout << "Root Stopped" << std::endl;
     for (BehaviorTree* tree : m_BehaviorTrees)
     {
         tree->StopTree();
@@ -31,15 +19,9 @@ void Root::RootStop()
     m_BehaviorTrees.clear();
 }
 
-void Root::BuildEditor()
+BehaviorTree* Root::CreateBehaviorTree()
 {
-    m_NodeEditorApp = std::make_unique<NodeEditorApp>();
-    //m_NodeEditorApp->SetEnemyAI(m_EnemyAI);
-}
-
-BehaviorTree* Root::CreateBehaviorTree(/*EnemyAI* owner*/)
-{
-    BehaviorTree* tree = new BehaviorTree(/*owner*/);
+    BehaviorTree* tree = new BehaviorTree();
     m_BehaviorTrees.push_back(tree);
     return tree;
 }
