@@ -4,41 +4,7 @@ workspace "BehaviorTreeProject"
     configurations { "Debug", "Release" }
     startproject "BehaviorTreeProject"
 
-    project "yaml-cpp"
-    kind "StaticLib"
-    language "C++"
-    cppdialect "C++17"
-    staticruntime "off"
-
-    targetdir ("bin/%{cfg.buildcfg}/%{prj.name}")
-    objdir    ("bin-int/%{cfg.buildcfg}/%{prj.name}")
-
-    files
-    {
-        "libs/yaml-cpp/src/**.cpp",
-        "libs/yaml-cpp/src/**.h",
-        "libs/yaml-cpp/include/**.h",
-        "libs/yaml-cpp/include/**.hpp"
-    }
-
-    includedirs
-    {
-        "libs/yaml-cpp/include"
-    }
-
-    defines
-    {
-        "YAML_CPP_STATIC_DEFINE"
-    }
-
-    filter "configurations:Debug"
-        runtime "Debug"
-        symbols "on"
-
-    filter "configurations:Release"
-        runtime "Release"
-        optimize "on"
-
+outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 project "BehaviorTreeProject"
     kind "ConsoleApp"
@@ -87,7 +53,8 @@ project "BehaviorTreeProject"
     }
 
     libdirs {
-        "libs/glfw-3.4.bin.WIN64/lib-vc2022"
+        "libs/glfw-3.4.bin.WIN64/lib-vc2022",
+        "bin/" .. outputdir .. "/yaml-cpp"
     }
 
     links {
@@ -96,15 +63,18 @@ project "BehaviorTreeProject"
         "yaml-cpp"
     }
 
+    
     defines { "YAML_CPP_STATIC_DEFINE" }
-
+    
     filter "system:windows"
-        systemversion "latest"
-
+    systemversion "latest"
+    
     filter "configurations:Debug"
-        defines { "DEBUG" }
-        symbols "On"
-
+    defines { "DEBUG" }
+    symbols "On"
+    
     filter "configurations:Release"
-        defines { "NDEBUG" }
-        optimize "On"
+    defines { "NDEBUG" }
+    optimize "On"
+
+include "libs/yaml-cpp"
