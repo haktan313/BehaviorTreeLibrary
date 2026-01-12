@@ -78,7 +78,7 @@ public:
     {
         static_assert(std::is_base_of_v<HActionNode, ActionNodeType>, "ActionNodeType must derive from HAction");
         auto action = std::make_unique<ActionNodeType>(std::forward<Args>(args)...);
-        std::cout << "Adding Action Node: " << action->GetName() << std::endl;
+        
         m_LastCreatedNode = action.get();
         if (m_CurrentDecorator)
         {
@@ -106,7 +106,7 @@ public:
     {
         static_assert(std::is_base_of_v<HCondition, ConditionNodeType>, "ConditionNodeType must derive from HCondition");
         auto condition = std::make_unique<ConditionNodeType>(std::forward<Args>(args)...);
-        std::cout << "Adding Condition Node: " << condition->GetName() << std::endl;
+        
         if (m_LastCreatedNode)
         {
             condition->SetTree(m_Tree);
@@ -121,7 +121,6 @@ public:
     {
         static_assert(std::is_base_of_v<HDecorator, DecoratorNodeType>, "DecoratorNodeType must derive from HDecorator");
         m_CurrentDecorator = std::make_unique<DecoratorNodeType>(std::forward<Args>(args)...);
-        std::cout << "Adding Decorator Node: " << m_CurrentDecorator->GetName() << std::endl;
         m_CurrentDecorator->SetTree(m_Tree);
         m_CurrentDecorator->SetType(HNodeType::Decorator);
         return *this;

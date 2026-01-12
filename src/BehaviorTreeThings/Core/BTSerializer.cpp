@@ -2,6 +2,7 @@
 #include <fstream>
 #include <yaml-cpp/yaml.h>
 #include "NodeRegistry.h"
+#include "Editor/EditorRoot.h"
 #include "Editor/NodeEditorApp.h"
 
 BTSerializer::BTSerializer(BehaviorTree*& tree) : m_Tree(tree)
@@ -52,10 +53,8 @@ bool BTSerializer::Deserialize(const std::string& filepath/*, EnemyAI& owner*/)
     auto btNode = data["BehaviorTree"];
     if (!btNode)
         return false;
-    auto editorApp = Root::GetNodeEditorApp();
-
-    /*HBlackboard* blackboard = new HBlackboard();
-    DeserializeBlackboard(btNode["Blackboard"], blackboard);*/
+    auto editorApp = EditorRoot::GetNodeEditorApp();
+    
     HBlackboard* blackboard = nullptr;
     std::string bbClassName = "";
 
@@ -69,7 +68,7 @@ bool BTSerializer::Deserialize(const std::string& filepath/*, EnemyAI& owner*/)
         {
             if (editorApp)
             {
-                blackboard = &Root::GetNodeEditorApp()->SetBlackboardForEditor(bbClassName, it->second);
+                blackboard = &EditorRoot::GetNodeEditorApp()->SetBlackboardForEditor(bbClassName, it->second);
                 std::cout << "Created blackboard of class by Editor: " << bbClassName << std::endl;
             }
             else
@@ -86,7 +85,7 @@ bool BTSerializer::Deserialize(const std::string& filepath/*, EnemyAI& owner*/)
     
     if (!editorApp)
     {
-        BehaviorTreeBuilder builder/*(&owner)*/;
+        BehaviorTreeBuilder builder;
         builder.setBlackboard(blackboard);
 
         DeserializeNodeRecursive(btNode["RuntimeData"], builder);
@@ -95,7 +94,7 @@ bool BTSerializer::Deserialize(const std::string& filepath/*, EnemyAI& owner*/)
         return true;
     }
     editorApp->ClearBuildData();
-    Root::GetNodeEditorApp()->GetNodeEditorHelper().ClearDatas();
+    EditorRoot::GetNodeEditorApp()->GetNodeEditorHelper().ClearDatas();
     
     std::unordered_map<int, nodeEditor::NodeId> idMap;
 
@@ -117,16 +116,16 @@ bool BTSerializer::Deserialize(const std::string& filepath/*, EnemyAI& owner*/)
             switch (type)
             {
                 case NodeType::Root:
-                    newNode = Root::GetNodeEditorApp()->GetNodeEditorHelper().SpawnRootNode();
+                    newNode = EditorRoot::GetNodeEditorApp()->GetNodeEditorHelper().SpawnRootNode();
                 break;
                 case NodeType::Sequence:
-                    newNode = Root::GetNodeEditorApp()->GetNodeEditorHelper().SpawnSequenceNode(pos);
+                    newNode = EditorRoot::GetNodeEditorApp()->GetNodeEditorHelper().SpawnSequenceNode(pos);
                 break;
                 case NodeType::Selector:
-                    newNode = Root::GetNodeEditorApp()->GetNodeEditorHelper().SpawnSelectorNode(pos);
+                    newNode = EditorRoot::GetNodeEditorApp()->GetNodeEditorHelper().SpawnSelectorNode(pos);
                 break;
                 case NodeType::Action:
-                    newNode = Root::GetNodeEditorApp()->GetNodeEditorHelper().SpawnActionNode(pos);
+                    newNode = EditorRoot::GetNodeEditorApp()->GetNodeEditorHelper().SpawnActionNode(pos);
                 break;
             }
 
@@ -200,10 +199,10 @@ bool BTSerializer::Deserialize(const std::string& filepath/*, EnemyAI& owner*/)
             }
         }
     }
-    Root::GetNodeEditorApp()->GetNodeEditorHelper().BuildNodes();
+    EditorRoot::GetNodeEditorApp()->GetNodeEditorHelper().BuildNodes();
     if (btNode["EditorData"]["Links"])
     {
-        auto& helper = Root::GetNodeEditorApp()->GetNodeEditorHelper();
+        auto& helper = EditorRoot::GetNodeEditorApp()->GetNodeEditorHelper();
         for (auto l : btNode["EditorData"]["Links"])
         {
             int startNodeOldID = l["StartNodeID"].as<int>();
@@ -352,7 +351,7 @@ void BTSerializer::DeserializeBlackboard(const YAML::Node& blackboardNode, HBlac
 
 void BTSerializer::SerializeEditorData(YAML::Emitter& out)
 {
-    auto editorApp = Root::GetNodeEditorApp();
+    auto editorApp = EditorRoot::GetNodeEditorApp();
     if (!editorApp)
         return;
 

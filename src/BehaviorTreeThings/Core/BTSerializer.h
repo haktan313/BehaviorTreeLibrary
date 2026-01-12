@@ -9,7 +9,7 @@ public:
     ~BTSerializer() = default;
 
     void Serialize(const std::string& filepath);
-    bool Deserialize(const std::string& filepath/*, EnemyAI& owner*/);
+    bool Deserialize(const std::string& filepath);
 private:
     static const char* NodeTypeToString(HNodeType type);
     static const char* PriorityToString(PriorityType p);

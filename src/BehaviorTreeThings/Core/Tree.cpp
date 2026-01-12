@@ -4,7 +4,6 @@
 //BehaviorTree methods
 BehaviorTree* BehaviorTreeBuilder::build() const 
 {
-    std::cout << "Behavior Tree Built" << std::endl;
     return m_Tree;
 }
 
@@ -17,7 +16,6 @@ BehaviorTree::~BehaviorTree()
 
 void BehaviorTree::StartTree()
 {
-    std::cout << "Behavior Tree Started" << std::endl;
     m_bIsRunning = true;
 }
 
@@ -32,7 +30,6 @@ void BehaviorTree::TickTree()
 
 void BehaviorTree::StopTree()
 {
-    std::cout << "Behavior Tree Stopped" << std::endl;
     if (!m_bIsRunning)
         return;
     m_bIsRunning = false;
@@ -44,12 +41,14 @@ void BehaviorTree::StopTree()
 
 BehaviorTreeBuilder& BehaviorTreeBuilder::root(NodeEditorApp* editorApp)
 {
-    std::cout << "Adding Root Node" << std::endl;
     auto rootNode = std::make_unique<HRootNode>();
     rootNode->SetTree(m_Tree);
+    
     HRootNode* rootNodePtr = rootNode.get();
     rootNodePtr->SetType(HNodeType::Root);
+    
     m_LastCreatedNode = rootNodePtr;
+    
     m_Tree->SetRootNode(std::move(rootNode));
     m_NodeStack.push_back(rootNodePtr);
     return *this;
@@ -57,11 +56,12 @@ BehaviorTreeBuilder& BehaviorTreeBuilder::root(NodeEditorApp* editorApp)
 
 BehaviorTreeBuilder& BehaviorTreeBuilder::sequence(const std::string& name)
 {
-    std::cout << "Adding Sequence Node: " << name << std::endl;
     auto sequenceNode = std::make_unique<SequenceNode>(name);
+    
     SequenceNode* sequenceNodePtr = sequenceNode.get();
     sequenceNodePtr->SetType(HNodeType::Composite);
     sequenceNodePtr->SetTree(m_Tree);
+    
     m_LastCreatedNode = sequenceNodePtr;
     if (m_CurrentDecorator)
     {
@@ -80,11 +80,12 @@ BehaviorTreeBuilder& BehaviorTreeBuilder::sequence(const std::string& name)
 
 BehaviorTreeBuilder& BehaviorTreeBuilder::selector(const std::string& name)
 {
-    std::cout << "Adding Selector Node: " << name << std::endl;
     auto selectorNode = std::make_unique<SelectorNode>(name);
     auto selectorNodePtr = selectorNode.get();
+    
     selectorNodePtr->SetType(HNodeType::Composite);
     selectorNodePtr->SetTree(m_Tree);
+    
     m_LastCreatedNode = selectorNodePtr;
     if (m_CurrentDecorator)
     {
