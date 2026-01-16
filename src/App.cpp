@@ -39,12 +39,9 @@ App::App() : m_EnemyAI(nullptr), m_Window(nullptr)
     
     NodeRegistry::AddDecoratorNodeToBuilder<ChangeResultOfTheNodeDecorator, ChangeResultOfTheNodeParameters>("Change Result Of The Node Decorator");
     NodeRegistry::AddDecoratorNodeToBuilder<CooldownDecorator, CooldownDecoratorParameters>("Cooldown Decorator");
-
-    //Create the Enemy AI instance and set it as the owner of the Node Editor App, so we can access it inside the action, condition and decorator nodes.
-    //If you dont initialize the Node Editor App inside the Root, you need to set the owner to insiode of the behavior tree manually after building it,
+    
     //you can find the example in the EnemyAI.cpp. "m_BehaviorTree->SetOwner(this);"
     m_EnemyAI = new EnemyAI();
-    EditorRoot::GetNodeEditorApp()->SetOwner<EnemyAI>(m_EnemyAI);
     //-------------------------------------------- Changable Part ------------------------------------------------//
 }
 

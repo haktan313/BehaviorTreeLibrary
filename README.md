@@ -233,9 +233,12 @@ The node visuals are created using **imgui-node-editor**. You can find **example
 - You can check the `App.cpp` file for setup. You can find the instructions here.
 ```cpp
     //-------------------------------------------- Changable Part ------------------------------------------------//
-    Root::BuildEditor();//Initialize the Node Editor App inside the Root, if you want you can work without editor app for that don't call this function
-    // Root::RootStart() call this after app started but if you initialize the Node Editor App call this start after initializing the Node Editor App.
-    // Root::RootStop() call this before app shutdown.
+    // Root::RootTick() call this inside the main loop.
+    // Root::RootClear() call this before app shutdown.
+    EditorRoot::EditorRootStart();//Initialize the Node Editor App, if you want you can work without editor app for that don't call this function
+    // EditorRoot::EditorRootStop() call this before app shutdown.
+    // EditorRoot::GetNodeEditorApp() to get the instance of the Node Editor App.
+    // EditorRoot::EditorRootTick() call this inside the main loop after Root::RootTick().
 
     //Register Custom Blackboard, Actions, Conditions and Decorators to the Node Registry
     NodeRegistry::AddBlackBoardToEditor<MeleeEnemyBlackboard>("Melee Enemy Blackboard");
@@ -255,7 +258,7 @@ The node visuals are created using **imgui-node-editor**. You can find **example
     //If you dont initialize the Node Editor App inside the Root, you need to set the owner to insiode of the behavior tree manually after building it,
     //you can find the example in the EnemyAI.cpp. "m_BehaviorTree->SetOwner(this);"
     m_EnemyAI = new EnemyAI();
-    Root::GetNodeEditorApp()->SetOwner<EnemyAI>(m_EnemyAI);
+    EditorRoot::GetNodeEditorApp()->SetOwner<EnemyAI>(m_EnemyAI);
     //-------------------------------------------- Changable Part ------------------------------------------------//
 ```
 Script Example(Behavior Tree and Builder)

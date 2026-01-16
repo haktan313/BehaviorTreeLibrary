@@ -9,8 +9,6 @@ BehaviorTree* BehaviorTreeBuilder::build() const
 
 BehaviorTree::~BehaviorTree()
 {
-    if (m_bOwnsBlackboard)
-        delete m_Blackboard;
     m_Blackboard = nullptr;
 }
 
@@ -39,7 +37,7 @@ void BehaviorTree::StopTree()
 
 // BehaviorTreeBuilder methods
 
-BehaviorTreeBuilder& BehaviorTreeBuilder::root(NodeEditorApp* editorApp)
+BehaviorTreeBuilder& BehaviorTreeBuilder::root()
 {
     auto rootNode = std::make_unique<HRootNode>();
     rootNode->SetTree(m_Tree);

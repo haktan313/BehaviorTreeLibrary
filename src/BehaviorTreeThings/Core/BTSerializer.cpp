@@ -21,7 +21,7 @@ void BTSerializer::Serialize(const std::string& filepath)
 
     out << YAML::Key << "Blackboard" << YAML::Value;
     out << YAML::BeginMap;
-    SerializeBlackboard(out, m_Tree->GetBlackboard());
+    SerializeBlackboard(out, m_Tree->GetBlackboardRaw());
     out << YAML::EndMap;
 
     out << YAML::Key << "EditorData" << YAML::Value;
@@ -39,7 +39,7 @@ void BTSerializer::Serialize(const std::string& filepath)
     fout << out.c_str();
 }
 
-bool BTSerializer::Deserialize(const std::string& filepath/*, EnemyAI& owner*/)
+bool BTSerializer::Deserialize(const std::string& filepath)
 {
     YAML::Node data;
     try {
@@ -53,7 +53,48 @@ bool BTSerializer::Deserialize(const std::string& filepath/*, EnemyAI& owner*/)
     auto btNode = data["BehaviorTree"];
     if (!btNode)
         return false;
-    auto editorApp = EditorRoot::GetNodeEditorApp();
+    
+    std::unique_ptr<HBlackboard> blackboard = nullptr;
+    std::string bbClassName = "";
+
+    if (btNode["Blackboard"]["ClassName"])
+    {
+        bbClassName = btNode["Blackboard"]["ClassName"].as<std::string>();
+        auto& bbRegistry = NodeRegistry::GetBlackboardClassInfoMap();
+        
+        auto it = bbRegistry.find(bbClassName);
+        if (it != bbRegistry.end())
+            blackboard = it->second.CreateBlackboardFn();
+    }
+    if (!blackboard)
+        blackboard = std::make_unique<HBlackboard>();
+    DeserializeBlackboard(btNode["Blackboard"], blackboard);
+    
+    
+    BehaviorTreeBuilder builder(m_Tree);
+    builder.setBlackboard(std::move(blackboard));
+
+    DeserializeNodeRecursive(btNode["RuntimeData"], builder);
+
+    builder.build();
+    return true;
+}
+
+bool BTSerializer::Deserialize(const std::string& filepath, NodeEditorApp* editorApp)
+{
+    YAML::Node data;
+    try
+    {
+        data = YAML::LoadFile(filepath);
+    }
+    catch (const std::exception& e)
+    {
+        return false;
+    }
+
+    auto btNode = data["BehaviorTree"];
+    if (!btNode)
+        return false;
     
     HBlackboard* blackboard = nullptr;
     std::string bbClassName = "";
@@ -68,13 +109,8 @@ bool BTSerializer::Deserialize(const std::string& filepath/*, EnemyAI& owner*/)
         {
             if (editorApp)
             {
+                EditorRoot::GetNodeEditorApp()->SetBlackboardForEditor(bbClassName, it->second);
                 blackboard = &EditorRoot::GetNodeEditorApp()->SetBlackboardForEditor(bbClassName, it->second);
-                std::cout << "Created blackboard of class by Editor: " << bbClassName << std::endl;
-            }
-            else
-            {
-                blackboard = it->second.CreateBlackboardFn().release();
-                std::cout << "Created blackboard of class: " << bbClassName << std::endl;
             }
         }
     }
@@ -82,19 +118,8 @@ bool BTSerializer::Deserialize(const std::string& filepath/*, EnemyAI& owner*/)
         blackboard = new HBlackboard();
     DeserializeBlackboard(btNode["Blackboard"], blackboard);
     
-    
-    if (!editorApp)
-    {
-        BehaviorTreeBuilder builder;
-        builder.setBlackboard(blackboard);
-
-        DeserializeNodeRecursive(btNode["RuntimeData"], builder);
-
-        m_Tree = builder.build();
-        return true;
-    }
     editorApp->ClearBuildData();
-    EditorRoot::GetNodeEditorApp()->GetNodeEditorHelper().ClearDatas();
+    editorApp->GetNodeEditorHelper().ClearDatas();
     
     std::unordered_map<int, nodeEditor::NodeId> idMap;
 
@@ -116,16 +141,16 @@ bool BTSerializer::Deserialize(const std::string& filepath/*, EnemyAI& owner*/)
             switch (type)
             {
                 case NodeType::Root:
-                    newNode = EditorRoot::GetNodeEditorApp()->GetNodeEditorHelper().SpawnRootNode();
+                    newNode = editorApp->GetNodeEditorHelper().SpawnRootNode();
                 break;
                 case NodeType::Sequence:
-                    newNode = EditorRoot::GetNodeEditorApp()->GetNodeEditorHelper().SpawnSequenceNode(pos);
+                    newNode = editorApp->GetNodeEditorHelper().SpawnSequenceNode(pos);
                 break;
                 case NodeType::Selector:
-                    newNode = EditorRoot::GetNodeEditorApp()->GetNodeEditorHelper().SpawnSelectorNode(pos);
+                    newNode = editorApp->GetNodeEditorHelper().SpawnSelectorNode(pos);
                 break;
                 case NodeType::Action:
-                    newNode = EditorRoot::GetNodeEditorApp()->GetNodeEditorHelper().SpawnActionNode(pos);
+                    newNode = editorApp->GetNodeEditorHelper().SpawnActionNode(pos);
                 break;
             }
 
@@ -143,13 +168,13 @@ bool BTSerializer::Deserialize(const std::string& filepath/*, EnemyAI& owner*/)
                         auto& decoMap = NodeRegistry::GetDecoratorClassInfoMap();
                         if (decoMap.count(className))
                         {
-                            editorApp->s_NodeToDecoratorClassId[nodeKey] = className;
-                            editorApp->s_NodeToDecoratorParams[nodeKey] = decoMap[className].CreateParamsFn();
-                            editorApp->s_NodeToDecoratorParams[nodeKey]->Deserialize(d["Params"]);
+                            editorApp->m_NodeToDecoratorClassId[nodeKey] = className;
+                            editorApp->m_NodeToDecoratorParams[nodeKey] = decoMap[className].CreateParamsFn();
+                            editorApp->m_NodeToDecoratorParams[nodeKey]->Deserialize(d["Params"]);
                             
                             EditorDecorator edeco(d["Name"].as<std::string>());
                             edeco.ClassName = className;
-                            edeco.Params = editorApp->s_NodeToDecoratorParams[nodeKey].get();
+                            edeco.Params = editorApp->m_NodeToDecoratorParams[nodeKey].get();
                             newNode->Decorators.push_back(edeco);
                         }
                     }
@@ -160,9 +185,9 @@ bool BTSerializer::Deserialize(const std::string& filepath/*, EnemyAI& owner*/)
                         auto& condMap = NodeRegistry::GetConditionClassInfoMap();
                         if (condMap.count(className))
                         {
-                            editorApp->s_NodeToConditionClassId[nodeKey] = className;
-                            editorApp->s_NodeToConditionParams[nodeKey] = condMap[className].CreateParamsFn();
-                            editorApp->s_NodeToConditionParams[nodeKey]->Deserialize(c["Params"]);
+                            editorApp->m_NodeToConditionClassId[nodeKey] = className;
+                            editorApp->m_NodeToConditionParams[nodeKey] = condMap[className].CreateParamsFn();
+                            editorApp->m_NodeToConditionParams[nodeKey]->Deserialize(c["Params"]);
                             
                             if (c["Params"]["Priority"])
                             {
@@ -175,12 +200,12 @@ bool BTSerializer::Deserialize(const std::string& filepath/*, EnemyAI& owner*/)
                                 else if (pStr == "Both")
                                     p = PriorityType::Both;
                 
-                                editorApp->s_NodeToConditionParams[nodeKey]->Priority = p;
+                                editorApp->m_NodeToConditionParams[nodeKey]->Priority = p;
                             }
     
                             EditorCondition econd(c["Name"].as<std::string>());
                             econd.ClassName = className;
-                            econd.Params = editorApp->s_NodeToConditionParams[nodeKey].get();
+                            econd.Params = editorApp->m_NodeToConditionParams[nodeKey].get();
                             newNode->Conditions.push_back(econd);
                         }
                     }
@@ -191,18 +216,21 @@ bool BTSerializer::Deserialize(const std::string& filepath/*, EnemyAI& owner*/)
                     auto& actionMap = NodeRegistry::GetActionClassInfoMap();
                     if (actionMap.count(actionClassName))
                     {
-                        editorApp->s_NodeToActionClassId[nodeKey] = actionClassName;
-                        editorApp->s_NodeToParams[nodeKey] = actionMap[actionClassName].CreateParamsFn();
-                        editorApp->s_NodeToParams[nodeKey]->Deserialize(n["Params"]);
+                        editorApp->m_NodeToActionClassId[nodeKey] = actionClassName;
+                        editorApp->m_NodeToParams[nodeKey] = actionMap[actionClassName].CreateParamsFn();
+                        editorApp->m_NodeToParams[nodeKey]->Deserialize(n["Params"]);
                     }
                 }
             }
         }
     }
-    EditorRoot::GetNodeEditorApp()->GetNodeEditorHelper().BuildNodes();
+    else
+        editorApp->GetNodeEditorHelper().SpawnRootNode();
+    
+    editorApp->GetNodeEditorHelper().BuildNodes();
     if (btNode["EditorData"]["Links"])
     {
-        auto& helper = EditorRoot::GetNodeEditorApp()->GetNodeEditorHelper();
+        auto& helper = editorApp->GetNodeEditorHelper();
         for (auto l : btNode["EditorData"]["Links"])
         {
             int startNodeOldID = l["StartNodeID"].as<int>();
@@ -228,7 +256,7 @@ bool BTSerializer::Deserialize(const std::string& filepath/*, EnemyAI& owner*/)
 
         }
     }
-    
+    m_Tree = editorApp->BuildBehaviorTree();
     return true;
 }
 
@@ -270,6 +298,15 @@ const char* BTSerializer::PriorityToString(PriorityType p)
 
 void BTSerializer::SerializeBlackboard(YAML::Emitter& out, const HBlackboard* blackboard)
 {
+    if (!blackboard)
+    {
+        out << YAML::Key << "ClassName" << YAML::Value << "NoBlackboard";
+        out << YAML::Key << "Floats" << YAML::Value << YAML::BeginMap << YAML::EndMap;
+        out << YAML::Key << "Ints" << YAML::Value << YAML::BeginMap << YAML::EndMap;
+        out << YAML::Key << "Bools" << YAML::Value << YAML::BeginMap << YAML::EndMap;
+        out << YAML::Key << "Strings" << YAML::Value << YAML::BeginMap << YAML::EndMap;
+        return;
+    }
     auto classInfo = NodeRegistry::GetBlackboardClassInfoMap().find(blackboard->GetName());
     if (classInfo != NodeRegistry::GetBlackboardClassInfoMap().end())
         out << YAML::Key << "ClassName" << YAML::Value << classInfo->second.Name;
@@ -293,6 +330,60 @@ void BTSerializer::SerializeBlackboard(YAML::Emitter& out, const HBlackboard* bl
     for (const auto& [key, val] : blackboard->GetStringValues())
         out << YAML::Key << key << YAML::Value << val;
     out << YAML::EndMap;
+}
+
+void BTSerializer::DeserializeBlackboard(const YAML::Node& blackboardNode, std::unique_ptr<HBlackboard>& blackboard)
+{
+    if (!blackboardNode || !blackboard)
+        return;
+    
+    if (blackboardNode["Floats"])
+        for (auto it = blackboardNode["Floats"].begin(); it != blackboardNode["Floats"].end(); ++it)
+        {
+            const std::string key = it->first.as<std::string>();
+            const float value = it->second.as<float>();
+
+            if (blackboard->HasFloatValue(key))
+                blackboard->SetFloatValue(key, value);
+            else
+                blackboard->CreateFloatValue(key, value);
+        }
+
+    if (blackboardNode["Ints"])
+        for (auto it = blackboardNode["Ints"].begin(); it != blackboardNode["Ints"].end(); ++it)
+        {
+            const std::string key = it->first.as<std::string>();
+            const int value = it->second.as<int>();
+
+            if (blackboard->HasIntValue(key))
+                blackboard->SetIntValue(key, value);
+            else
+                blackboard->CreateIntValue(key, value);
+        }
+
+    if (blackboardNode["Bools"])
+        for (auto it = blackboardNode["Bools"].begin(); it != blackboardNode["Bools"].end(); ++it)
+        {
+            const std::string key = it->first.as<std::string>();
+            const bool value = it->second.as<bool>();
+
+            if (blackboard->HasBoolValue(key))
+                blackboard->SetBoolValue(key, value);
+            else
+                blackboard->CreateBoolValue(key, value);
+        }
+
+    if (blackboardNode["Strings"])
+        for (auto it = blackboardNode["Strings"].begin(); it != blackboardNode["Strings"].end(); ++it)
+        {
+            const std::string key = it->first.as<std::string>();
+            const std::string value = it->second.as<std::string>();
+
+            if (blackboard->HasStringValue(key))
+                blackboard->SetStringValue(key, value);
+            else
+                blackboard->CreateStringValue(key, value);
+        }
 }
 
 void BTSerializer::DeserializeBlackboard(const YAML::Node& blackboardNode, HBlackboard* blackboard)
@@ -358,6 +449,9 @@ void BTSerializer::SerializeEditorData(YAML::Emitter& out)
     auto& helper = editorApp->GetNodeEditorHelper();
     
     out << YAML::Key << "Nodes" << YAML::Value << YAML::BeginSeq;
+    if (helper.GetNodes().empty())
+        helper.SpawnRootNode();
+    
     for (const auto& node : helper.GetNodes())
     {
         out << YAML::BeginMap;
@@ -365,7 +459,8 @@ void BTSerializer::SerializeEditorData(YAML::Emitter& out)
         out << YAML::Key << "Name" << YAML::Value << node.Name;
         out << YAML::Key << "Type" << YAML::Value << static_cast<int>(node.Type);
         auto runtimeNode = editorApp->GetRuntimeNodeFor(node.ID);
-        out << YAML::Key << "Class" << YAML::Value << typeid(*runtimeNode).name();
+        if (runtimeNode)
+            out << YAML::Key << "Class" << YAML::Value << typeid(*runtimeNode).name();
         
         ImVec2 pos = nodeEditor::GetNodePosition(node.ID);
         out << YAML::Key << "PosX" << YAML::Value << pos.x;
@@ -400,10 +495,10 @@ void BTSerializer::SerializeEditorData(YAML::Emitter& out)
         }
         out << YAML::EndSeq;
         
-        int nodeKey = (int)node.ID.Get();
         out << YAML::Key << "Params" << YAML::Value;
         out << YAML::BeginMap;
-        runtimeNode->GetParams().Serialize(out);
+        if (runtimeNode)
+            runtimeNode->GetParams().Serialize(out);
         out << YAML::EndMap;
 
         out << YAML::EndMap;
@@ -511,7 +606,7 @@ void BTSerializer::DeserializeNodeRecursive(const YAML::Node& nodeData, Behavior
 
     if (type == "Root")
     {
-        builder.root(nullptr);
+        builder.root();
         if (nodeData["Children"]) 
             for (auto child : nodeData["Children"])
                 DeserializeNodeRecursive(child, builder);

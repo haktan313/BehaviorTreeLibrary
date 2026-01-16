@@ -54,7 +54,7 @@ void NodeEditorHelper::OnStart()
     
     m_EditorContext = nodeEditor::CreateEditor(&config);
     nodeEditor::SetCurrentEditor(m_EditorContext);
-    nodeEditor::NavigateToContent();
+    //nodeEditor::NavigateToContent();
 
     SpawnRootNode();
     

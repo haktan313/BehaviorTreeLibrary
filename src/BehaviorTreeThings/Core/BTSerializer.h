@@ -10,11 +10,13 @@ public:
 
     void Serialize(const std::string& filepath);
     bool Deserialize(const std::string& filepath);
+    bool Deserialize(const std::string& filepath, NodeEditorApp* editorAppFromEditor);
 private:
     static const char* NodeTypeToString(HNodeType type);
     static const char* PriorityToString(PriorityType p);
 
     static void SerializeBlackboard(YAML::Emitter& out, const HBlackboard* blackboard);
+    static void DeserializeBlackboard(const YAML::Node& blackboardNode, std::unique_ptr<HBlackboard>& blackboard);
     static void DeserializeBlackboard(const YAML::Node& blackboardNode, HBlackboard* blackboard);
 
     static void SerializeEditorData(YAML::Emitter& out);

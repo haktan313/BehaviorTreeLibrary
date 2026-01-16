@@ -3,6 +3,12 @@
 
 std::vector<BehaviorTree*> Root::m_BehaviorTrees;
 
+void Root::RootStart()
+{
+    for (BehaviorTree* tree : m_BehaviorTrees)
+        tree->StartTree();
+}
+
 void Root::RootTick()
 {
     for (BehaviorTree* tree : m_BehaviorTrees)
@@ -17,6 +23,12 @@ void Root::RootClear()
         delete tree;
     }
     m_BehaviorTrees.clear();
+}
+
+void Root::RootStop()
+{
+    for (BehaviorTree* tree : m_BehaviorTrees)
+        tree->StopTree();
 }
 
 BehaviorTree* Root::CreateBehaviorTree()

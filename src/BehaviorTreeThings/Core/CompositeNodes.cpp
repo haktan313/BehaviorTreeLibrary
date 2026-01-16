@@ -13,7 +13,6 @@ bool HCompositeNode::CheckConditions()
             if (conditionStatus == NodeStatus::FAILURE)
             {
                 m_Status = NodeStatus::FAILURE;
-                std::cout << "Node Condition Failed: " << condition->GetName() << " in " << m_Name << std::endl;
                 return false;
             }
         }
@@ -37,7 +36,6 @@ void SequenceNode::OnStart()
 {
     if (GetTree() && GetTree()->GetEditorApp())
         GetTree()->GetEditorApp()->AddActiveNode(this);
-    std::cout << "Sequence Node Started: " << m_Name << " - Parent:" << (m_Parent != nullptr ? m_Parent->GetName() : std::string(" NoParent")) << std::endl;
 }
 
 NodeStatus SequenceNode::Update()
@@ -63,18 +61,14 @@ NodeStatus SequenceNode::Update()
 
 void SequenceNode::OnFinished()
 {
-    std::cout << "Sequence Node Finished: " << m_Name << " result is: " << (m_Status == NodeStatus::SUCCESS ? "SUCCESS" : "FAILURE") << std::endl;
     m_CurrentChildIndex = 0;
     m_bIsStarted = false;
-    /*if (m_EditorApp)
-        m_EditorApp->RemoveActiveNode(this);*/
     if (GetTree() && GetTree()->GetEditorApp())
         GetTree()->GetEditorApp()->RemoveActiveNode(this);
 }
 
 void SequenceNode::OnAbort()
 {
-    std::cout << "Sequence Node Aborted: " << m_Name << std::endl;
     if (m_CurrentChildIndex < static_cast<int>(m_Childrens.size()))
         if (m_Childrens[m_CurrentChildIndex]->GetStatus() == NodeStatus::RUNNING)
             m_Childrens[m_CurrentChildIndex]->OnAbort();
@@ -86,11 +80,8 @@ void SequenceNode::OnAbort()
 //SelectorNode methods
 void SelectorNode::OnStart()
 {
-    /*if (m_EditorApp)
-        m_EditorApp->AddActiveNode(this);*/
     if (GetTree() && GetTree()->GetEditorApp())
         GetTree()->GetEditorApp()->AddActiveNode(this);
-    std::cout << "Selector Node Started: " << m_Name << " - Parent:" << (m_Parent != nullptr ? m_Parent->GetName() : std::string(" NoParent")) << std::endl;
 }
 
 NodeStatus SelectorNode::Update()
@@ -120,18 +111,14 @@ NodeStatus SelectorNode::Update()
 
 void SelectorNode::OnFinished()
 {
-    std::cout << "Selector Node Finished: " << m_Name << " result is: " << (m_Status == NodeStatus::SUCCESS ? "SUCCESS" : "FAILURE") << std::endl;
     m_CurrentChildIndex = 0;
     m_bIsStarted = false;
-    /*if (m_EditorApp)
-        m_EditorApp->RemoveActiveNode(this);*/
     if (GetTree() && GetTree()->GetEditorApp())
         GetTree()->GetEditorApp()->RemoveActiveNode(this);
 }
 
 void SelectorNode::OnAbort()
 {
-    std::cout << "Selector Node Aborted: " << m_Name << std::endl;
     if (m_CurrentChildIndex < static_cast<int>(m_Childrens.size()))
         if (m_Childrens[m_CurrentChildIndex]->GetStatus() == NodeStatus::RUNNING)
             m_Childrens[m_CurrentChildIndex]->OnAbort();

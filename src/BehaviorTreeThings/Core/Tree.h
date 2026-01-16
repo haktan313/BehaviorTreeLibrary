@@ -6,7 +6,7 @@
 #include "Nodes.h"
 #include "Root.h"
 
-class BehaviorTree
+class BehaviorTree 
 {
 public:
     BehaviorTree() : m_Owner(nullptr), m_Blackboard(nullptr), m_EditorApp(nullptr) {}
@@ -19,7 +19,7 @@ public:
     void SetRootNode(std::unique_ptr<HNode> root) { m_RootNode = std::move(root); }
     void SetNodeEditorApp(NodeEditorApp* editorApp) { m_EditorApp = editorApp; }
     HNode* GetRootNode() const { return m_RootNode.get(); }
-    HBlackboard* GetBlackboard() const { return m_Blackboard; }
+    HBlackboard* GetBlackboardRaw() const { return m_Blackboard.get(); }
     NodeEditorApp* GetEditorApp() const { return m_EditorApp; }
 
     template<typename OwnerType>
@@ -39,7 +39,7 @@ private:
     void* m_Owner;
     
     std::unique_ptr<HNode> m_RootNode;
-    HBlackboard* m_Blackboard;
+    std::unique_ptr<HBlackboard> m_Blackboard;
     NodeEditorApp* m_EditorApp;
 
     friend class BehaviorTreeBuilder;
@@ -54,23 +54,25 @@ class BehaviorTreeBuilder
 {
 public:
     BehaviorTreeBuilder() : m_Tree(Root::CreateBehaviorTree()) {}
+    BehaviorTreeBuilder(BehaviorTree* tree) : m_Tree(tree) {}
 
     template<typename BlackboardType>
     BehaviorTreeBuilder& setBlackboard()
     {
         static_assert(std::is_base_of_v<HBlackboard, BlackboardType>, "BlackboardType must derive from HBlackboard");
-        auto blackboard = new BlackboardType();
-        m_Tree->m_Blackboard = blackboard;
+        //auto blackboard = new BlackboardType();
+        auto blackboard = std::make_unique<BlackboardType>();
+        m_Tree->m_Blackboard = std::move(blackboard);
         m_Tree->m_bOwnsBlackboard = true;
         return *this;
     }
-    BehaviorTreeBuilder& setBlackboard(HBlackboard* blackboard)
+    BehaviorTreeBuilder& setBlackboard(std::unique_ptr<HBlackboard> blackboard)
     {
-        m_Tree->m_Blackboard = blackboard;
-        m_Tree->m_bOwnsBlackboard = false;
+        m_Tree->m_Blackboard = std::move(blackboard);
+        m_Tree->m_bOwnsBlackboard = true;
         return *this;
     }
-    BehaviorTreeBuilder& root(NodeEditorApp* editorApp);
+    BehaviorTreeBuilder& root();
     BehaviorTreeBuilder& sequence(const std::string& name);
     BehaviorTreeBuilder& selector(const std::string& name);
     template<typename ActionNodeType, typename... Args>

@@ -1,5 +1,6 @@
 #include "PlatformUtilsBT.h"
 #include "App.h"
+#include "Root.h"
 
 std::string PlatformUtilsBT::OpenFile(const char* filter)
 {

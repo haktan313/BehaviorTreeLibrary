@@ -31,12 +31,9 @@ public:
     virtual bool CanStart() { return true; }
     
     void SetParent(HNode* parent) { m_Parent = parent; }
-    /*void SetEditorApp(NodeEditorApp* app) { m_EditorApp = app; }*/
     void SetTree(BehaviorTree* tree) { m_Tree = tree; }
     void SetType(HNodeType type) { m_Type = type; }
-    
-    /*NodeEditorApp* GetEditorApp() const { return m_EditorApp; }
-    HBlackboard& GetBlackboard() const { return *m_Blackboard; }*/
+
     HNode* GetParent() const { return m_Parent; }
     BehaviorTree* GetTree() const { return m_Tree; }
     HBlackboard& GetBlackboard() const;
@@ -75,15 +72,16 @@ public:
     bool m_bIsStarted = false;
 protected:
     BehaviorTree* m_Tree = nullptr;
-    const std::string m_Name;
     HNode* m_Parent;
-    /*HBlackboard* m_Blackboard;
-    NodeEditorApp* m_EditorApp;*/
     std::unique_ptr<Params> m_Params;
+    
+    const std::string m_Name;
     NodeStatus m_Status;
     HNodeType m_Type;
+
     std::vector<std::unique_ptr<HNode>> m_Childrens;
     std::vector<std::unique_ptr<HCondition>> m_ConditionNodes;
+
     friend class BTSerializer;
 };
 
@@ -127,7 +125,6 @@ public:
     bool CheckConditions();
     bool CheckConditionsSelfMode();
 private:
-    /*void SetBlackboard(HBlackboard* blackboard) { m_Blackboard = blackboard; }*/
     friend class BehaviorTreeBuilder;
     friend class BehaviorTree;
 };
@@ -161,7 +158,6 @@ private:
     NodeStatus m_LastStatus;
 
     NodeStatus Update() override final { return CheckCondition() ? NodeStatus::SUCCESS : NodeStatus::FAILURE; }
-    /*void SetBlackboard(HBlackboard* blackboard) { m_Blackboard = blackboard; }*/
     void SetPriorityMode(PriorityType priority) { m_PriorityMode = priority; }
     friend class BehaviorTreeBuilder;
     friend class BehaviorTree;
@@ -187,7 +183,6 @@ public:
     virtual void OnAbort() override { HNode::OnAbort(); }
 private:
     virtual NodeStatus Update() override final;
-    /*void SetBlackboard(HBlackboard* blackboard) { m_Blackboard = blackboard; }*/
     friend class BehaviorTreeBuilder;
     friend class BehaviorTree;
 };
