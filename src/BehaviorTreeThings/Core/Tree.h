@@ -9,7 +9,7 @@
 class BehaviorTree
 {
 public:
-    BehaviorTree() : m_Owner(nullptr), m_Blackboard(nullptr), m_EditorApp(nullptr) {}
+    BehaviorTree(const std::string& name) : m_Owner(nullptr), m_Blackboard(nullptr), m_EditorApp(nullptr), m_Name(name) {}
     ~BehaviorTree();
 
     void StartTree();
@@ -18,10 +18,12 @@ public:
     
     void SetRootNode(std::unique_ptr<HNode> root) { m_RootNode = std::move(root); }
     void SetNodeEditorApp(NodeEditorApp* editorApp) { m_EditorApp = editorApp; }
+    void SetName(const std::string& name) { m_Name = name; }
     HNode* GetRootNode() const { return m_RootNode.get(); }
     HBlackboard* GetBlackboard() const { return m_Blackboard; }
     NodeEditorApp* GetEditorApp() const { return m_EditorApp; }
-
+    const std::string& GetName() const { return m_Name; }
+    
     template<typename OwnerType>
     void SetOwner(OwnerType* owner)
     {
@@ -33,16 +35,29 @@ public:
         return static_cast<OwnerType*>(m_Owner);
     }
 private:
+    void AddActiveNode(HNode* node) { m_ActiveNodes.push_back(node); }
+    void RemoveActiveNode(HNode* node) { m_ActiveNodes.erase(std::remove(m_ActiveNodes.begin(), m_ActiveNodes.end(), node), m_ActiveNodes.end());}
+    void ClearActiveNodes() { m_ActiveNodes.clear(); }
+    const std::vector<HNode*>& GetActiveNodes() const { return m_ActiveNodes; }
+    
     bool m_bOwnsBlackboard = false;
     bool m_bIsRunning = false;
-    
+
     void* m_Owner;
+    std::string m_Name;
+
+    std::vector<HNode*> m_ActiveNodes;
     
     std::unique_ptr<HNode> m_RootNode;
     HBlackboard* m_Blackboard;
     NodeEditorApp* m_EditorApp;
 
     friend class BehaviorTreeBuilder;
+    friend class NodeEditorApp;
+    friend class SequenceNode;
+    friend class SelectorNode;
+    friend class HRootNode;
+    friend class HNode;
 };
 template<typename OwnerType>
 OwnerType* HNode::GetOwner() const
@@ -53,7 +68,8 @@ OwnerType* HNode::GetOwner() const
 class BehaviorTreeBuilder
 {
 public:
-    BehaviorTreeBuilder() : m_Tree(Root::CreateBehaviorTree()) {}
+    BehaviorTreeBuilder() : m_Tree(Root::CreateBehaviorTree("BehaviorTree")) {}
+    BehaviorTreeBuilder(BehaviorTree* tree) : m_Tree(tree) {}
 
     template<typename BlackboardType>
     BehaviorTreeBuilder& setBlackboard()
@@ -77,13 +93,12 @@ public:
     BehaviorTreeBuilder& action(Args&&... args)
     {
         static_assert(std::is_base_of_v<HActionNode, ActionNodeType>, "ActionNodeType must derive from HAction");
-        auto action = std::make_unique<ActionNodeType>(std::forward<Args>(args)...);
+        auto action = MakeNode<ActionNodeType>(std::forward<Args>(args)...);
         
         m_LastCreatedNode = action.get();
         if (m_CurrentDecorator)
         {
             auto decoratorNode = std::move(m_CurrentDecorator);
-            auto decoratorNodePtr = decoratorNode.get();
             if (!m_NodeStack.empty())
             {
                 action->SetTree(m_Tree);
@@ -105,7 +120,7 @@ public:
     BehaviorTreeBuilder& condition(PriorityType priority, Args&&... args)
     {
         static_assert(std::is_base_of_v<HCondition, ConditionNodeType>, "ConditionNodeType must derive from HCondition");
-        auto condition = std::make_unique<ConditionNodeType>(std::forward<Args>(args)...);
+        auto condition = MakeNode<ConditionNodeType>(std::forward<Args>(args)...);
         
         if (m_LastCreatedNode)
         {
@@ -120,7 +135,7 @@ public:
     BehaviorTreeBuilder& decorator(Args&&... args)
     {
         static_assert(std::is_base_of_v<HDecorator, DecoratorNodeType>, "DecoratorNodeType must derive from HDecorator");
-        m_CurrentDecorator = std::make_unique<DecoratorNodeType>(std::forward<Args>(args)...);
+        m_CurrentDecorator = MakeNode<DecoratorNodeType>(std::forward<Args>(args)...);
         m_CurrentDecorator->SetTree(m_Tree);
         m_CurrentDecorator->SetType(HNodeType::Decorator);
         return *this;
@@ -134,4 +149,13 @@ private:
     HNode* m_LastCreatedNode = nullptr;
     std::unique_ptr<HDecorator> m_CurrentDecorator;
     std::vector<HNode*> m_NodeStack;
+
+    uint64_t m_NextUID = 1;
+    template<typename TNode, typename... Args>
+    std::unique_ptr<TNode> MakeNode(Args&&... args)
+    {
+        auto node = std::make_unique<TNode>(std::forward<Args>(args)...);
+        node->SetID(m_NextUID++);
+        return node;
+    }
 };

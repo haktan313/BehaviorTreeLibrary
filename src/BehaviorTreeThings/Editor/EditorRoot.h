@@ -11,6 +11,7 @@ public:
     static void EditorRootStop();
 
     static NodeEditorApp* GetNodeEditorApp() { return m_NodeEditorApp.get(); }
+    static bool HasNodeEditorApp() { return m_NodeEditorApp != nullptr; }
 private:
     static std::unique_ptr<NodeEditorApp> m_NodeEditorApp;
 };

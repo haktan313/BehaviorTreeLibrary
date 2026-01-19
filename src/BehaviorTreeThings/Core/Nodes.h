@@ -31,18 +31,16 @@ public:
     virtual bool CanStart() { return true; }
     
     void SetParent(HNode* parent) { m_Parent = parent; }
-    /*void SetEditorApp(NodeEditorApp* app) { m_EditorApp = app; }*/
     void SetTree(BehaviorTree* tree) { m_Tree = tree; }
     void SetType(HNodeType type) { m_Type = type; }
-    
-    /*NodeEditorApp* GetEditorApp() const { return m_EditorApp; }
-    HBlackboard& GetBlackboard() const { return *m_Blackboard; }*/
+
     HNode* GetParent() const { return m_Parent; }
     BehaviorTree* GetTree() const { return m_Tree; }
     HBlackboard& GetBlackboard() const;
     NodeStatus GetStatus() const { return m_Status; }
     HNodeType GetType() const { return m_Type; }
     const Params& GetParams() const { return *m_Params; }
+    uint64_t GetID() const { return m_ID; }
     
     const std::string& GetName() const { return m_Name; }
     const std::vector<std::unique_ptr<HNode>>& GetChildrensUnique() const { return m_Childrens; }
@@ -77,14 +75,17 @@ protected:
     BehaviorTree* m_Tree = nullptr;
     const std::string m_Name;
     HNode* m_Parent;
-    /*HBlackboard* m_Blackboard;
-    NodeEditorApp* m_EditorApp;*/
+
     std::unique_ptr<Params> m_Params;
     NodeStatus m_Status;
     HNodeType m_Type;
     std::vector<std::unique_ptr<HNode>> m_Childrens;
     std::vector<std::unique_ptr<HCondition>> m_ConditionNodes;
-    friend class BTSerializer;
+    
+    friend class BehaviorTreeBuilder;
+private:
+    uint64_t m_ID = 0;
+    void SetID(uint64_t id) { m_ID = id; }
 };
 
 class HRootNode : public HNode
