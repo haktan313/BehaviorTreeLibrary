@@ -20,7 +20,7 @@ public:
     void SetNodeEditorApp(NodeEditorApp* editorApp) { m_EditorApp = editorApp; }
     void SetName(const std::string& name) { m_Name = name; }
     HNode* GetRootNode() const { return m_RootNode.get(); }
-    HBlackboard* GetBlackboard() const { return m_Blackboard; }
+    HBlackboard* GetBlackboardRaw() const { return m_Blackboard.get(); }
     NodeEditorApp* GetEditorApp() const { return m_EditorApp; }
     const std::string& GetName() const { return m_Name; }
     
@@ -49,7 +49,7 @@ private:
     std::vector<HNode*> m_ActiveNodes;
     
     std::unique_ptr<HNode> m_RootNode;
-    HBlackboard* m_Blackboard;
+    std::unique_ptr<HBlackboard> m_Blackboard;
     NodeEditorApp* m_EditorApp;
 
     friend class BehaviorTreeBuilder;
@@ -75,14 +75,15 @@ public:
     BehaviorTreeBuilder& setBlackboard()
     {
         static_assert(std::is_base_of_v<HBlackboard, BlackboardType>, "BlackboardType must derive from HBlackboard");
-        auto blackboard = new BlackboardType();
-        m_Tree->m_Blackboard = blackboard;
+        //auto blackboard = new BlackboardType();
+        auto blackboard = std::make_unique<BlackboardType>();
+        m_Tree->m_Blackboard = std::move(blackboard);
         m_Tree->m_bOwnsBlackboard = true;
         return *this;
     }
-    BehaviorTreeBuilder& setBlackboard(HBlackboard* blackboard)
+    BehaviorTreeBuilder& setBlackboard(std::unique_ptr<HBlackboard> blackboard)
     {
-        m_Tree->m_Blackboard = blackboard;
+        m_Tree->m_Blackboard = std::move(blackboard);
         m_Tree->m_bOwnsBlackboard = false;
         return *this;
     }

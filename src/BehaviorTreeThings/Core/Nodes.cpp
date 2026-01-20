@@ -76,7 +76,7 @@ void HNode::AddConditionNode(std::unique_ptr<HCondition> conditionNode)
 
 HBlackboard& HNode::GetBlackboard() const
 {
-    return *m_Tree->GetBlackboard();
+    return *m_Tree->GetBlackboardRaw();
 }
 
 bool HNode::CheckConditionsSelfMode(HNode* node, const std::vector<std::unique_ptr<HCondition>>& conditionNodes)

@@ -14,7 +14,7 @@
 void NodeEditorApp::ClearDatas()
 {
     m_bIsRuntimeMode = false;
-    //m_CopyBlackboard = nullptr;
+    m_CopyBlackboard = nullptr;
     m_LastSelectedDecorator = nullptr;
     m_LastSelectedCondition = nullptr;
     m_LastHoveredNode = nullptr;
@@ -71,7 +71,7 @@ void NodeEditorApp::DrawToolbar()
     {
         if (m_BehaviorTree)
             m_BehaviorTree->SetNodeEditorApp(nullptr);
-        //m_CopyBlackboard = nullptr;
+        m_CopyBlackboard = nullptr;
         m_Blackboard = nullptr;
         ClearBuildData();
         std::string filePath = PlatformUtilsBT::OpenFile("Behavior Tree File (*.btree)\0*.btree\0");
@@ -546,7 +546,13 @@ void NodeEditorApp::ShowBlackboardDetails()
     }
     if (!m_SelectedBlackboardClassName.empty())
     {
-        m_Blackboard->DrawImGui();
+        if (m_CopyBlackboard)
+            m_CopyBlackboard->DrawImGui();
+        else
+        {
+            currentLabel = "Select Blackboard";
+            m_SelectedBlackboardClassName.clear();
+        }
     }
 }
 
@@ -554,18 +560,33 @@ HBlackboard& NodeEditorApp::SetBlackboardForEditor(const std::string& id, const 
 {
     m_SelectedBlackboardClassName = id;
     m_Blackboard = info.CreateBlackboardFn();
+    m_CopyBlackboard = m_Blackboard.get();
     return *m_Blackboard;
 }
 
 BehaviorTree* NodeEditorApp::BuildBehaviorTree()
 {
+    if (!m_Blackboard)
+        for (auto& [id, info] : NodeRegistry::GetBlackboardClassInfoMap())
+            if (id == m_SelectedBlackboardClassName)
+            {
+                m_SelectedBlackboardClassName = id;
+                m_Blackboard = info.CreateBlackboardFn();
+                if (m_Blackboard && m_CopyBlackboard && m_CopyBlackboard->GetName() == m_SelectedBlackboardClassName)
+                {
+                    m_Blackboard->SetBoolValues(m_CopyBlackboard->GetBoolValues());
+                    m_Blackboard->SetIntValues(m_CopyBlackboard->GetIntValues());
+                    m_Blackboard->SetFloatValues(m_CopyBlackboard->GetFloatValues());
+                    m_Blackboard->SetStringValues(m_CopyBlackboard->GetStringValues());
+                    m_CopyBlackboard = m_Blackboard.get();
+                }
+                break;
+            }
     m_NodeEditor->BuildNodes();
-    std::cout << "Building Behavior Tree from Node Editor..." << std::endl;
     ClearBuildData();
     
     BehaviorTreeBuilder btBuilder;
-    //btBuilder.setBlackboard<EnemyBlackboard>();
-    btBuilder.setBlackboard(m_Blackboard.get());
+    btBuilder.setBlackboard(std::move(m_Blackboard));
     
     btBuilder.root(this);
     if (auto* runtimeRoot = btBuilder.GetLastCreatedNode())
@@ -870,9 +891,9 @@ void NodeEditorApp::CreateEditorTreeFromRuntimeTree(BehaviorTree* runtimeTree)
     ClearNodeMappings();
     /*ClearActiveNodes();*/
 
-    /*m_CopyBlackboard = m_BehaviorTree->GetBlackboardRaw();
+    m_CopyBlackboard = m_BehaviorTree->GetBlackboardRaw();
     if (m_CopyBlackboard)
-        m_SelectedBlackboardClassName = m_CopyBlackboard->GetName();*/
+        m_SelectedBlackboardClassName = m_CopyBlackboard->GetName();
 
     const std::string path = Root::GetBehaviorTreePath(m_BehaviorTree);
     if (path.empty() || !std::filesystem::exists(path))

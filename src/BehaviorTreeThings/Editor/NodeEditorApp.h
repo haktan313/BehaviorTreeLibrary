@@ -77,6 +77,7 @@ private:
     BehaviorTree* m_BehaviorTree = nullptr;
     std::unique_ptr<NodeEditorHelper> m_NodeEditor;
     std::unique_ptr<HBlackboard> m_Blackboard;
+    HBlackboard* m_CopyBlackboard = nullptr;
     
     std::unordered_map<const HNode*, nodeEditor::NodeId> m_NodeToEditorIdMap;
     std::unordered_map<uintptr_t, const HNode*> m_EditorIdToNodeMap;

@@ -56,7 +56,7 @@ void BTSerializer::Serialize(const std::string& filepath)
 
     out << YAML::Key << "Blackboard" << YAML::Value;
     out << YAML::BeginMap;
-    SerializeBlackboard(out, m_Tree->GetBlackboard());
+    SerializeBlackboard(out, m_Tree->GetBlackboardRaw());
     out << YAML::EndMap;
 
     out << YAML::Key << "EditorData" << YAML::Value;
@@ -124,7 +124,7 @@ bool BTSerializer::DeserializeData(const YAML::Node& data)
     
     
     BehaviorTreeBuilder builder(m_Tree);
-    builder.setBlackboard(blackboard.get()/*std::move(blackboard)*/);
+    builder.setBlackboard(std::move(blackboard));
 
     DeserializeNodeRecursive(btNode["RuntimeData"], builder);
 
