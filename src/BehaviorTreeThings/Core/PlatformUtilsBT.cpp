@@ -5,6 +5,8 @@ GLFWwindow* PlatformUtilsBT::s_Window = nullptr;
 
 std::string PlatformUtilsBT::OpenFile(const char* filter)
 {
+    if (!s_Window)
+        return std::string();
     OPENFILENAMEA ofn;
     CHAR szFile[260] = { 0 };
     ZeroMemory(&ofn, sizeof(OPENFILENAME));
@@ -22,6 +24,8 @@ std::string PlatformUtilsBT::OpenFile(const char* filter)
 
 std::string PlatformUtilsBT::SaveFile(const char* filter)
 {
+    if (!s_Window)
+        return std::string();
     OPENFILENAMEA ofn;
     CHAR szFile[260] = { 0 };
     ZeroMemory(&ofn, sizeof(OPENFILENAME));

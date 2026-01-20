@@ -20,8 +20,10 @@ App::App() : m_EnemyAI(nullptr), m_Window(nullptr)
     s_Instance = this;
     
     //-------------------------------------------- Changable Part ------------------------------------------------//
+    // Root::RootStart() starts whole Behavior Trees.
     // Root::RootTick() call this inside the main loop.
     // Root::RootClear() call this before app shutdown.
+    // Root::RootStop() stops whole Behavior Trees.
     EditorRoot::EditorRootStart();//Initialize the Node Editor App, if you want you can work without editor app for that don't call this function
     // EditorRoot::EditorRootStop() call this before app shutdown.
     // EditorRoot::GetNodeEditorApp() to get the instance of the Node Editor App.
@@ -40,6 +42,8 @@ App::App() : m_EnemyAI(nullptr), m_Window(nullptr)
     
     NodeRegistry::AddDecoratorNodeToBuilder<ChangeResultOfTheNodeDecorator, ChangeResultOfTheNodeParameters>("Change Result Of The Node Decorator");
     NodeRegistry::AddDecoratorNodeToBuilder<CooldownDecorator, CooldownDecoratorParameters>("Cooldown Decorator");
+
+    // PlatformUtilsBT::SetWindow(m_Window); set the window for using in the Behavior Trees platform utils.
     
     //you can find the example in the EnemyAI.cpp. "m_BehaviorTree->SetOwner(this);"
     m_EnemyAI = new EnemyAI();
@@ -50,6 +54,7 @@ App::~App()
 {
     delete m_EnemyAI;
     m_EnemyAI = nullptr;
+    
     Root::RootClear();
     EditorRoot::EditorRootStop();
 }
