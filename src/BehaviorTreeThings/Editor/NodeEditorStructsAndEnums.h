@@ -1,7 +1,7 @@
 #pragma once
 #include <functional>
 #include <imgui_node_editor_internal.h>
-#include "Nodes.h"
+#include "BehaviorTreeThings/Core/Nodes.h"
 
 namespace nodeEditor = ax::NodeEditor;
 

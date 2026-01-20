@@ -506,6 +506,7 @@ void BTSerializer::CollectRuntimeNodesByUID(const HNode* node, std::unordered_ma
         CollectRuntimeNodesByUID(cond, out);
 }
 
+
 const char* BTSerializer::NodeTypeToString(HNodeType type)
 {
     switch (type)
@@ -695,6 +696,9 @@ void BTSerializer::SerializeEditorData(YAML::Emitter& out)
     auto& helper = editorApp->GetNodeEditorHelper();
     
     out << YAML::Key << "Nodes" << YAML::Value << YAML::BeginSeq;
+    if (helper.GetNodes().empty())
+        helper.SpawnRootNode();
+    
     for (const auto& node : helper.GetNodes())
     {
         out << YAML::BeginMap;
@@ -742,10 +746,11 @@ void BTSerializer::SerializeEditorData(YAML::Emitter& out)
             out << YAML::EndMap;
         }
         out << YAML::EndSeq;
-
+        
         out << YAML::Key << "Params" << YAML::Value;
         out << YAML::BeginMap;
-        runtimeNode->GetParams().Serialize(out);
+        if (runtimeNode)
+            runtimeNode->GetParams().Serialize(out);
         out << YAML::EndMap;
 
         out << YAML::EndMap;
@@ -807,7 +812,6 @@ void BTSerializer::SerializeNode(YAML::Emitter& out, const HNode* node)
 
     if (node->GetType() == HNodeType::Decorator)
     {
-        std::cout << "DEC name=" << node->GetName() << " class=" << typeid(*node).name() << "\n";
         auto children = node->GetChildrensRaw();
 
         out << YAML::Key << "Child" << YAML::Value;
@@ -828,7 +832,6 @@ void BTSerializer::SerializeNode(YAML::Emitter& out, const HNode* node)
 
     if (node->GetType() == HNodeType::Condition)
     {
-        std::cout << "COND name=" << node->GetName() << " class=" << typeid(*node).name() << "\n";
         auto* cond = dynamic_cast<const HCondition*>(node);
         if (cond)
             out << YAML::Key << "Priority" << YAML::Value << PriorityToString(cond->GetPriorityMode());
@@ -853,7 +856,7 @@ void BTSerializer::DeserializeNodeRecursive(const YAML::Node& nodeData, Behavior
 
     if (type == "Root")
     {
-        builder.root(nullptr);
+        builder.root();
         if (nodeData["Children"]) 
             for (auto child : nodeData["Children"])
                 DeserializeNodeRecursive(child, builder);

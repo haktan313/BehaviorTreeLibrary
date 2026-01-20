@@ -13,7 +13,7 @@ public:
     void Serialize(const std::string& filepath);
     
     bool Deserialize(const std::string& filepath);
-    bool Deserialize(const std::string& filepath, NodeEditorApp* editorApp);
+    bool Deserialize(const std::string& filepath, NodeEditorApp* editorAppFromEditor);
     bool Deserialize(const YAML::Node& data);
     bool Deserialize(const YAML::Node& data, NodeEditorApp* editorAppFromEditor);
     bool DeserializeData(const YAML::Node& data);

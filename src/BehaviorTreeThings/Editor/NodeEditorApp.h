@@ -30,6 +30,7 @@ public:
     std::unordered_map<const HNode*, nodeEditor::NodeId>& GetNodeMappings() { return m_NodeToEditorIdMap; }
     NodeEditorHelper& GetNodeEditorHelper() { return *m_NodeEditor; }
     HBlackboard& GetBlackboard() { return *m_Blackboard; }
+    std::unique_ptr<HBlackboard> GetUniqueBlackboard() { return std::move(m_Blackboard); }
     bool IsRuntimeMode() const { return m_bIsRuntimeMode; }
 
     void DecoratorNodeSelected(EditorDecorator& decorator);

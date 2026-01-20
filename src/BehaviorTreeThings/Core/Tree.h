@@ -23,7 +23,7 @@ public:
     HBlackboard* GetBlackboardRaw() const { return m_Blackboard.get(); }
     NodeEditorApp* GetEditorApp() const { return m_EditorApp; }
     const std::string& GetName() const { return m_Name; }
-    
+
     template<typename OwnerType>
     void SetOwner(OwnerType* owner)
     {
@@ -40,9 +40,8 @@ private:
     void ClearActiveNodes() { m_ActiveNodes.clear(); }
     const std::vector<HNode*>& GetActiveNodes() const { return m_ActiveNodes; }
     
-    bool m_bOwnsBlackboard = false;
     bool m_bIsRunning = false;
-
+    
     void* m_Owner;
     std::string m_Name;
 
@@ -78,16 +77,14 @@ public:
         //auto blackboard = new BlackboardType();
         auto blackboard = std::make_unique<BlackboardType>();
         m_Tree->m_Blackboard = std::move(blackboard);
-        m_Tree->m_bOwnsBlackboard = true;
         return *this;
     }
     BehaviorTreeBuilder& setBlackboard(std::unique_ptr<HBlackboard> blackboard)
     {
         m_Tree->m_Blackboard = std::move(blackboard);
-        m_Tree->m_bOwnsBlackboard = false;
         return *this;
     }
-    BehaviorTreeBuilder& root(NodeEditorApp* editorApp);
+    BehaviorTreeBuilder& root();
     BehaviorTreeBuilder& sequence(const std::string& name);
     BehaviorTreeBuilder& selector(const std::string& name);
     template<typename ActionNodeType, typename... Args>
@@ -100,6 +97,7 @@ public:
         if (m_CurrentDecorator)
         {
             auto decoratorNode = std::move(m_CurrentDecorator);
+            auto decoratorNodePtr = decoratorNode.get();
             if (!m_NodeStack.empty())
             {
                 action->SetTree(m_Tree);
@@ -150,7 +148,7 @@ private:
     HNode* m_LastCreatedNode = nullptr;
     std::unique_ptr<HDecorator> m_CurrentDecorator;
     std::vector<HNode*> m_NodeStack;
-
+    
     uint64_t m_NextUID = 1;
     template<typename TNode, typename... Args>
     std::unique_ptr<TNode> MakeNode(Args&&... args)
@@ -159,4 +157,5 @@ private:
         node->SetID(m_NextUID++);
         return node;
     }
+
 };

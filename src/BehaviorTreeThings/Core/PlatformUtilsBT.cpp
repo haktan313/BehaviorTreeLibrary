@@ -9,7 +9,7 @@ std::string PlatformUtilsBT::OpenFile(const char* filter)
     CHAR szFile[260] = { 0 };
     ZeroMemory(&ofn, sizeof(OPENFILENAME));
     ofn.lStructSize = sizeof(OPENFILENAME);
-    ofn.hwndOwner = glfwGetWin32Window((GLFWwindow*)s_Window/*App::Get()->GetWindow()*/);
+    ofn.hwndOwner = glfwGetWin32Window((GLFWwindow*)s_Window);
     ofn.lpstrFile = szFile;
     ofn.nMaxFile = sizeof(szFile);
     ofn.lpstrFilter = filter;
@@ -26,7 +26,7 @@ std::string PlatformUtilsBT::SaveFile(const char* filter)
     CHAR szFile[260] = { 0 };
     ZeroMemory(&ofn, sizeof(OPENFILENAME));
     ofn.lStructSize = sizeof(OPENFILENAME);
-    ofn.hwndOwner = glfwGetWin32Window((GLFWwindow*)s_Window/*App::Get()->GetWindow()*/);
+    ofn.hwndOwner = glfwGetWin32Window((GLFWwindow*)s_Window);
     ofn.lpstrFile = szFile;
     ofn.nMaxFile = sizeof(szFile);
     ofn.lpstrFilter = filter;

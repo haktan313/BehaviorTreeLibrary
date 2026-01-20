@@ -73,12 +73,13 @@ public:
     bool m_bIsStarted = false;
 protected:
     BehaviorTree* m_Tree = nullptr;
-    const std::string m_Name;
     HNode* m_Parent;
-
     std::unique_ptr<Params> m_Params;
+    
+    const std::string m_Name;
     NodeStatus m_Status;
     HNodeType m_Type;
+
     std::vector<std::unique_ptr<HNode>> m_Childrens;
     std::vector<std::unique_ptr<HCondition>> m_ConditionNodes;
     
@@ -128,7 +129,6 @@ public:
     bool CheckConditions();
     bool CheckConditionsSelfMode();
 private:
-    /*void SetBlackboard(HBlackboard* blackboard) { m_Blackboard = blackboard; }*/
     friend class BehaviorTreeBuilder;
     friend class BehaviorTree;
 };
@@ -162,7 +162,6 @@ private:
     NodeStatus m_LastStatus;
 
     NodeStatus Update() override final { return CheckCondition() ? NodeStatus::SUCCESS : NodeStatus::FAILURE; }
-    /*void SetBlackboard(HBlackboard* blackboard) { m_Blackboard = blackboard; }*/
     void SetPriorityMode(PriorityType priority) { m_PriorityMode = priority; }
     friend class BehaviorTreeBuilder;
     friend class BehaviorTree;
@@ -188,7 +187,6 @@ public:
     virtual void OnAbort() override { HNode::OnAbort(); }
 private:
     virtual NodeStatus Update() override final;
-    /*void SetBlackboard(HBlackboard* blackboard) { m_Blackboard = blackboard; }*/
     friend class BehaviorTreeBuilder;
     friend class BehaviorTree;
 };

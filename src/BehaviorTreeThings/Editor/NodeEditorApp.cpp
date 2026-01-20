@@ -50,7 +50,6 @@ void NodeEditorApp::DrawToolbar()
     ImGui::Separator();
     if (ImGui::Button("Save", ImVec2(150, 30)))
     {
-        std::cout << "Save Button Clicked" << std::endl;
         if (!m_BehaviorTree)
         {
             return;
@@ -127,13 +126,11 @@ void NodeEditorApp::DrawBlackboardContent()
 NodeEditorApp::NodeEditorApp()
 {
     m_NodeEditor = std::make_unique<NodeEditorHelper>(this);
-    //Root::RootStart();
 }
 
 NodeEditorApp::~NodeEditorApp()
 {
-    ClearNodeMappings();
-    //Root::RootStop();
+    ClearDatas();
 }
 
 void NodeEditorApp::OnStart()
@@ -182,14 +179,12 @@ const HNode* NodeEditorApp::GetRuntimeNodeFor(nodeEditor::NodeId editorId)
 void NodeEditorApp::DecoratorNodeSelected(EditorDecorator& decorator)
 {
     m_bDecoratorSelected = true; m_bConditionSelected = false;
-    std::cout << "Decorator Selected: " << decorator.Name << std::endl;
     m_LastSelectedDecorator = &decorator;
 }
 
 void NodeEditorApp::ConditionNodeSelected(EditorCondition& condition)
 {
     m_bConditionSelected = true; m_bDecoratorSelected = false;
-    std::cout << "Condition Selected: " << condition.Name << std::endl;
     m_LastSelectedCondition = &condition;
 }
 
@@ -588,7 +583,7 @@ BehaviorTree* NodeEditorApp::BuildBehaviorTree()
     BehaviorTreeBuilder btBuilder;
     btBuilder.setBlackboard(std::move(m_Blackboard));
     
-    btBuilder.root(this);
+    btBuilder.root();
     if (auto* runtimeRoot = btBuilder.GetLastCreatedNode())
         for (auto& n : m_NodeEditor->GetNodes())
         {

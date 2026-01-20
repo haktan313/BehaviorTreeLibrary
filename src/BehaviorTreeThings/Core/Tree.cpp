@@ -36,7 +36,8 @@ void BehaviorTree::StopTree()
 }
 
 // BehaviorTreeBuilder methods
-BehaviorTreeBuilder& BehaviorTreeBuilder::root(NodeEditorApp* editorApp)
+
+BehaviorTreeBuilder& BehaviorTreeBuilder::root()
 {
     auto rootNode = MakeNode<HRootNode>();
     rootNode->SetTree(m_Tree);
@@ -101,7 +102,6 @@ BehaviorTreeBuilder& BehaviorTreeBuilder::selector(const std::string& name)
 
 BehaviorTreeBuilder& BehaviorTreeBuilder::end()
 {
-    std::cout << "Ending Current Node" << std::endl;
     if (!m_NodeStack.empty())
         m_NodeStack.pop_back();
     return *this;
